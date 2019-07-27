@@ -101,7 +101,7 @@ var container = scene.make.rexContainerLite({
 container.destroy();
 ```
 
-Also destroy all child game objects.
+Also destroy all children.
 
 ### Other properties
 
@@ -138,15 +138,18 @@ These world properties of children will be changed with container.
 
 ### Remove child
 
-```javascript
-container.remove(child);  // child: a game object
-```
-
-Or remove all children
-
-```javascript
-container.clear();
-```
+- Remove a child
+    ```javascript
+    container.remove(child);
+    // container.remove(child, destroyChild);
+    ```
+    - `child` : Game object
+    - `destroyChild` : Set true to destroy child. Default is `false`.
+- Remove all children
+    ```javascript
+    container.clear();
+    // container.clear(destroyChild);
+    ```
 
 ### Get children
 
@@ -183,20 +186,47 @@ var group = container.children;
 
 Reference [Group](group.md)
 
-#### Change state of child
+### Set properties of child
 
-- Local position
-    ```javascript
-    container.setChildLocalPosition(child, x, y);
-    ```
-- Visible
-    ```javascript
-    container.setChildLocalVisible(child, visible);
-    ```
-- Alpha
-    ```javascript
-    container.setChildLocalAlpha(child, alpha);
-    ```
+#### Position
+
+```javascript
+// child.x = x;
+// child.y = y;
+container.resetChildPositionState(child);
+```
+
+or
+
+```javascript
+container.setChildPosition(child, x, y);
+```
+
+#### Visible
+
+```javascript
+// child.visible = visible;
+container.resetChildVisibleState(child);
+```
+
+or
+
+```javascript
+container.setChildVisible(child, visible);
+```
+
+#### Alpha
+
+```javascript
+// child.child = child;
+container.resetChildAlphaState(child);
+```
+
+or
+
+```javascript
+container.setChildAlpha(child, alpha);
+```
 
 ### Local state of child
 
@@ -219,24 +249,30 @@ var localState = child.rexContainer;
     - `visible`
     - `alpha`
 
-#### Update world properties of child
+#### Change local state of child
 
-Call these methods to update properties of child after changing local state of child.
+- Local position
+    ```javascript
+    container.setChildLocalPosition(child, x, y);
+    ```
 
-- Position/Angle/Scale
+### Depth
+
+- Get depth of container
     ```javascript
-    container.updateChildPosition(gameObject);
-    // container.syncPosition();  // update position/angle/scale of all children
+    var depth = container.depth;
     ```
-- Visible
+- Set depth of container and all children
     ```javascript
-    container.updateChildVisible(gameObject);
-    // container.syncVisible();  // update visible of all children
+    container.setDepth(value);
     ```
-- Alpha
+- Swap depth with another container
     ```javascript
-    container.updateChildAlpha(gameObject);
-    // container.syncAlpha();  // update alpha of all children
+    containerA.swapDepth(containerB);
+    ```
+- Increase of container and all children
+    ```javascript
+    container.incDepth(value);
     ```
 
 ### Mask

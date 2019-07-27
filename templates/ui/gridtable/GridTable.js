@@ -1,9 +1,9 @@
-import Scrollable from '../utils/Scrollable.js';
+import Scrollable from '../utils/scrollable/Scrollable.js';
 import GetScrollMode from '../utils/GetScrollMode.js';
 import GridTableCore from '../../../plugins/gameobjects/gridtable/GridTable.js';
 import InjectProperties from './InjectProperties.js';
 import TableOnCellVisible from './TableOnCellVisible.js';
-import TableSetInteractive from './TableSetInteractive.js';
+import TableSetInteractive from './input/TableSetInteractive.js';
 import NOOP from '../../../plugins/utils/object/NOOP.js';
 import SetItems from './SetItems.js';
 
@@ -58,7 +58,10 @@ class GridTable extends Scrollable {
         this.setCreateCellContainerCallback(callback, scope);
 
         TableOnCellVisible.call(this, table);
-        TableSetInteractive.call(this, table);
+
+        if (GetValue(tableConfig, 'interactive', true)) {
+            TableSetInteractive.call(this, table);
+        }
         this.setItems(GetValue(config, 'items', []));
     }
 

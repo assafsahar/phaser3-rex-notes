@@ -1,8 +1,9 @@
-import Render from './TextRender.js';
-import TextStyle from './TextStyle.js'; // extended
-import CanvasTextKlass from './CanvasText.js';
-import PoolKlass from '../../pool.js';
+import Render from './render/TextRender.js';
+import TextStyle from './textstyle/TextStyle.js'; // extended
+import CanvasTextKlass from './canvastext/CanvasText.js';
+import Pool from '../../pool.js';
 import CONST from './const.js';
+import GetGlobImageManager from './imagemanager/GetGlobImageManager.js';
 
 const AddToDOM = Phaser.DOM.AddToDOM;
 const CanvasPool = Phaser.Display.Canvas.CanvasPool;
@@ -28,7 +29,6 @@ var Text = new Phaser.Class({
         Components.Mask,
         Components.Origin,
         Components.Pipeline,
-        Components.ScaleMode,
         Components.ScrollFactor,
         Components.Tint,
         Components.Transform,
@@ -110,13 +110,15 @@ var Text = new Phaser.Class({
             }
 
             if (!PensPools.hasOwnProperty(type)) {
-                PensPools[type] = new PoolKlass();
+                PensPools[type] = new Pool();
             }
-            CANVASTEXT_CONFIG.context = this.context;
-            CANVASTEXT_CONFIG.parser = parser;
-            CANVASTEXT_CONFIG.style = this.style;
-            CANVASTEXT_CONFIG.pensPool = PensPools[type];
-            this.canvasText = new CanvasTextKlass(CANVASTEXT_CONFIG);
+            this.canvasText = new CanvasTextKlass({
+                parent: this,
+                context: this.context,
+                parser: parser,
+                style: this.style,
+                pensPool: PensPools[type]
+            });
 
             //this.initRTL();
 
@@ -331,7 +333,7 @@ var Text = new Phaser.Class({
         // wrap text to pens
         var style = this.style;
         if (runWrap) {
-            canvasText.updatePensManager(
+            canvasText.updatePenManager(
                 this._text,
                 style.wrapMode,
                 style.wrapWidth,
@@ -340,21 +342,33 @@ var Text = new Phaser.Class({
         }
 
         // resize
-        var boxWidth = canvasText.linesWidth,
-            boxHeight = canvasText.linesHeight;
         var padding = this.padding;
-        var w = boxWidth + padding.left + padding.right;
-        var h = boxHeight + padding.top + padding.bottom;
-
-        this.width = (style.fixedWidth === 0) ? w : style.fixedWidth;
-        this.height = (style.fixedHeight === 0) ? h : style.fixedHeight;
-
-        if (w > this.width) {
-            w = this.width;
+        var textWidth, textHeight;
+        if (style.fixedWidth === 0) {
+            this.width = canvasText.linesWidth + padding.left + padding.right;
+            textWidth = canvasText.linesWidth;
         }
-        if (h > this.height) {
-            h = this.height;
+        else {
+            this.width = style.fixedWidth;
+            textWidth = this.width - padding.left - padding.right;
+            if (textWidth < canvasText.linesWidth) {
+                textWidth = canvasText.linesWidth;
+            }
         }
+        if (style.fixedHeight === 0) {
+            this.height = canvasText.linesHeight + padding.top + padding.bottom;
+            textHeight = canvasText.linesHeight;
+        }
+        else {
+            this.height = style.fixedHeight;
+            textHeight = this.height - padding.top - padding.bottom;
+            if (textHeight < canvasText.linesHeight) {
+                textHeight = canvasText.linesHeight;
+            }
+        }
+
+        var w = this.width;
+        var h = this.height;
 
         this.updateDisplayOrigin();
 
@@ -382,8 +396,8 @@ var Text = new Phaser.Class({
         canvasText.draw(
             padding.left,
             padding.top,
-            boxWidth,
-            boxHeight
+            textWidth,
+            textHeight
         );
 
         context.restore();
@@ -441,6 +455,12 @@ var Text = new Phaser.Class({
         this.canvasText.destroy();
     },
 
+    setInteractive: function (shape, callback, dropZone) {
+        GameObject.prototype.setInteractive.call(this, shape, callback, dropZone);
+        this.canvasText.setInteractive();
+        return this;
+    },
+
     getWrappedText: function (text, start, end) {
         text = this.canvasText.getText(text, start, end, true);
         return text.split(SPLITREGEXP);
@@ -458,12 +478,20 @@ var Text = new Phaser.Class({
         return this.getText(text, start, end);
     },
 
-    copyPensManager: function (pensManager) {
-        return this.canvasText.copyPensManager(pensManager);
+    copyPenManager: function (penManager) {
+        return this.canvasText.copyPenManager(penManager);
     },
 
-    getPenManager: function (text, pensManager) {
-        return this.canvasText.getPenManager(text, pensManager);
+    getPenManager: function (text, penManager) {
+        return this.canvasText.getPenManager(text, penManager);
+    },
+
+    setSize: function (width, height) {
+        return this.setFixedSize(width, height);
+    },
+
+    resize: function (width, height) {
+        return this.setFixedSize(width, height);
     },
 
     lineSpacing: {
@@ -474,10 +502,23 @@ var Text = new Phaser.Class({
         set: function (value) {
             this.setLineSpacing(value);
         }
+    },
+
+    imageManager: {
+        get: function () {
+            return GetGlobImageManager(this.scene.textures);
+        }
+    },
+
+    addImage(key, config) {
+        this.imageManager.add(key, config);
+        return this;
+    },
+
+    drawAreaBounds(graphics, color) {
+        this.canvasText.hitAreaManager.drawBounds(graphics, color, this);
+        return this;
     }
-
 });
-
-var CANVASTEXT_CONFIG = {};
 
 export default Text;

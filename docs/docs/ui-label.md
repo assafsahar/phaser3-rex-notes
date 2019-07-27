@@ -48,6 +48,8 @@ var label = scene.rexUI.add.label({
     icon: iconGameObject,
     iconMask: false,
     text: textGameObject,
+    expandTextWidth: false,
+    expandTextHeight: false,
     action: actionGameObject,
     actionMask: false,
 
@@ -81,6 +83,8 @@ var label = scene.rexUI.add.label({
 - `icon` : Game object of icon, optional.
 - `iconMask` : Set true to add a *circle* mask on icon game object.
 - `text` : Game object of text, optional.
+- `expandTextWidth` : Set `true` to expand width of text object.
+- `expandTextHeight` : Set `true` to expand height of text object.
 - `action` : Game object of action icon, optional.
 - `actionMask` : Set true to add a *circle* mask on action icon game object.
 - `space` : Pads spaces
@@ -89,6 +93,27 @@ var label = scene.rexUI.add.label({
     - `space.text` : Space between text game object and action icon game object.
 - `name` : Set name of this label.
 - `draggable` : Set `true` to drag to-most sizer.
+
+#### Expand size of text
+
+Expand width/height of text when `expandTextWidth`/`expandTextHeight` is `true`
+
+To resize text object, text object should have `resize` method. For example
+
+```javascript
+class MyText extends Phaser.GameObjects.Text {
+    constructor(scene, x, y, text, style) {
+        super(scene, x, y, text, style);
+        scene.add.existing(this);
+    }
+    resize(width, height) {
+        this.setFixedSize(width, height);
+        return this;
+    }
+}
+```
+
+Or uses [bbcode text object](bbcodetext.md), or [tag text object](tagtext.md)
 
 ### Custom class
 
@@ -128,7 +153,7 @@ label.layout();
         ```
     - Text game object
         ```javascript
-        var icon = label.getElement('text');
+        var textObject = label.getElement('text');
         ```
     - Action icon game object
         ```javascript

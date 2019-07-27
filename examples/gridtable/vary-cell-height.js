@@ -14,10 +14,10 @@ class Demo extends Phaser.Scene {
     preload() { }
 
     create() {
-        var newCellObject = function (cell) {
+        var onCellVisible = function (cell) {
             var scene = cell.scene;
             var cellIdx = cell.index;
-            // cell.height = (cellIdx % 2) ? 40 : 80;  // se height of visible cell
+            // cell.height = (cellIdx % 2) ? 40 : 80;  // Set height of visible cell
 
             var color = (cellIdx % 2) ? COLOR_PRIMARY : COLOR_DARK;
             var bg = scene.add.rectangle(0, 0, cell.width, cell.height, color)
@@ -25,11 +25,8 @@ class Demo extends Phaser.Scene {
                 .setOrigin(0);
             var txt = scene.add.text(5, 5, cellIdx);
             var container = scene.add.container(0, 0, [bg, txt]);
-            return container;
-        }
 
-        var onCellVisible = function (cell) {
-            cell.setContainer(newCellObject(cell));
+            cell.setContainer(container);
             //console.log('Cell ' + cell.index + ' visible');
         };
         var table = this.add.rexGridTable(400, 300, 250, 400, {
@@ -43,20 +40,20 @@ class Demo extends Phaser.Scene {
             }
         });
 
-        // set height of all cells
+        // Set height of all cells
         for (var i = 0, cnt = table.cellsCount; i < cnt; i++) {
             var cellHeight = (i % 2) ? 40 : 80;
             table.setCellHeight(i, cellHeight);
         }
-        table.updateTable(); // refresh visible cells
+        table.updateTable(true); // Refresh visible cells
 
-        // draw bound
+        // Draw bound
         this.add.graphics()
             .lineStyle(2, 0xff0000)
             .strokeRectShape(table.getBounds())
             .setDepth(1);
 
-        // drag table content
+        // Drag table content
         table.setInteractive();
         table.on('pointermove', function (pointer) {
             if (!pointer.isDown) {

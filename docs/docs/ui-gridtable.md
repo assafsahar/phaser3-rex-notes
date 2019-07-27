@@ -61,7 +61,9 @@ var gridTable = scene.rexUI.add.gridTable({
         columns: 2,
         mask: {
             padding: 0
-        }
+        },
+        interactive: true,
+        reuseCellContainer: false,
     },
 
     slider: {
@@ -70,11 +72,15 @@ var gridTable = scene.rexUI.add.gridTable({
     },
 
     scroller: {
+        threshold: 10,
         slidingDeceleration: 5000,
         backDeceleration: 2000,
     },
 
     clamplChildOY: false,
+
+    header: headerGameObject,
+    footer: footerGameObject,
 
     space: {
         left: 0,
@@ -83,16 +89,37 @@ var gridTable = scene.rexUI.add.gridTable({
         bottom: 0,
 
         table: 0,
+        // table: {
+        //    top: 0,
+        //    bottom: 0,
+        //    left: 0,
+        //    right: 0,
+        //},
+        header: 0,
+        footer: 0,
     },
 
-    createCellContainerCallback: function(cell) {
+    expand: {
+        header: true,
+        footer: true,
+    },
+
+    align: {
+        header: 'center',
+        footer: 'center',
+    },
+
+    createCellContainerCallback: function(cell, cellContainer) {
         var scene = cell.scene,
             width = cell.width,
             height = cell.height,
             item = cell.item,
             index = cell.index;
-        // container = ...
-        return container;
+        if (cellContainer === null) { // No reusable cell container, create a new one
+            // cellContainer = scene.add.container();
+        }
+        // Set child properties of cell container ...
+        return cellContainer;
     },
 
     items: [],
@@ -124,6 +151,8 @@ var gridTable = scene.rexUI.add.gridTable({
     - `table.mask` : A rectangle mask of cells
         - `table.mask.padding` : Extra left/right/top/bottom padding spacing of this rectangle mask. Default value is `0`.
         - `false` : No mask.
+    - `table.interactive` : Set `true` to install touch events (tap/press/over/out/click).
+    - `table.reuseCellContainer` : Set `true` to reuse cell container when creating new cell container.
 - `slider` : Componments of slider, optional.
     - `slider.background` : Game object of slider background, optional.
     - `slider.track` : Game object of track.
@@ -132,13 +161,14 @@ var gridTable = scene.rexUI.add.gridTable({
         - `'drag'` : Control slider by dragging thumb game object. Default setting.
         - `'click'` : Control slider by touching track game object.
         - `'none'` : Disable sider controlling.
-    - Set to `false` to ignore slider.
+    - Set to `false` to skip creating slider.
 - `scroller` : Configuration of scroller behavior.
+    - `scroller.threshold` : Minimal movement to scroll. Set `0` to scroll immediately.
     - `scroller.slidingDeceleration` : Deceleration of slow down when dragging released.
         - Set `false` to disable it.
     - `scroller.backDeceleration` : Deceleration of pull back when out of bounds.
         - Set `false` to disable it.
-    - Set to `false` to ignore scroller.
+    - Set to `false` to skip creating scroller.
 - `clamplChildOY` : Set `true` to clamp scrolling.
 - `createCellContainerCallback` : Callback to return a container object of each visible cell.
     - Properties of `cell` parameter
@@ -148,9 +178,33 @@ var gridTable = scene.rexUI.add.gridTable({
         - `cell.item` : Item of this cell to display.
         - `cell.index` : Index of this cell.
     - **Origin of returned cell container will be set to (0, 0)**
+    - `cellContainer` : Cell container picked from object pool for reusing. Set `reuseCellContainer` to `true` to enable this feature.
+        - `null` : No cell container available.
+        - Game object : Reusable cell container.
+- `header` : Game object of header, optional.
+- `footer` : Game object of footer, optional.
 - `space` : Pads spaces
     - `space.left`, `space.right`, `space.top`, `space.bottom` : Space of bounds.
-    - `space.table` : Space between table object and slider object.
+    - `space.table` :
+        - A number: Space between table object and slider object.
+        - An object: Padding of table object.
+            - If `scrollMode` is `0` (vertical) :
+                - `space.table.top`, `space.table.bottom` : Top, bottom padding space of table object.
+                - `space.table.right` : Space between table object and slider object.
+            - If `scrollMode` is `1` (horizontal) :
+                - `space.table.left`, `space.table.right` : Left, right padding space of table object.
+                - `space.table.bottom` : Space between table object and slider object.
+    - `space.header` : Space between header and table.
+    - `space.footer` : Space between footer and table.
+- `expand` : Expand width or height of element
+    - `expand.header` : Set `true` to expand width or height of header game object.
+    - `expand.footer`
+- `align` : Align element
+    - `align.header`
+        - `'center'`, or `Phaser.Display.Align.CENTER` : Align game object at center. Default value.
+        - `'left'`, or `Phaser.Display.Align.LEFT_CENTER` : Align game object at left-center.
+        - `'right'`, or `Phaser.Display.Align.RIGHT_CENTER` : Align game object at right-center.
+    - `align.footer`
 - `items` : Array of item data for each cell.
 - `name` : Set name of this gridTable.
 
@@ -288,9 +342,23 @@ See [base sizer object](ui-basesizer.md).
 
 ### Events
 
-- Click cell
+- [Tap](gesture-tap.md) cell
     ```javascript
-    gridTable.on('cell.click', function(cellContainer, cellIndex) {
+    gridTable.on(tapEventName, function(cellContainer, cellIndex) {
+        // ...
+    }, scope);
+    ```
+    - `tapEventName` : `'cell.1tap'`, `'cell.2tap'`, `'cell.3tap'`, etc ...
+    - `cellContainer` : Container game object of triggered cell.
+    - `cellIndex` : Index of triggered cell.
+- [Press](gesture-press.md) cell
+    ```javascript
+    gridTable.on(`cell.pressstart`, function(cellContainer, cellIndex) {
+        // ...
+    }, scope);
+    ```
+    ```javascript
+    gridTable.on(`cell.pressend`, function(cellContainer, cellIndex) {
         // ...
     }, scope);
     ```
@@ -307,6 +375,14 @@ See [base sizer object](ui-basesizer.md).
 - Pointer-out cell
     ```javascript
     gridTable.on('cell.out', function(cellContainer, cellIndex) {
+        // ...
+    }, scope);
+    ```
+    - `cellContainer` : Container game object of triggered cell.
+    - `cellIndex` : Index of triggered cell.
+- Click cell
+    ```javascript
+    gridTable.on('cell.click', function(cellContainer, cellIndex) {
         // ...
     }, scope);
     ```

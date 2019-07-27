@@ -121,7 +121,7 @@ See bound in [body object](arcade-body.md#collision-bound), or [game object](arc
                 // ...
             }
             ```
-        - `processCallback` : Fired when gameObject1 intersects gameObject2
+        - `processCallback` : Fired when gameObject1 intersects gameObject2, optional.
             ```javascript
             var processCallback = function(gameObject1, gameObject2) {
                 return true;  // return false will discard remaining collision checking
@@ -130,6 +130,14 @@ See bound in [body object](arcade-body.md#collision-bound), or [game object](arc
 - Remove collider
     ```javascript
     scene.physics.world.removeCollider(collider);
+    ```
+- Deactivate collider
+    ```javascript
+    collider.active = false;  // Set true to activate again
+    ```
+- Name of collider (unused by engine)
+    ```javascript
+    collider.name = name;
     ```
 
 #### Testing wo collider
@@ -186,6 +194,13 @@ See bound in [body object](arcade-body.md#collision-bound), or [game object](arc
         scene.physics.world.checkCollision.right = right;
         scene.physics.world.checkCollision.up = up;
         scene.physics.world.checkCollision.down = down;
+        ```
+    - Get bounds [rectangle](geom-rectangle.md)
+        ```javascript
+        var top = scene.physics.world.bounds.top;
+        var bottom = scene.physics.world.bounds.bottom;
+        var left = scene.physics.world.bounds.left;
+        var right = scene.physics.world.bounds.right;
         ```
 
 #### Events
@@ -312,6 +327,7 @@ var graphics = scene.physics.world.debugGraphic;
     1. Update position & angle of each body
     1. Process each collider
     1. Update final position of each body
+    1. Emit `worldstep` event
 1. scene.sys.events: postupdate
     1. Draw debug graphics
 

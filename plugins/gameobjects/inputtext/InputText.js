@@ -1,14 +1,23 @@
+import StopPropagationTouchEvents from '../../utils/input/StopPropagationTouchEvents.js';
+
 const DOMElement = Phaser.GameObjects.DOMElement;
 const IsPlainObject = Phaser.Utils.Objects.IsPlainObject;
 const GetValue = Phaser.Utils.Objects.GetValue;
 
 class InputText extends DOMElement {
     constructor(scene, x, y, width, height, config) {
-        if (IsPlainObject(width)) {
+        if (IsPlainObject(x)) {
+            config = x;
+            x = GetValue(config, 'x', 0);
+            y = GetValue(config, 'y', 0);
+            width = GetValue(config, 'width', undefined);
+            height = GetValue(config, 'height', undefined);
+        } else if (IsPlainObject(width)) {
             config = width;
             width = GetValue(config, 'width', undefined);
             height = GetValue(config, 'height', undefined);
         }
+
         if (config === undefined) {
             config = {};
         }
@@ -71,6 +80,16 @@ class InputText extends DOMElement {
         style['box-sizing'] = 'border-box';
         super(scene, x, y, element, style);
         this.type = 'rexInputText';
+
+        // Apply events
+        for (let eventName in ElementEvents) { // Note: Don't use `var` here
+            this.node[ElementEvents[eventName]] = (function () {
+                this.emit(eventName, this);
+            }).bind(this);
+        }
+
+        // Don't propagate touch/mouse events to parent(game canvas)
+        StopPropagationTouchEvents(this.node);
     }
 
     resize(width, height) {
@@ -125,15 +144,7 @@ class InputText extends DOMElement {
         return this;
     }
 
-    get onTextChanged() {
-        return this.node.oninput;
-    }
-
-    set onTextChanged(callback) {
-        this.node.oninput = callback;
-    }
-
-    setOnTextChangedCallback(callback) {
+    setTextChangedCallback(callback) {
         this.onTextChanged = callback;
         return this;
     }
@@ -172,6 +183,10 @@ class InputText extends DOMElement {
         return this;
     }
 
+    getStyle(key) {
+        return this.node.style[key];
+    }
+
     scrollToBottom() {
         this.node.scrollTop = this.node.scrollHeight;
         return this;
@@ -201,24 +216,29 @@ const ElementProperties = {
     text: ['value', undefined],
     placeholder: ['placeholder', undefined],
     tooltip: ['title', undefined],
-    readOnly: ['readOnly', false],
+    readOnly: ['readonly', false],
     spellCheck: ['spellcheck', false],
     autoComplete: ['autocomplete', 'off'],
-    onTextChanged: ['oninput', undefined],
-    onClick: ['onclick', undefined],
-    onDoubleClick: ['ondblclick', undefined],
-    onFocus: ['onfocus', undefined],
-    onBlur: ['onblur', undefined],
 };
 
 const StyleProperties = {
+    align: ['text-align', undefined],
     width: ['width', undefined],
     height: ['height', undefined],
+    fontFamily: ['font-family', undefined],
     fontSize: ['font-size', undefined],
     color: ['color', '#ffffff'],
     backgroundColor: ['backgroundColor', 'transparent'],
     borderColor: ['borderColor', 'transparent'],
-    outline: ['outline', 'none']
+    outline: ['outline', 'none'],
+};
+
+const ElementEvents = {
+    textchange: 'oninput',
+    click: 'onclick',
+    dblclick: 'ondblclick',
+    focus: 'onfocus',
+    blur: 'onblur',
 };
 
 export default InputText;

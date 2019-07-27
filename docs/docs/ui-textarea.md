@@ -60,11 +60,15 @@ var textArea = scene.rexUI.add.textArea({
     },
 
     scroller: {
+        threshold: 10,
         slidingDeceleration: 5000,
         backDeceleration: 2000,
     },
 
     clamplChildOY: false,
+
+    header: headerGameObject,
+    footer: footerGameObject,
 
     space: {
         left: 0,
@@ -73,6 +77,24 @@ var textArea = scene.rexUI.add.textArea({
         bottom: 0,
 
         text: 0,
+        // text: {
+        //    top: 0,
+        //    bottom: 0,
+        //    left: 0,
+        //    right: 0,
+        //},
+        header: 0,
+        footer: 0,
+    },
+
+    expand: {
+        header: true,
+        footer: true,
+    },
+
+    align: {
+        header: 'center',
+        footer: 'center',
     },
 
     content: '',
@@ -97,17 +119,39 @@ var textArea = scene.rexUI.add.textArea({
         - `'drag'` : Control slider by dragging thumb game object. Default setting.
         - `'click'` : Control slider by touching track game object.
         - `'none'` : Disable sider controlling.
-    - Set to `false` to ignore slider.
+    - Set to `false` to skip creating slider.
 - `scroller` : Configuration of scroller behavior.
+    - `scroller.threshold` : Minimal movement to scroll. Set `0` to scroll immediately.
     - `scroller.slidingDeceleration` : Deceleration of slow down when dragging released.
         - Set `false` to disable it.
     - `scroller.backDeceleration` : Deceleration of pull back when out of bounds.
         - Set `false` to disable it.
-    - Set to `false` to ignore scroller.
+    - Set to `false` to skip creating scroller.
 - `clamplChildOY` : Set `true` to clamp scrolling.
+- `header` : Game object of header, optional.
+- `footer` : Game object of footer, optional.
 - `space` : Pads spaces
     - `space.left`, `space.right`, `space.top`, `space.bottom` : Space of bounds.
-    - `space.text` : Space between text object and slider object.
+    - `space.text` :
+        - A number: Space between text object and slider object.
+        - An object: Padding of text object.
+            - If `scrollMode` is `0` (vertical) :
+                - `space.text.top`, `space.text.bottom` : Top, bottom padding space of text object.
+                - `space.text.right` : Space between text object and slider object.
+            - If `scrollMode` is `1` (horizontal) :
+                - `space.text.left`, `space.text.right` : Left, right padding space of text object.
+                - `space.text.bottom` : Space between text object and slider object.
+    - `space.header` : Space between header and text object.
+    - `space.footer` : Space between footer and text object.
+- `expand` : Expand width or height of element
+    - `expand.header` : Set `true` to expand width or height of header game object.
+    - `expand.footer`
+- `align` : Align element
+    - `align.header`
+        - `'center'`, or `Phaser.Display.Align.CENTER` : Align game object at center. Default value.
+        - `'left'`, or `Phaser.Display.Align.LEFT_CENTER` : Align game object at left-center.
+        - `'right'`, or `Phaser.Display.Align.RIGHT_CENTER` : Align game object at right-center.
+    - `align.footer`
 - `content` : Content of this text area.
 - `name` : Set name of this textArea.
 

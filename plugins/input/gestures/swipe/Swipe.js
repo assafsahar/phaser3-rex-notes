@@ -8,8 +8,8 @@ const GetValue = Phaser.Utils.Objects.GetValue;
 const RadToDeg = Phaser.Math.RadToDeg;
 
 class Swipe extends OnePointerTracer {
-    constructor(scene, config) {
-        super(scene, config);
+    constructor(gameObject, config) {
+        super(gameObject, config);
 
         var self = this;
         var stateConfig = {
@@ -25,7 +25,7 @@ class Swipe extends OnePointerTracer {
                     enter: function () {
                         self.start();
                         self.updateDirectionStates();
-                        self.emit('swipe', self);
+                        self.emit('swipe', self, self.gameObject, self.lastPointer);
                     },
 
                     exit: function () {
@@ -47,7 +47,7 @@ class Swipe extends OnePointerTracer {
         super.resetFromJSON(o);
         this.setDragThreshold(GetValue(o, 'threshold', 10));
         this.setMinDragVelocity(GetValue(o, 'velocityThreshold', 1000));
-        this.setDirectionMode(GetValue(o, 'direction', '8dir'));
+        this.setDirectionMode(GetValue(o, 'dir', '8dir'));
         return this;
     }
 

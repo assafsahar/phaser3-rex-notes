@@ -1,14 +1,15 @@
 import GetSceneObject from '../../utils/system/GetSceneObject.js';
+import EventEmitterMethods from '../../utils/eventemitter/EventEmitterMethods.js';
 
-const EE = Phaser.Events.EventEmitter;
 const GetValue = Phaser.Utils.Objects.GetValue;
 const DistanceBetween = Phaser.Math.Distance.Between;
 
-class DragSpeed extends EE {
+class DragSpeed {
     constructor(gameObject, config) {
-        super();
         this.gameObject = gameObject;
         this.scene = GetSceneObject(gameObject);
+        // Event emitter
+        this.setEventEmitter(GetValue(config, 'eventEmitter', undefined));
 
         gameObject.setInteractive(GetValue(config, "inputConfig", undefined));
         this.resetFromJSON(config);
@@ -25,6 +26,7 @@ class DragSpeed extends EE {
         this.preY = undefined;
         this.localX = undefined;
         this.localY = undefined;
+        this.justMoved = false;
         this.setEnable(GetValue(o, "enable", true));
         this.holdThreshold = GetValue(o, "holdThreshold", 50); // ms
         return this;
@@ -41,14 +43,14 @@ class DragSpeed extends EE {
     }
 
     shutdown() {
-        super.shutdown();
         if (this.scene) { // Scene might be destoryed
             this.scene.events.off('preupdate', this.preupdate, this);
         }
         this.pointer = undefined;
         this.gameObject = undefined;
         this.scene = undefined;
-        // gameObject events will be removed when this gameObject destroyed 
+        // GameObject events will be removed when this gameObject destroyed 
+        this.destroyEventEmitter();
     }
 
     destroy() {
@@ -78,11 +80,7 @@ class DragSpeed extends EE {
     }
 
     get isUp() {
-        return this.pointer === undefined;
-    }
-
-    get justMoved() {
-        return this.pointer && this.pointer.justMoved;
+        return !this.isDown;
     }
 
     get dx() {
@@ -145,8 +143,9 @@ class DragSpeed extends EE {
 
     preupdate(time, delta) {
         var pointer = this.pointer;
+        this.justMoved = false;
         if (pointer && (!this.isInTouched)) {
-            // touch start
+            // Touch start
             this.x = pointer.x;
             this.y = pointer.y;
             this.preX = pointer.x;
@@ -156,9 +155,9 @@ class DragSpeed extends EE {
             this.emit('touchstart', pointer, this.localX, this.localY);
 
         } else if (pointer && this.isInTouched) {
-            // in touch
+            // In touch
             if ((this.x === pointer.x) && (this.y === pointer.y)) {
-                // hold
+                // Hold
                 if (this.holdStartTime === undefined) {
                     this.holdStartTime = time;
                 } else if (time - this.holdStartTime > this.holdThreshold) {
@@ -166,17 +165,18 @@ class DragSpeed extends EE {
                     this.preY = this.y;
                 }
             } else {
-                // move
+                // Move
                 this.preX = this.x;
                 this.preY = this.y;
                 this.x = pointer.x;
                 this.y = pointer.y;
                 this.holdStartTime = undefined;
+                this.justMoved = true;
                 this.emit('touchmove', pointer, this.localX, this.localY);
             }
 
         } else if ((!pointer) && this.isInTouched) {
-            // touch end
+            // Touch end
             this.isInTouched = false;
             this.holdStartTime = undefined;
             this.emit('touchend', pointer);
@@ -184,5 +184,10 @@ class DragSpeed extends EE {
         }
     }
 }
+
+Object.assign(
+    DragSpeed.prototype,
+    EventEmitterMethods
+);
 
 export default DragSpeed;

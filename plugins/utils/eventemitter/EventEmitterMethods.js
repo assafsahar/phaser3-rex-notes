@@ -1,9 +1,10 @@
-import EventEmitter from './EventEmitter.js';
-
 export default {
-    setEventEmitter(eventEmitter) {
+    setEventEmitter(eventEmitter, EventEmitterClass) {
+        if (EventEmitterClass === undefined) {
+            EventEmitterClass = Phaser.Events.EventEmitter; // Use built-in EventEmitter class by default
+        }
         this._privateEE = (eventEmitter === undefined);
-        this._eventEmitter = (this._privateEE) ? (new EventEmitter()) : eventEmitter;
+        this._eventEmitter = (this._privateEE) ? (new EventEmitterClass()) : eventEmitter;
         return this;
     },
 

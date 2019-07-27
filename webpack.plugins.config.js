@@ -24,6 +24,12 @@ module.exports = {
         'roundrectangle': './plugins/roundrectangle.js',
         'inputtextplugin': './plugins/inputtext-plugin.js',
         'inputtext': './plugins/inputtext.js',
+        'videoplugin': './plugins/video-plugin.js',
+        'video': './plugins/video.js',
+        'youtubeplayerplugin': './plugins/youtubeplayer-plugin.js',
+        'youtubeplayer': './plugins/youtubeplayer.js',
+        'persistenceeffectplugin': './plugins/persistenceeffect-plugin.js',
+        'persistenceeffect': './plugins/persistenceeffect.js',
 
         // custom file loader      
         'webfontloaderplugin': './plugins/webfontloader-plugin.js',
@@ -61,10 +67,12 @@ module.exports = {
         'eightdirectionplugin': './plugins/eightdirection-plugin.js',
         'bulletplugin': './plugins/bullet-plugin.js',
         'shipplugin': './plugins/ship-plugin.js',
+        'buildarcadeobjectplugin': './plugins/buildarcadeobject-plugin.js',
 
         // member of text
         'texttypingplugin': './plugins/texttyping-plugin.js',
         'textpageplugin': './plugins/textpage-plugin.js',
+        'texteditplugin': './plugins/textedit-plugin.js',
 
         // member of scene
         // sound
@@ -75,22 +83,27 @@ module.exports = {
         'fsmplugin': './plugins/fsm-plugin.js',
         'tcrpplugin': './plugins/tcrp-plugin.js',
         'csvscenarioplugin': './plugins/csvscenario-plugin.js',
-        'waitevents': './plugins/waitevents-plugin.js',
+        'waiteventsplugin': './plugins/waitevents-plugin.js',
         'achievementsplugin': './plugins/achievements-plugin.js',
         'conditionstableplugin': './plugins/conditionstable-plugin.js',
+        'questplugin': './plugins/quest-plugin.js',
+        'loopinticksplugin': './plugins/loopinticks-plugin.js',
 
         // time
         'clockplugin': './plugins/clock-plugin.js',
         'lifetimeplugin': './plugins/lifetime-plugin.js',
+        'awaytimeplugin': './plugins/awaytime-plugin.js',
 
         // data structure
         'csvtoarrayplugin': './plugins/csvtoarray-plugin.js',
         'csvtohashtableplugin': './plugins/csvtohashtable-plugin.js',
         'restorabledataplugin': './plugins/restorabledata-plugin.js',
         'buffdataplugin': './plugins/buffdata-plugin.js',
+        'canvasdataplugin': './plugins/canvasdata-plugin.js',
 
         // math
         'gashaponplugin': './plugins/gashapon-plugin.js',
+        'perlinplugin': './plugins/perlin-plugin.js',
         // geom
         'rhombusplugin': './plugins/rhombus-plugin.js',
         'hexagonplugin': './plugins/hexagon-plugin.js',
@@ -116,6 +129,7 @@ module.exports = {
         // templates
         'bejeweled': './templates/bejeweled/Bejeweled.js',
         'uiplugin': './templates/ui/ui-plugin.js',
+        'dialogquest': './templates/dialog-quest/DialogQuest.js',
     },
     output: {
         pathinfo: true,

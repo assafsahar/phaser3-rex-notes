@@ -1,14 +1,15 @@
 import GetSceneObject from '../../utils/system/GetSceneObject.js';
+import EventEmitterMethods from '../../utils/eventemitter/EventEmitterMethods.js';
 
-const EE = Phaser.Events.EventEmitter;
 const GetValue = Phaser.Utils.Objects.GetValue;
 const DistanceBetween = Phaser.Math.Distance.Between;
 
-class TouchState extends EE {
+class TouchState {
     constructor(gameObject, config) {
-        super();
         this.gameObject = gameObject;
         this.scene = GetSceneObject(gameObject);
+        // Event emitter
+        this.setEventEmitter(GetValue(config, 'eventEmitter', undefined));
 
         this.gameObject.setInteractive(GetValue(config, "inputConfig", undefined));
         this.resetFromJSON(config);
@@ -24,6 +25,7 @@ class TouchState extends EE {
         this.preY = undefined;
         this.localX = undefined;
         this.localY = undefined;
+        this.justMoved = false;
         this.setEnable(GetValue(o, "enable", true));
         return this;
     }
@@ -34,13 +36,16 @@ class TouchState extends EE {
         this.gameObject.on('pointerup', this.onPointOut, this);
         this.gameObject.on('pointerout', this.onPointOut, this);
         this.gameObject.on('pointermove', this.onPointerMove, this);
+        this.scene.events.on('postupdate', this.postupdate, this);
 
         this.gameObject.on('destroy', this.destroy, this);
     }
 
     shutdown() {
-        super.shutdown();
-
+        if (this.scene) { // Scene might be destoryed
+            this.scene.events.off('postupdate', this.postupdate, this);
+        }
+        this.destroyEventEmitter();
         this.pointer = undefined;
         this.gameObject = undefined;
         this.scene = undefined;
@@ -77,10 +82,6 @@ class TouchState extends EE {
         return this.pointer === undefined;
     }
 
-    get justMoved() {
-        return this.pointer && this.pointer.justMoved;
-    }
-
     get dx() {
         return this.x - this.preX;
     }
@@ -103,7 +104,7 @@ class TouchState extends EE {
         var speed = d / (this.dt * 0.001);
         return speed;
     }
-    
+
     get speedX() {
         return this.dx / (this.dt * 0.001);
     }
@@ -119,7 +120,7 @@ class TouchState extends EE {
             return;
         }
         this.pointer = pointer;
-        this.isInTouched = true;        
+        this.isInTouched = true;
         this.preX = pointer.x;
         this.preY = pointer.y;
         this.x = pointer.x;
@@ -148,10 +149,20 @@ class TouchState extends EE {
         this.x = pointer.x;
         this.y = pointer.y;
         this.localX = localX;
-        this.localY = localY;        
+        this.localY = localY;
+        this.justMoved = true;
         this.emit('touchmove', pointer, localX, localY);
     }
 
+    postupdate(time, delta) {
+        this.justMoved = false;
+    }
+
 }
+
+Object.assign(
+    TouchState.prototype,
+    EventEmitterMethods
+);
 
 export default TouchState;

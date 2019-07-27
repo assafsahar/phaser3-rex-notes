@@ -6,6 +6,20 @@ Base class of all game object in phaser.
 
 ## Usage
 
+### Destroy
+
+- Destroy game object
+    ```javascript
+    gameObject.destroy();
+    ```
+- Game object will be destroyed automatically when scene destroyed, if it is in display list, or update list.
+- Event
+    ```javascript
+    gameObject.once('destroy', function(gameObject) {
+    
+    }, scope);
+    ```
+
 ### Position
 
 - Get
@@ -62,9 +76,16 @@ Base class of all game object in phaser.
     ```
 - Set
     ```javascript
-    gameObject.alpha = alpha;
     gameObject.setAlpha(alpha);
+    // gameObject.alpha = alpha;
+    ```
+    or
+    ```javascript
     gameObject.setAlpha(topLeft, topRight, bottomLeft, bottomRight);
+    // gameObject.alphaTopLeft = alpha;
+    // gameObject.alphaTopRight = alpha;
+    // gameObject.alphaBottomLeft = alpha;
+    // gameObject.alphaBottomRight = alpha;
     ```
 
 ### FlipX, FlipY
@@ -123,8 +144,12 @@ Scroll factor: 0~1
 
 ```javascript
 var output = gameObject.getTopLeft(output);     // output: {x, y}
+var output = gameObject.getTopCenter(output);     // output: {x, y}
 var output = gameObject.getTopRight(output);    // output: {x, y}
+var output = gameObject.getLeftCenter(output);    // output: {x, y}
+var output = gameObject.getRightCenter(output);    // output: {x, y}
 var output = gameObject.getBottomLeft(output);  // output: {x, y}
+var output = gameObject.getBottomCenter(output);     // output: {x, y}
 var output = gameObject.getBottomRight(output); // output: {x, y}
 var output = gameObject.getCenter(output);      // output: {x, y}
 var output = gameObject.getBounds(output);      // output: {x, y, width, height}
@@ -296,6 +321,10 @@ var output = gameObject.getBounds(output);      // output: {x, y, width, height}
         var scaleX = gameObject.scaleX;
         var scaleY = gameObject.scaleY;
         ```
+        or
+        ```javascript
+        var scale = gameObject.scale;  // Return (scaleX + scaleY)/2
+        ```        
     - Set
         ```javascript
         gameObject.setScale(scaleX, scaleY);
@@ -303,7 +332,11 @@ var output = gameObject.getBounds(output);      // output: {x, y, width, height}
         or
         ```javascript
         gameObject.scaleX = scaleX;
-        gameObject.scaleY = scaleY;  
+        gameObject.scaleY = scaleY;
+        ```
+        or
+        ```javascript
+        gameObject.scale = scale;  // Set scaleX, scaleY to scale
         ```
 
 ### Click
@@ -346,12 +379,25 @@ See [touch event](touchevents.md#quick-start)
     ```javascript
     gameObject.setDataEnabled();
     ```
+- Events : 
+    - Set data evant
+        ```javascript
+        gameObject.data.events.on('setdata', function(parent, key, value){ /* ... */ });
+        ```
+    - Change data event
+        ```javascript
+        gameObject.data.events.on('changedata', function(parent, key, value, previousValue){ /* ... */ });
+        ```
+        ```javascript
+        gameObject.data.events.on('changedata-' + key, function(parent, value, previousValue){ /* ... */ });
+        ```           
 
 See [data manager](datamanager.md)
 
-### Texture
+!!! note
+    Ensure data manager is created before binding any data-changed events.
 
-Only [image](image.md) and sprite game object have teuture componment.
+### Texture
 
 - Set texture
     ```javascript
@@ -375,6 +421,28 @@ Only [image](image.md) and sprite game object have teuture componment.
         gameObject.setCrop();
         // gameObject.isCropped = false;
         ```
+- Get texture, [frame](texture.md#frame-object).
+    ```javascript
+    var texture = gameObject.texture;
+    var frame = gameObject.frame;
+    ```
+- Get texture key, frame name.
+    ```javascript
+    var textureKey = gameObject.texture.key;
+    var frameName = gameObject.frame.name;
+    ```
+
+### Will render
+
+- Test render flag and camera filter.
+    ```javascript
+    var willRennder = gameObject.willRender(camera);
+    ```
+- Test render flag only
+    ```javascript
+    var willRender = (gameObject.renderFlags === Phaser.GameObjects.GameObject.RENDER_MASK);
+    ```
+    - `Phaser.GameObjects.GameObject.RENDER_MASK` : 15 (Visible, Alpha, Transform and Texture)
 
 ### Name
 
@@ -400,12 +468,25 @@ Only [image](image.md) and sprite game object have teuture componment.
         }
         // ...
 
-        // preUpdate(time, delta) {}
+        // preUpdate(time, delta) {
+        //     if (super.preUpdate) {
+        //         super.preUpdate(time, delta);
+        //     }
+        // }
+
+        // destroy(fromScene) {
+        //     //  This Game Object has already been destroyed
+        //     if (!this.scene) {
+        //         return;
+        //     }
+        //     super.destroy(fromScene);
+        // }
     }
     ```
     - `scene.add.existing(gameObject)` : Adds an existing Game Object to this Scene.
         - If the Game Object renders, it will be added to the Display List.
         - If it has a `preUpdate` method, it will be added to the Update List.
+            - Some kinds of game object like Sprite, Dom-element has `preUpdate` method already.
 - Create instance
     ```javascript
     var image = new MyClass(scene, x, y, key);

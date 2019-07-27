@@ -32,7 +32,13 @@ Default style
         stroke: false,
         fill: false
     },
-    align: 'left',  // 'left'|'center'|'right'
+    align: 'left',  // 'left'|'center'|'right'|'justify'
+    padding: {
+        left: 0,
+        right: 0,
+        top: 0,
+        bottom: 0,
+    },
     maxLines: 0,
     lineSpacing: 0,
     fixedWidth: 0,
@@ -68,7 +74,7 @@ var txt = scene.make.text({
         fontSize: '64px',
         fontFamily: 'Arial',
         color: '#ffffff',
-        align: 'center',
+        align: 'center',  // 'left'|'center'|'right'|'justify'
         backgroundColor: '#ff00ff'
     },
     add: true
@@ -185,6 +191,14 @@ txt.setFontFamily(family);
 txt.setFontSize(size);
 txt.setFontStyle(style);
 ```
+
+### Set align
+
+```javascript
+txt.setAlign(align);
+```
+
+- `align` : `'left'`, `'center'`, `'right'`, `'justify'`
 
 ### Color
 

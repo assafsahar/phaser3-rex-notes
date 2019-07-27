@@ -24,7 +24,7 @@ Arcade physics body.
         - `gameObjects` : An array of game objects, or a group object
         - `isStatic` :
             - `0` : Dynamic body
-            - `1` : Static body 
+            - `1` : Static body
 1. Get physics body
     ```javascript
     var body = gameObject.body;
@@ -72,6 +72,10 @@ Whether the Body's position and rotation are affected by its velocity, accelerat
 
 !!! note "Use case"
     Set `body.moves` to `false` when game object is controlled by tween or dragging.
+
+### Destroy
+
+Physics body will be destroyed automatically when game object is destroyed.
 
 ### Movement
 
@@ -307,7 +311,7 @@ Reduces angular speed per second.
     body.setSize(width, height, center);
     ```    
     - `center` : `false` to set body's offset to (0, 0).
-        - No effect in [Graphics](graphics.md) object.
+        - Not work in [Graphics](graphics.md) object.
 - Circle
     ```javascript
     body.setCircle(radius, offsetX, offsetY);
@@ -391,13 +395,21 @@ var hit = body.hitTest(x, y);
 
 #### World bounds
 
+- [World bounds](arcade-world.md#world-bounds)
 - Enable
     ```javascript
     body.setCollideWorldBounds();
     ```
-- Disable (default))
+- Disable (default)
     ```javascript
     body.setCollideWorldBounds(false);
+    ```
+- Get world bounds [rectangle](geom-rectangle.md)
+    ```javascript
+    var top = body.world.bounds.top;
+    var bottom = body.world.bounds.bottom;
+    var left = body.world.bounds.left;
+    var right = body.world.bounds.right;
     ```
 
 ##### Blocked

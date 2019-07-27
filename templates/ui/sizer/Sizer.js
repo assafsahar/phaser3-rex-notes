@@ -1,11 +1,6 @@
 import BaseSizer from '../basesizer/BaseSizer.js';
-import ParsePaddingConfig from '../utils/ParsePaddingConfig.js';
-import GetChildrenWidth from './GetChildrenWidth.js';
-import GetChildrenHeight from './GetChildrenHeight.js';
-import GetChildrenProportion from './GetChildrenProportion.js';
-import GetChildrenSizers from './GetChildrenSizers.js';
-import Layout from './Layout.js';
-import _layoutInit from './_layoutInit.js';
+import Methods from './Methods.js';
+import GetBoundsConfig from '../utils/GetBoundsConfig.js';
 import ORIENTATIONMODE from '../utils/OrientationConst.js';
 import ALIGNMODE from '../utils/AlignConst.js';
 
@@ -100,7 +95,7 @@ class Sizer extends BaseSizer {
         config.parent = this;
         config.proportion = proportion;
         config.align = align;
-        config.padding = ParsePaddingConfig(paddingConfig);
+        config.padding = GetBoundsConfig(paddingConfig);
         config.expand = expand;
         this.sizerChildren.push(gameObject);
         return this;
@@ -131,17 +126,9 @@ class Sizer extends BaseSizer {
     }
 }
 
-var methods = {
-    getChildrenWidth: GetChildrenWidth,
-    getChildrenHeight: GetChildrenHeight,
-    getChildrenProportion: GetChildrenProportion,
-    getChildrenSizers: GetChildrenSizers,
-    layout: Layout,
-    _layoutInit: _layoutInit,
-}
 Object.assign(
     Sizer.prototype,
-    methods
+    Methods
 );
 
 const PROPORTIONMODE = {

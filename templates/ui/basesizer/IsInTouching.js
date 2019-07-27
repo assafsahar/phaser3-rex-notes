@@ -1,13 +1,28 @@
-import IsObjectBelowPointer from '../../../plugins/utils/input/IsObjectBelowPointer.js';
-
 var IsInTouching = function (pointer) {
-    if (!this.input) {
-        this.setInteractive();
+    if (globRect === undefined) {
+        globRect = new Phaser.Geom.Rectangle();
     }
-    return IsObjectBelowPointer(this, pointer, preTest);
+    this.getBounds(globRect);
+
+    if (pointer !== undefined) {
+        return globRect.contains(pointer.x, pointer.y);
+
+    } else {
+        var inputManager = this.scene.input.manager;
+        var pointersTotal = inputManager.pointersTotal;
+        var pointers = inputManager.pointers;
+        for (var i = 0; i < pointersTotal; i++) {
+            pointer = pointers[i];
+            if (globRect.contains(pointer.x, pointer.y)) {
+                return true;
+            }
+        }
+        return false;
+
+    }
+
 }
 
-var preTest = function (gameObject, pointer) {
-    return pointer.isDown;
-}
+var globRect = undefined;
+
 export default IsInTouching;

@@ -65,11 +65,15 @@ var scrollablePanel = scene.rexUI.add.scrollablePanel({
     },
 
     scroller: {
+        threshold: 10,
         slidingDeceleration: 5000,
         backDeceleration: 2000,
     },
 
     clamplChildOY: false,
+
+    header: headerGameObject,
+    footer: footerGameObject,
 
     space: {
         left: 0,
@@ -78,6 +82,24 @@ var scrollablePanel = scene.rexUI.add.scrollablePanel({
         bottom: 0,
 
         panel: 0,
+        // panel: {
+        //    top: 0,
+        //    bottom: 0,
+        //    left: 0,
+        //    right: 0,
+        //},
+        header: 0,
+        footer: 0,
+    },
+
+    expand: {
+        header: true,
+        footer: true,
+    },
+
+    align: {
+        header: 'center',
+        footer: 'center',
     },
 
     name: '',
@@ -105,17 +127,39 @@ var scrollablePanel = scene.rexUI.add.scrollablePanel({
         - `'drag'` : Control slider by dragging thumb game object. Default setting.
         - `'click'` : Control slider by touching track game object.
         - `'none'` : Disable sider controlling.
-    - Set to `false` to ignore slider.
+    - Set to `false` to skip creating slider.
 - `scroller` : Configuration of scroller behavior.
+    - `scroller.threshold` : Minimal movement to scroll. Set `0` to scroll immediately.
     - `scroller.slidingDeceleration` : Deceleration of slow down when dragging released.
         - Set `false` to disable it.
     - `scroller.backDeceleration` : Deceleration of pull back when out of bounds.
         - Set `false` to disable it.
-    - Set to `false` to ignore scroller.
+    - Set to `false` to skip creating scroller.
 - `clamplChildOY` : Set `true` to clamp scrolling.
+- `header` : Game object of header, optional.
+- `footer` : Game object of footer, optional.
 - `space` : Pads spaces
     - `space.left`, `space.right`, `space.top`, `space.bottom` : Space of bounds.
-    - `space.panel` : Space between panel object and slider object.
+    - `space.panel` :
+        - A number: Space between panel object and slider object.
+        - An object: Padding of panel object.
+            - If `scrollMode` is `0` (vertical) :
+                - `space.panel.top`, `space.panel.bottom` : Top, bottom padding space of panel object.
+                - `space.panel.right` : Space between panel object and slider object.
+            - If `scrollMode` is `1` (horizontal) :
+                - `space.panel.left`, `space.panel.right` : Left, right padding space of panel object.
+                - `space.panel.bottom` : Space between panel object and slider object.
+    - `space.header` : Space between header and panel.
+    - `space.footer` : Space between footer and panel.
+- `expand` : Expand width or height of element
+    - `expand.header` : Set `true` to expand width or height of header game object.
+    - `expand.footer`
+- `align` : Align element
+    - `align.header`
+        - `'center'`, or `Phaser.Display.Align.CENTER` : Align game object at center. Default value.
+        - `'left'`, or `Phaser.Display.Align.LEFT_CENTER` : Align game object at left-center.
+        - `'right'`, or `Phaser.Display.Align.RIGHT_CENTER` : Align game object at right-center.
+    - `align.footer`
 - `name` : Set name of this panel.
 
 ### Custom class

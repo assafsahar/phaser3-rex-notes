@@ -5,6 +5,7 @@
 - [Phaser3](https://github.com/photonstorm/phaser)
 - [API](https://photonstorm.github.io/phaser3-docs/index.html)
 - [Notes](https://rexrainbow.github.io/phaser3-rex-notes/docs/site/index.html)
+    - [Discord channel](https://discord.gg/kWkuFZK)
 
 ## Demo
 
@@ -38,3 +39,23 @@
     - [Energy drain](https://codepen.io/rexrainbow/pen/vMjNNm)
 - [Bejeweled](https://codepen.io/rexrainbow/full/wEVYoY)
 - [Kaleidoscope](https://codepen.io/rexrainbow/full/RdzvVj)
+- UI
+    - [Dialog](https://codepen.io/rexrainbow/pen/oQjMWE)
+        - [Yes/No](https://codepen.io/rexrainbow/pen/MPZWZG)
+        - [Choice](https://codepen.io/rexrainbow/pen/ePoRVz)
+        - [Pop-up](https://codepen.io/rexrainbow/pen/NEpjmP)
+    - [Edit](https://codepen.io/rexrainbow/pen/YbvwBw)
+    - [Menu](https://codepen.io/rexrainbow/pen/PxOEBr)
+    - [Text-box](https://codepen.io/rexrainbow/pen/MzGoJv)
+    - [Text-area](https://codepen.io/rexrainbow/pen/JzBZzy)
+    - [Number bar](https://codepen.io/rexrainbow/pen/qLZPXr)
+    - [Grid table](https://codepen.io/rexrainbow/pen/XyJbWX)
+    - [Tabs](https://codepen.io/rexrainbow/pen/qJeVza)
+        - [Tabs-tables](https://codepen.io/rexrainbow/pen/BGKvXK)
+    - [Scroll-able panel](https://codepen.io/rexrainbow/pen/YMyBom)
+    - [Pages](https://codepen.io/rexrainbow/pen/vPWzBa)
+    - [Fix-width sizer](https://codepen.io/rexrainbow/pen/WPJPdK)
+    - [Chart](https://codepen.io/rexrainbow/pen/qwVBNy)
+    - [Video](https://codepen.io/rexrainbow/pen/Gazmyz)
+    - [Anchor](https://codepen.io/rexrainbow/pen/jJqXxB)
+    - [Round-rectangle](https://codepen.io/rexrainbow/pen/ZqqJjG)

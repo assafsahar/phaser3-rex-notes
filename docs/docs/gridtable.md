@@ -47,6 +47,7 @@ var config = {
 
     cellVisibleCallback: null,
     cellVisibleCallbackScope: undefined,
+    reuseCellContainer: false,
 
     cellInvisibleCallback: null,
     cellInvisibleCallbackScope: undefined,
@@ -67,6 +68,7 @@ var table = scene.add.rexGridTable(x, y, width, height, config);
 - `cellWidth` : Width of each cell.
     - Expand cell width to fit table width : set `cellWidth` to `undefined`, and `scrollMode` is `'vertical'`.
 - `cellVisibleCallback` , `cellVisibleCallbackScope` : Callback when cell begins visible.
+- `reuseCellContainer` : Set `true` to reuse cell container when cell is visible.
 - `cellInvisibleCallback`, `cellInvisibleCallbackScope`: Callback when cell begins invisible.
 - `clamplTableOXY` : Set `true` to clamp `tableOX`, `tableOY` when out-of-bound,
     - Set `false` when dragging by [scroller](scroller.md)
@@ -119,8 +121,13 @@ var table = scene.make.rexGridTable({
 Add [container](container.md) of cell when it begins visible in event `cellvisible`. 
 
 ```javascript
-table.on('cellvisible', function(cell){
-    cell.setContainer(customContainer);
+table.on('cellvisible', function(cell, cellContainer){
+    if (cellContainer === null) { // No reusable cell container, create a new one
+        var scene = cell.scene;
+        // cellContainer = scene.add.container();
+    }
+    // Set child properties of cell container ...
+    cell.setContainer(cellContainer); // Assign cell container
 })
 ```
 
@@ -129,34 +136,58 @@ It is equal to `cellVisibleCallback` in configuration.
 ```javascript
 {
     // ...
-    cellVisibleCallback: function(cell) { cell.setContainer(customContainer); },
+    cellVisibleCallback: function(cell, cellContainer) {
+        cell.setContainer(cellContainer); // Assign cell container
+    },
     // ...
 }
 ```
 
+- `cell`
+    - Scene object of grid table.
+        ```javascript
+        var scene = cell.scene;
+        ```
+    - Index of cell.
+        ```javascript
+        var index = cell.index;
+        ```
+    - Size of cell.
+        ```javascript
+        var cellWidth = cell.width;
+        var cellHeight = cell.height;
+        ```
+        - Change size of cell : 
+            - Change cell height in scoll-vertical mode.
+                ```javascript
+                cell.height = newHeight;
+                ```
+            - Change cell width in scroll-horizontal mode.
+                ```javascript
+                cell.width = newWidth;
+                ```
+    - Assign cell container. Set origin point of this cell container to (0,0).
+        ```javascript
+        cell.setContainer(cellContainer);
+        ```
+- `cellContainer` : Cell container picked from object pool for reusing. Set `reuseCellContainer` to `true` to enable this feature.
+    - `null` : No cell container available.
+    - Game object : Reusable cell container.
+
 Each cell only has **one** container gameObject, old container will be destroyed when assigning a new container.
-
-#### Properties of cell object
-
-- Scene object, for creating Game Object.
-    ```javascript
-    var scene = cell.scene;
-    ```
-- Index of table grid
-    ```javascript
-    var index = cell.index;
-    ```
 
 ### Cell begins invisible
 
 Container of an invisible cell will be destroyed automatically.
 
-To resue container gameObject, user could pop that container by `cell.popContainer()` in event `cellinvisible`.
+To resue container gameObject
+
+- Set `reuseCellContainer` to `true` to put invisible cell container into object pool.
+- Or, pop that container by `cell.popContainer()` in event `cellinvisible`.
 
 ```javascript
 table.on('cellinvisible', function(cell){
-    var container = cell.popContainer();
-    // put this container into an object pool
+    // var container = cell.popContainer();
 })
 ```
 
@@ -165,7 +196,9 @@ It is equal to `cellInvisibleCallback` in configuration.
 ```javascript
 {
     // ...
-    cellInvisibleCallback: function(cell) { var container = cell.popContainer(); /*... */ },
+    cellInvisibleCallback: function(cell) { 
+        // var container = cell.popContainer();
+    },
     // ...
 }
 ```
@@ -300,7 +333,7 @@ table.resize(width, height);
 #### Get cell
 
 ```javascript
-var cell = table.getCell(cellIndxe);
+var cell = table.getCell(cellIndex);
 ```
 
 #### Cell height
@@ -309,14 +342,39 @@ var cell = table.getCell(cellIndxe);
     ```javascript
     var height = cell.height;
     ```
-- Set
+- Set cell height, only worked in scoll-vertical mode.
     ```javascript
     cell.height = height;
+    // cell.setHeight(height);
     ```
     or
     ```javascript
-    cell.setHeight(height);
+    table.setCellHeight(cellIndex, cellHeight);
     ```
+    - Refresh table after the cell size is changed.
+        ```javascript
+        table.updateTable(true);
+        ```
+
+#### Cell width
+
+- Get
+    ```javascript
+    var width = cell.width;
+    ```
+- Set cell width, only worked in scoll-horizontal mode.
+    ```javascript
+    cell.width = width;
+    // cell.setWidth(width);
+    ```
+    or
+    ```javascript
+    table.setCellWidth(cellIndex, cellWidth);
+    ```
+    - Refresh table after the cell size is changed.
+        ```javascript
+        table.updateTable(true);
+        ```
 
 #### Fore each visible cell
 

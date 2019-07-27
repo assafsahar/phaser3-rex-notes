@@ -22,10 +22,15 @@ import TextArea from './textarea/TextArea.js';
 import ScrollableBlock from './scrollableblock/ScrollableBlock.js';
 import ScrollablePanel from './scrollablepanel/ScrollablePanel.js';
 import Chart from './chart/Chart.js';
-// import InputText from './inputtext/InputText.js';
+import Video from './video/Video.js';
+import VideoCanvas from './video/VideoCanvas.js';
+import YoutubePlayer from './youtubeplayer/YoutubePlayer.js';
 
-import Hide from './utils/Hide.js';
-import Show from './utils/Show.js';
+import {
+    Show,
+    Hide
+} from './utils/Hide.js';
+import Edit from '../../plugins/behaviors/textedit/Edit.js';
 
 export default {
     RoundRectangle: RoundRectangle,
@@ -52,8 +57,11 @@ export default {
     ScrollableBlock: ScrollableBlock,
     ScrollablePanel: ScrollablePanel,
     Chart: Chart,
-    // InputText: InputText,
+    Video: Video,
+    VideoCanvas: VideoCanvas,
+    YoutubePlayer: YoutubePlayer,
 
     hide: Hide,
     show: Show,
+    edit: Edit,
 };

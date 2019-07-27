@@ -1,6 +1,8 @@
 // copy from Phaser.GameObjects.Text
 
 import Render from './CanvasRender.js';
+import CanvasMethods from './CanvasMethods.js';
+import TextureMethods from './TextureMethods.js';
 
 const CanvasPool = Phaser.Display.Canvas.CanvasPool;
 const Components = Phaser.GameObjects.Components;
@@ -21,12 +23,13 @@ var Canvas = new Phaser.Class({
         Components.Mask,
         Components.Origin,
         Components.Pipeline,
-        Components.ScaleMode,
         Components.ScrollFactor,
         Components.Tint,
         Components.Transform,
         Components.Visible,
-        Render
+        Render,
+        CanvasMethods,
+        TextureMethods,
     ],
 
     initialize:
@@ -39,10 +42,10 @@ var Canvas = new Phaser.Class({
                 y = 0;
             }
             if (width === undefined) {
-                width = 0;
+                width = 1;
             }
             if (height === undefined) {
-                height = 0;
+                height = 1;
             }
 
             GameObject.call(this, scene, 'rexCanvas');
@@ -52,7 +55,7 @@ var Canvas = new Phaser.Class({
             this.resolution = scene.sys.game.config.resolution;
             this.canvas = CanvasPool.create(this, this.resolution * width, this.resolution * height);
             this.context = this.canvas.getContext('2d');
-            this.dirty = true;
+            this.dirty = false;
 
             this.setPosition(x, y);
             this.setSize(width, height);
@@ -70,14 +73,10 @@ var Canvas = new Phaser.Class({
             //  Set the resolution
             this.frame.source.resolution = this.resolution;
 
-            if (this.renderer.gl) {
-                if ((width > 0) && (height > 0)) {
-                    this.updateTexture();
-                } else {
-                    //  Clear the default glTexture, as we override it later
-                    this.renderer.deleteTexture(this.frame.source.glTexture);
-                    this.frame.source.glTexture = null;
-                }
+            if (this.renderer && this.renderer.gl) {
+                //  Clear the default 1x1 glTexture, as we override it later
+                this.renderer.deleteTexture(this.frame.source.glTexture);
+                this.frame.source.glTexture = null;
             }
 
             if (scene.sys.game.config.renderType === Phaser.WEBGL) {
@@ -85,6 +84,8 @@ var Canvas = new Phaser.Class({
                     this.dirty = true;
                 }, this);
             }
+
+            this.dirty = true;
         },
 
     getCanvas: function (readOnly) {
@@ -99,133 +100,27 @@ var Canvas = new Phaser.Class({
         return this;
     },
 
-    clear: function () {
-        var canvas = this.canvas;
-        var ctx = this.context;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        this.dirty = true;
-        return this;
-    },
-
-    fill: function (color) {
-        var canvas = this.canvas;
-        var ctx = this.context;
-        ctx.fillStyle = color;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        this.dirty = true;
-        return this;
-    },
-
     preDestroy: function () {
         CanvasPool.remove(this.canvas);
     },
 
-    updateTexture: function (callback, scope) {
-        if (callback) {
-            if (scope) {
-                callback.call(scope, this.canvas, this.context);
-            } else {
-                callback(this.canvas, this.context);
-            }
-        }
-        if ((this.width !== this.frame.width) || (this.height !== this.frame.height)) {
-            this.frame.setSize(this.width, this.height);
-        }
-        if (this.renderer.gl) {
-            this.frame.source.glTexture = this.renderer.canvasToTexture(this.canvas, this.frame.source.glTexture, true);
-            this.frame.glTexture = this.frame.source.glTexture;
-        }
-        this.dirty = false;
-        return this;
-    },
-
-    generateTexture: function (key, x, y, width, height) {
-        var srcCanvas = this.canvas;
-        var sys = this.scene.sys;
-        var renderer = sys.game.renderer;
-        var texture;
-
-        if (x === undefined) {
-            x = 0;
-        }
-
-        if (y === undefined) {
-            y = 0;
-        }
-
-        if (width === undefined) {
-            width = srcCanvas.width;
-        } else {
-            width *= this.resolution;
-        }
-
-        if (height === undefined) {
-            height = srcCanvas.height;
-        } else {
-            height *= this.resolution;
-        }
-
-
-        if (sys.textures.exists(key)) {
-            texture = sys.textures.get(key);
-        } else {
-            texture = sys.textures.createCanvas(key, width, height);
-        }
-
-        var destCanvas = texture.getSourceImage();
-        if (destCanvas.width !== width) {
-            destCanvas.width = width;
-        }
-        if (destCanvas.height !== height) {
-            destCanvas.height = height;
-        }
-
-        var destCtx = destCanvas.getContext('2d');
-        destCtx.clearRect(0, 0, width, height);
-        destCtx.drawImage(srcCanvas, x, y, width, height);
-        if (renderer.gl && texture) {
-            texture.source[0].glTexture = renderer.canvasToTexture(destCanvas, texture.source[0].glTexture, true, 0);
-        }
-
-        return this;
-    },
-
-    loadTexture: function (key, resize) {
-        var sys = this.scene.sys;
-        if (!sys.textures.exists(key)) {
+    resize: function (width, height) {
+        if ((this.width === width) && (this.height === height)) {
             return this;
         }
-
-        if (resize === undefined) {
-            resize = true;
-        }
-        var srcCanvas = sys.textures.get(key).getSourceImage();
-        var srcCtx = srcCanvas.getContext('2d');
-        var destCanvas = this.canvas;
-        if (destCanvas.width !== srcCanvas.width) {
-            destCanvas.width = srcCanvas.width;
-        }
-        if (destCanvas.height !== srcCanvas.height) {
-            destCanvas.height = srcCanvas.height;
-        }
-        var destCtx = destCanvas.getContext('2d');
-        destCtx.clearRect(0, 0, destCanvas.width, destCanvas.height);
-        destCtx.drawImage(srcCanvas, 0, 0, destCanvas.width, destCanvas.height);
-        this.updateTexture();
-
-        if (resize) {
-            this.setSize(destCanvas.width / this.resolution, destCanvas.height / this.resolution);
-        }
-        return this;
-    },
-
-    resize: function (width, height) {
-        this.canvas.width = this.resolution * width;
-        this.canvas.height = this.resolution * height;
 
         this
             .setSize(width, height)
             .updateDisplayOrigin();
+
+        width *= this.resolution;
+        height *= this.resolution;
+        width = Math.max(Math.ceil(width), 1);
+        height = Math.max(Math.ceil(height), 1);
+        this.canvas.width = width;
+        this.canvas.height = height;
+
+        this.dirty = true;
         return this;
     }
 });

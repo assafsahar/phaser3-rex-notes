@@ -1,10 +1,5 @@
+import Methods from './Methods.js';
 import GetChessData from '../chess/GetChessData.js';
-import GetCost from './GetCost.js';
-import IsInCone from './IsInCone.js';
-import IsPathVisible from './IsPathVisible.js';
-import IsInLOS from './IsInLOS.js';
-import LOS from './LOS.js';
-import FindFOV from './FindFOV.js';
 import CONST from './const.js';
 import DegToRad from '../../utils/math/DegToRad.js';
 import AngleNormalize from '../../utils/math/angle/Normalize.js';
@@ -21,17 +16,26 @@ class FieldOfView {
     }
 
     resetFromJSON(o) {
+        // Pre-test
+        var occupiedTest = GetValue(o, 'occupiedTest', false);
+        var blockerTest = GetValue(o, 'blockerTest', false);
+        var edgeBlockerTest = GetValue(o, 'edgeBlockerTest', false); // Unsupport now
+        var preTestCallback = GetValue(o, 'preTestCallback', undefined);
+        var preTestCallbackScope = GetValue(o, 'preTestCallbackScope', undefined);
+        // Cost of each tile
         var costCallback = GetValue(o, 'costCallback', undefined);
         var costCallbackScope = GetValue(o, 'costCallbackScope', undefined);
         if (costCallback === undefined) {
-            costCallback = GetValue(o, 'cost', 0);
+            costCallback = GetValue(o, 'cost', undefined);
         }
+
         this.setFace(GetValue(o, 'face', 0));
         this.setConeMode(GetValue(o, 'coneMode', 0));
         this.setCone(GetValue(o, 'cone', undefined));
-        this.setOccupiedTest(GetValue(o, 'occupiedTest', false));
-        this.setBlockerTest(GetValue(o, 'blockerTest', false));
-        this.setEdgeBlockerTest(GetValue(o, 'edgeBlockerTest', false));
+        this.setOccupiedTest(occupiedTest);
+        this.setBlockerTest(blockerTest);
+        this.setEdgeBlockerTest(edgeBlockerTest);
+        this.setPreTestFunction(preTestCallback, preTestCallbackScope);
         this.setCostFunction(costCallback, costCallbackScope);
         this.setDebugGraphics(GetValue(o, 'debug.graphics', undefined));
         this.setDebugLineColor(GetValue(o, 'debug.visibleLineColor', 0x00ff00), GetValue(o, 'debug.invisibleLineColor', 0xff0000));
@@ -46,6 +50,7 @@ class FieldOfView {
     }
 
     shutdown() {
+        this.debugGraphics = undefined;
         this.gameObject = undefined;
         this.chessData = undefined;
         return this;
@@ -85,9 +90,8 @@ class FieldOfView {
 
         if (value !== undefined) {
             if (this.coneMode === 0) { // Direction
-                this.halfConeRad = value / 2;
             } else { // Angle
-                this.halfConeRad = DegToRad(value / 2);
+                this.coneRad = DegToRad(value);
             }
         }
     }
@@ -135,6 +139,12 @@ class FieldOfView {
         return this;
     }
 
+    setPreTestFunction(callback, scope) {
+        this.preTestCallback = callback;
+        this.preTestCallbackScope = scope;
+        return this;
+    }
+
     setDebugGraphics(graphics) {
         this.debugGraphics = graphics;
         return this;
@@ -179,17 +189,9 @@ const CONEMODE = {
     angle: 1,
 };
 
-var methods = {
-    getCost: GetCost,
-    isInCone: IsInCone,
-    isPathVisible: IsPathVisible,
-    isInLOS: IsInLOS,
-    LOS: LOS,
-    findFOV: FindFOV,
-};
 Object.assign(
     FieldOfView.prototype,
-    methods
+    Methods
 );
 
 export default FieldOfView;

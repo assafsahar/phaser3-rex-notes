@@ -30,6 +30,9 @@ var game = new Phaser.Game(config);
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
+    dom: {
+        createContainer: false,
+    },
     scene: null,
     backgroundColor: 0x333333
 }
@@ -79,7 +82,7 @@ or
         },
         smoothFactor: 0,
         gamepad: false,
-        windowEvents: true,        
+        windowEvents: true,
     },
 
     backgroundColor: 0,
@@ -94,7 +97,8 @@ or
         preserveDrawingBuffer: false,
         failIfMajorPerformanceCaveat: false,
         powerPreference: 'default', // 'high-performance', 'low-power' or 'default'
-        batchSize: 2000
+        batchSize: 2000,
+        desynchronized: false,
     },
 
     physics: {
@@ -191,4 +195,35 @@ Global [scene manager](scenemanager.md) in `game.scene`, or `scene.scene` in eac
 
 ### Global data
 
-Insatance of [data manager](datamanager.md) in `game.registry`, or `scene.registry` in each scene.
+Instance of [data manager](datamanager.md) in `game.registry`, or `scene.registry` in each scene.
+
+## Game time
+
+- The time that the current game step started at.
+    ```javascript
+    var time = game.getTime();
+    // var time = scene.game.getTime();
+    ```
+- The current game frame.
+    ```javascript
+    var frameCount = game.getFrame();
+    // var frameCount = scene.game.getFrame();
+    ```
+- The delta time, since the last game step. This is a clamped and smoothed average value.
+    ```javascript
+    var delta = game.loop.delta;
+    // var delta = scene.game.loop.delta;
+    ```
+
+## Window size
+
+- Width
+    ```javascript
+    var width = game.config.width;
+    // var width = scene.game.config.width;
+    ```
+- Height
+    ```javascript
+    var height = game.config.height;
+    // var height = scene.game.config.height;
+    ```

@@ -23,11 +23,25 @@ import TextBlockFactory from './textblock/TextBlockFactory.js';
 import TextAreaFactory from './textarea/TextAreaFactory.js';
 import ScrollableBlockFactory from './scrollableblock/ScrollableBlockFactory.js';
 import ScrollablePanelFactory from './scrollablepanel/ScrollablePanelFactory.js';
+import ToastFactory from './toast/ToastFactory.js';
 import ChartFactory from './chart/ChartFactory.js';
-// import InputTextFactory from './inputtext/InputTextFactory.js';
+import VideoFactory from './video/VideoFactory.js';
+import VideoCanvasFactory from './video/VideoCanvasFactory.js';
+import YoutubePlayerFactory from './youtubeplayer/YoutubePlayerFactory.js';
 
-import Hide from './utils/Hide.js';
-import Show from './utils/Show.js';
+import TapFactory from './tap/TapFactory.js';
+import PressFactory from './press/PressFactory.js';
+import SwipeFactory from './swipe/SwipeFactory.js';
+import PanFactory from './pan/PanFactory.js';
+import PinchFactory from './pinch/PinchFactory.js';
+import RotateFactory from './rotate/RotateFactory.js';
+
+import {
+    Show,
+    Hide,
+    IsShown,
+} from './utils/Hide.js';
+import Edit from '../../plugins/behaviors/textedit/Edit.js';
 
 class UIPlugin extends Phaser.Plugins.ScenePlugin {
     constructor(scene, pluginManager) {
@@ -40,6 +54,8 @@ class UIPlugin extends Phaser.Plugins.ScenePlugin {
 var methods = {
     hide: Hide,
     show: Show,
+    isShown: IsShown,
+    edit: Edit,
 }
 
 Object.assign(

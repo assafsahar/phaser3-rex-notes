@@ -4,6 +4,7 @@ import {
     ButtonSetInteractive,
     FireEvent
 } from './ButtonSetInteractive.js';
+import ButtonMethods from './ButtonMethods.js';
 
 const GetValue = Phaser.Utils.Objects.GetValue;
 
@@ -77,12 +78,11 @@ class Buttons extends Sizer {
         this.addChildrenMap('background', background);
         this.addChildrenMap('buttons', (buttons) ? buttons : []);
     }
-
-    emitButtonClick(index) {
-        // index or button game object
-        FireEvent.call(this, 'button.click', index);
-        return this;
-    }
 }
+
+Object.assign(
+    Buttons.prototype,
+    ButtonMethods,
+);
 
 export default Buttons;

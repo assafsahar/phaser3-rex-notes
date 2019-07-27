@@ -21,10 +21,10 @@ class TickTask {
 
     // override
     shutdown() {
-        super.shutdown();
+        this.destroyEventEmitter();
         if (this.tickingState) {
             this.stopTicking();
-        }
+        }        
     }
 
     setTickingMode(mode) {
@@ -85,9 +85,7 @@ class TickTask {
 
     complete() {
         this.isRunning = false;
-        if (this.tickingMode !== 0) {
-            this.emit('complete', this.parent, this);
-        }
+        this.emit('complete', this.parent, this);
     }
 }
 

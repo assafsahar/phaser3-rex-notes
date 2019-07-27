@@ -1,13 +1,14 @@
+import EventEmitterMethods from '../../utils/eventemitter/EventEmitterMethods.js';
 import GetSceneObject from '../../utils/system/GetSceneObject.js';
 
-const EE = Phaser.Events.EventEmitter;
 const GetValue = Phaser.Utils.Objects.GetValue;
 
-class Button extends EE {
+class Button {
     constructor(gameObject, config) {
-        super();
         this.gameObject = gameObject;
         this.scene = GetSceneObject(gameObject);
+        // Event emitter
+        this.setEventEmitter(GetValue(config, 'eventEmitter', undefined));
 
         gameObject.setInteractive(GetValue(config, "inputConfig", undefined));
         this.resetFromJSON(config);
@@ -20,6 +21,7 @@ class Button extends EE {
         this.setEnable(GetValue(o, "enable", true));
         this.setMode(GetValue(o, "mode", 1));
         this.setClickInterval(GetValue(o, "clickInterval", 100));
+        this.setDragThreshold(GetValue(o, 'threshold', undefined));
         return this;
     }
 
@@ -27,11 +29,12 @@ class Button extends EE {
         this.gameObject.on('pointerdown', this.onPress, this);
         this.gameObject.on('pointerup', this.onRelease, this);
         this.gameObject.on('pointerout', this.onPointOut, this);
+        this.gameObject.on('pointermove', this.onMove, this);
         this.gameObject.on('destroy', this.destroy, this);
     }
 
     shutdown() {
-        super.shutdown();
+        this.destroyEventEmitter();
         this.pointer = undefined;
         this.gameObject = undefined;
         this.scene = undefined;
@@ -52,7 +55,7 @@ class Button extends EE {
         }
 
         if (!e) {
-            this.pointer = undefined;
+            this.cancel();
         }
         this.enable = e;
         this.gameObject.input.enabled = e;
@@ -69,6 +72,11 @@ class Button extends EE {
 
     setClickInterval(interval) {
         this.clickInterval = interval; // ms
+        return this;
+    }
+
+    setDragThreshold(distance) {
+        this.dragThreshold = distance;
         return this;
     }
 
@@ -97,7 +105,21 @@ class Button extends EE {
         if (this.pointer !== pointer) {
             return;
         }
-        this.pointer = undefined;
+        this.cancel();
+    }
+
+    onMove(pointer) {
+        if (this.pointer !== pointer) {
+            return;
+        }
+
+        if (this.dragThreshold === undefined) {
+            return;
+        }
+
+        if (pointer.getDistance() >= this.dragThreshold) {
+            this.cancel();
+        }
     }
 
     click(nowTime, pointer) {
@@ -117,7 +139,17 @@ class Button extends EE {
         this.emit('click', this, this.gameObject, pointer);
         return this;
     }
+
+    cancel() {
+        this.pointer = undefined;
+        return this;
+    }
 }
+
+Object.assign(
+    Button.prototype,
+    EventEmitterMethods
+);
 
 const CLICKMODE = {
     'press': 0,

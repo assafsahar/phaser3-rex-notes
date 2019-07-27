@@ -17,7 +17,7 @@ class TwoPointersTracer {
         // Event emitter
         this.setEventEmitter(GetValue(config, 'eventEmitter', undefined));
         this.pointers = [];
-        this.movedState = {};        
+        this.movedState = {};
         this.resetFromJSON(config);
         this.boot();
     }
@@ -40,6 +40,7 @@ class TwoPointersTracer {
     }
 
     shutdown() {
+        this.destroyEventEmitter();
         this.pointers.length = 0;
         Clear(this.movedState);
         if (this.scene) {
@@ -49,6 +50,7 @@ class TwoPointersTracer {
             this.scene.events.off('destroy', this.destroy, this);
             this.scene = undefined;
         }
+        this.scene = undefined;
     }
 
     destroy() {
@@ -76,8 +78,7 @@ class TwoPointersTracer {
             return;
         }
 
-        var index = this.pointers.indexOf(pointer);
-        if (index !== -1) { // Already in catched pointers
+        if (this.pointers.length === 2) {
             return;
         }
 
@@ -86,12 +87,13 @@ class TwoPointersTracer {
             return;
         }
 
-        if (this.pointers.length === 2) {
+        var index = this.pointers.indexOf(pointer);
+        if (index !== -1) { // Already in catched pointers
             return;
-        } else {
-            this.movedState[pointer.id] = false;
-            this.pointers.push(pointer);
         }
+
+        this.movedState[pointer.id] = false;
+        this.pointers.push(pointer);
 
         switch (this.tracerState) {
             case TOUCH0:
@@ -198,18 +200,6 @@ class TwoPointersTracer {
 
     onDrag2() {
         this.emit('drag2', this);
-    }
-
-    get isDrag() {
-        return (this.tracerState === TOUCH1) &&
-            (this.pointers[0].justMoved) &&
-            (this.movedState[this.pointers[0].id]);
-    }
-
-    get isDrag2() {
-        return (this.tracerState === TOUCH2) &&
-            (this.pointers[0].justMoved || this.pointers[1].justMoved) &&
-            (this.movedState[this.pointers[0].id] || this.movedState[this.pointers[1].id]);
     }
 
     get distanceBetween() {

@@ -24,6 +24,7 @@ nav:
         - Single image:
             - Image: image.md
             - Sprite: sprite.md
+            - Animation: animation.md
             - Quad: quad.md
             - Shader: shader.md
         - Multiple images: 
@@ -42,6 +43,7 @@ nav:
         - Behaviors:
             - Typing: texttyping.md    
             - Page: textpage.md
+            - Edit: textedit.md
     - Graphics:
         - Graphics: graphics.md
         - Render texture: rendertexture.md
@@ -66,11 +68,15 @@ nav:
     - Container:
         - Container: container.md
         - Container Lite: containerlite.md
-        - Group: group.md        
         - Grid table: gridtable.md
     - Zone: zone.md
+    - Object pool:
+        - Group: group.md
     - DOM element:
         - DOM element: domelement.md
+        - Input text: inputtext.md
+        - Video: video.md
+        - Youtube player: youtubeplayer.md
     - Behaviors:
         - Actions:
             - Group actions: groupactions.md
@@ -86,9 +92,11 @@ nav:
         - Anchor: anchor.md
         - Interception: interception.md
         - Arcade:
-            - World: arcade-world.md
-            - Body: arcade-body.md
-            - Game object: arcade-gameobject.md
+            - Engine:
+                - World: arcade-world.md
+                - Body: arcade-body.md
+                - Game object: arcade-gameobject.md
+            - Build arcade object: buildarcadeobject.md
             - 8 direction: eightdirection.md
             - Bullet: bullet.md
             - Ship: ship.md
@@ -99,13 +107,23 @@ nav:
     - Touch:
         - Touch events: touchevents.md
         - Cursor: cursor.md
+        - Mouse wheel: mousewheel.md
+        - Gestures:
+            - Overview: gesture-overview.md
+            - One pointer gesture:
+                - Tap: gesture-tap.md
+                - Press: gesture-press.md
+                - Swipe: gesture-swipe.md
+                - Pan: gesture-pan.md
+            - Two pointers gesture:
+                - Pinch: gesture-pinch.md
+                - Rotate: gesture-rotate.md
         - Button: button.md
         - Drag: drag.md
         - Slider: slider.md
         - Scroller: scroller.md
         - Virtual joystick: virtualjoystick.md
         - Cursor at bound: cursoratbound.md
-        - Pinch: pinch.md
         - Drag rotate: dragrotate.md
         - Mouse-wheel to up/down: mousewheeltoupdown.md
     - Keyboard:
@@ -145,6 +163,9 @@ nav:
     - Wait events: waitevents.md
     - CSV table:
         - Conditions table: conditionstable.md
+    - Quest: 
+        - Quest: quest.md
+        - Dialog-quest: dialog-quest.md
 - Data:
     - Data manager: 
         - Built-in data: datamanager.md
@@ -152,14 +173,17 @@ nav:
         - Buff data: buffdata.md
     - Set: structs-set.md
     - Array:
+        - Sort: array-sort.md
+        - Random: array-random.md
         - Filter/Map: array-filter.md
-        - Random: random-array.md
         - Number array: create-number-array.md
     - CSV:
         - CSV to array: csvtoarray.md
         - CSV to hash table: csvtohashtable.md
     - Database:
         - LokiJs: lokijs.md
+    - Configuration data: config-data.md
+    - Canvas image data: canvas-data.md
 - Math:
     - Max, min:
         - Interpolation: interpolation.md
@@ -172,6 +196,7 @@ nav:
     - Random:
         - Random number: random.md
         - Gashapon: gashapon.md
+        - Perlin: perlin.md
     - Color: color.md
     - Vector:
         - Vector2: vector2.md
@@ -196,12 +221,14 @@ nav:
     - LZ string: lzstring.md
     - XOR: xor.md
     - UUID: uuid.md
+    - Base64: base64.md
 - Time:
     - Date: date.md
     - Timer: timer.md
     - Timeline: timeline.md    
     - Clock: clock.md
     - Life time: lifetime.md
+    - Away time: awaytime.md
 - UI:
     - Overview: ui-overview.md
     - Sizer: ui-sizer.md
@@ -210,6 +237,7 @@ nav:
     - Label: ui-label.md
     - Text box: ui-textbox.md
     - Text area: ui-textarea.md
+    - Toast: ui-toast.md
     - Buttons: ui-buttons.md
     - Slider: ui-slider.md
     - Dialog: ui-dialog.md

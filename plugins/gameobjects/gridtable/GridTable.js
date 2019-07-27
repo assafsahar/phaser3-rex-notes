@@ -32,6 +32,9 @@ class GridTable extends Container {
         this.execeedLeftState = false;
         this.execeedRightState = false;
 
+        var reuseCellContainer = GetValue(config, 'reuseCellContainer', false);
+        this.cellContainersPool = (reuseCellContainer) ? scene.add.group() : undefined;
+
         var callback = GetValue(config, 'cellVisibleCallback', null);
         if (callback !== null) {
             var scope = GetValue(config, 'cellVisibleCallbackScope', undefined);
@@ -75,9 +78,18 @@ class GridTable extends Container {
         if (!this.scene) {
             return;
         }
-        this.setCellsCount(0);
-        this.table.destroy();
+
+        if (!fromScene) {
+            // Recycle cell containers
+            this.setCellsCount(0);
+        }
+
+        this.table.destroy(fromScene);
         this.table = undefined;
+        if (this.cellContainersPool) {
+            this.cellContainersPool.destroy(true);
+            this.cellContainersPool = undefined;
+        }
         super.destroy(fromScene);
     }
 
@@ -319,6 +331,9 @@ class GridTable extends Container {
     }
 
     updateTable(refresh) {
+        if (refresh === undefined) {
+            refresh = false;
+        }
         if (refresh) {
             this.clearVisibleCellIndexes();
             this.hideCells();
@@ -444,7 +459,11 @@ class GridTable extends Container {
         for (var i = 0, cnt = cells.length; i < cnt; i++) {
             container = cells[i].getContainer();
             if (container) {
-                container.getAllChildren(children);
+                if (container.isRexContainerLite) { // ContainerLite
+                    container.getAllChildren(children);
+                } else { // Others
+                    children.push(container);
+                }
             }
         }
         MaskChildren(this, this.cellsMask, children);
@@ -559,7 +578,32 @@ class GridTable extends Container {
 
     showCell(cell) {
         // Attach container to cell by cell.setContainer(container) under this event
-        this.emit('cellvisible', cell);
+        var reusedCellContainer = null;
+        if (this.cellContainersPool) {
+            reusedCellContainer = this.cellContainersPool.getFirstDead();
+            if (reusedCellContainer !== null) { // Reuse this game object
+                reusedCellContainer.setActive(true).setVisible(true);
+            }
+        }
+
+        this.emit('cellvisible', cell, reusedCellContainer);
+
+        if (this.cellContainersPool) {
+            var cellContainer = cell.getContainer();
+            if (cellContainer) {
+                if (reusedCellContainer === null) {
+                    this.cellContainersPool.add(cellContainer); // New cell container, add to pool
+                } else if (reusedCellContainer !== cellContainer) {
+                    // Why reusedCellContainer is not equal to cellContainer?
+                    this.cellContainersPool.add(cellContainer); // New cell container, add to pool
+                    this.cellContainersPool.killAndHide(reusedCellContainer); // Unused cell container, put back to pool
+                }
+            } else { // No cell container added
+                if (reusedCellContainer !== null) {
+                    this.cellContainersPool.killAndHide(reusedCellContainer); // Unused cell container, put back to pool
+                }
+            }
+        }
     }
 
     hideCells() {
@@ -575,6 +619,14 @@ class GridTable extends Container {
     hideCell(cell) {
         // Option: pop container of cell by cell.popContainer() under this event 
         this.emit('cellinvisible', cell);
+
+        if (this.cellContainersPool) {
+            var cellContainer = cell.popContainer(); // null if already been removed
+            if (cellContainer) {
+                this.cellContainersPool.killAndHide(cellContainer);
+            }
+        }
+
         cell.destroyContainer(); // Destroy container of cell
     }
 

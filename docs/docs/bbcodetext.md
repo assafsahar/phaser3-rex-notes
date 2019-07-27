@@ -17,15 +17,17 @@ Drawing text with [BBCode](https://en.wikipedia.org/wiki/BBCode) protocol.
 
 ### BBCode
 
-- bold: `[b]text[/b]`
-- italic: `[i]text[/i]`
-- color: `[color=red]text[/color]`
-- size: `[size=18]text[/size]`
-- stroke: `[stroke]text[/stroke]`
-    - stroke with color setting: `[stroke=red]text[/stroke]`
-- shadow: `[shadow]text[/shadow]`
-- underline: `[u]text[/u]`
-    - underline with color setting: `[u=red]text[/u]`
+- Bold : `[b]text[/b]`
+- Italic : `[i]text[/i]`
+- Color : `[color=red]text[/color]`
+- Size : `[size=18]text[/size]`
+- Stroke : `[stroke]text[/stroke]`
+    - Stroke with color setting : `[stroke=red]text[/stroke]`
+- Shadow : `[shadow]text[/shadow]`
+- Underline : `[u]text[/u]`
+    - Underline with color setting : `[u=red]text[/u]`
+- Image : `[img=imgKey]`
+- Hit area of words : `[area=key]text[/area]`
 
 ### Install plugin
 
@@ -79,7 +81,15 @@ Default style
         thinkness: 0,
         offset: 0
     },
-    align: 'left',  // 0|'left'|1|'center'|2|'right'
+    // align: 'left',  // Equal to halign
+    halign: 'left', // 'left'|'center'|'right'
+    valign: 'top',  // 'top'|'center'|'bottom'
+    padding: {
+        left: 0,
+        right: 0,
+        top: 0,
+        bottom: 0,
+    },
     maxLines: 0,
     lineSpacing: 0,
     fixedWidth: 0,
@@ -119,6 +129,12 @@ var txt = scene.make.rexBBCodeText({
     add: true
 });
 ```
+
+- Alignment
+    - `halign`, or `align` : Horizontal alignment.
+        - `left`, `center`, `right`
+    - `valign` : Vertical alignment.
+        - `top`, `center`, `bottom`
 
 ### Custom class
 
@@ -281,6 +297,73 @@ txt.setFontStyle(style);
         txt.setShadowStroke(enabled);
         txt.setShadowFill(enabled);
         ```
+
+### Image
+
+- Uses texture key as image key by default.
+- Add image render information
+    ```javascript
+    txt.addImage(imgKey, {
+        key: textureKey,
+        frame: frameName,
+        width: undefined,
+        height: undefined,
+        y: 0,
+        left: 0,
+        right: 0
+    });
+    ```
+    - `imgKey` : Image key used in text content, i.e. `[img=imgKey]`.
+    - `key` : Texture key.
+    - `frame` : Frame name.
+    - `width` : Render width, set `undefined` to use the cut width of frame.
+    - `height` : Render height, set `undefined` to use the cut height of frame.
+    - `y` : Extra offset y.
+    - `left` : Left padding space.
+    - `Right` : Right padding space.
+- Add some image render informations
+    ```javascript
+    txt.addImage(data);
+    ```
+    - `data` : `{imgKey, config}`
+
+### Hit area of words
+
+#### Hitting events
+
+- Pointer down
+    ```javascript
+    txt.on('areadown', function(key, pointer, localX, localY){
+
+    }, scope)
+    ```
+    or
+    ```javascript
+    txt.on('areadown-' + key, function(pointer, localX, localY){
+
+    }, scope)
+    ```
+- Pointer up
+    ```javascript
+    txt.on('areaup', function(key, pointer, localX, localY){
+
+    }, scope)
+    ```
+    or
+    ```javascript
+    txt.on('areaup-' + key, function(pointer, localX, localY){
+
+    }, scope)
+    ```
+
+#### Draw hit-areas
+
+```javascript
+txt.drawAreaBounds(graphics, color);
+```
+
+- `graphics` : [Graphics game object](graphics.md)
+- `color` : Default value is `0xffffff`
 
 ### Line spacing
 

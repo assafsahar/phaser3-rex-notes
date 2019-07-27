@@ -32,7 +32,7 @@ scene.load.start();                     // start loading
     ```
 - Loading progressing
     ```javascript
-    scene.load.once('progress', function(progress){});
+    scene.load.on('progress', function(progress){});
     ```
 - Loading a file object successful
     ```javascript
@@ -313,6 +313,16 @@ var data = cache.get(key);
 ```javascript
 scene.load.plugin(key, url, true); // start plugin when loaded
 ```
+
+- `url` : File url or class instance.
+
+#### Scene plugin
+
+```javascript
+scene.load.scenePlugin(key, url, systemKey, sceneKey);
+```
+
+- `url` : File url or class instance.
 
 #### File pack
 

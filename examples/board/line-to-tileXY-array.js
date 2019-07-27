@@ -22,7 +22,7 @@ class Demo extends Phaser.Scene {
             }
         });
 
-        var lineGraphics = this.add.graphics({
+        var graphics = this.add.graphics({
                 lineStyle: {
                     width: 3,
                     color: 0xff0000,
@@ -48,7 +48,7 @@ class Demo extends Phaser.Scene {
                 var worldXY = board.worldXYSnapToGrid(pointer.x, pointer.y);
                 startX = worldXY.x;
                 startY = worldXY.y;
-                lineGraphics.clear();
+                graphics.clear();
                 Phaser.Actions.Call(board.tileZToChessArray(0), function (gameObject) {
                     gameObject.destroy();
                 });
@@ -60,13 +60,13 @@ class Demo extends Phaser.Scene {
                 var worldXY = board.worldXYSnapToGrid(pointer.x, pointer.y);
                 endX = worldXY.x;
                 endY = worldXY.y;
-                lineGraphics.clear().lineBetween(startX, startY, endX, endY);
+                graphics.clear().lineBetween(startX, startY, endX, endY);
             })
             .on('pointerup', function (pointer) {
                 var worldXY = board.worldXYSnapToGrid(pointer.x, pointer.y);
                 endX = worldXY.x;
                 endY = worldXY.y;
-                lineGraphics.clear().lineBetween(startX, startY, endX, endY);
+                graphics.clear().lineBetween(startX, startY, endX, endY);
                 var tileXYArray = board.lineToTileXYArray(startX, startY, endX, endY);
                 var tileXY;
                 for (var i = 0, cnt = tileXYArray.length; i < cnt; i++) {

@@ -1,16 +1,17 @@
 import GetSceneObject from '../../utils/system/GetSceneObject.js';
+import EventEmitterMethods from '../../utils/eventemitter/EventEmitterMethods.js';
 import State from './State.js';
 import DrapSpeed from '../../dragspeed.js';
 import SlowDown from '../../utils/movement/SlowDown.js';
 
-const EE = Phaser.Events.EventEmitter;
 const GetValue = Phaser.Utils.Objects.GetValue;
 
-class Scroller extends EE {
+class Scroller {
     constructor(gameObject, config) {
-        super();
         this.gameObject = gameObject;
         this.scene = GetSceneObject(gameObject);
+        // Event emitter
+        this.setEventEmitter(GetValue(config, 'eventEmitter', undefined));
 
         var enable = GetValue(config, 'enable', true);
         var stateConfig = {
@@ -21,7 +22,8 @@ class Scroller extends EE {
 
         var drapSpeedConfig = {
             inputConfig: GetValue(config, 'inputConfig', undefined),
-            enable: enable
+            enable: enable,
+            eventEmitter: false,
         };
         this.dragState = new DrapSpeed(gameObject, drapSpeedConfig);
 
@@ -50,6 +52,7 @@ class Scroller extends EE {
 
     resetFromJSON(o) {
         this.setOrientationMode(GetValue(o, 'orientation', 0));
+        this.setDragThreshold(GetValue(o, 'threshold', 10));
         this.setSlidingDeceleration(GetValue(o, 'slidingDeceleration', 5000));
         this.setBackDeceleration(GetValue(o, 'backDeceleration', 2000));
 
@@ -70,7 +73,7 @@ class Scroller extends EE {
     }
 
     shutdown() {
-        super.shutdown();
+        this.destroyEventEmitter();
         if (this.scene) { // Scene might be destoryed
             this.scene.events.off('update', this._state.update, this._state);
         }
@@ -90,6 +93,11 @@ class Scroller extends EE {
             m = ORIENTATIONMODE[m];
         }
         this.orientationMode = m;
+        return this;
+    }
+
+    setDragThreshold(distance) {
+        this.dragThreshold = distance;
         return this;
     }
 
@@ -285,6 +293,10 @@ class Scroller extends EE {
 
 }
 
+Object.assign(
+    Scroller.prototype,
+    EventEmitterMethods
+);
 
 /** @private */
 const ORIENTATIONMODE = {

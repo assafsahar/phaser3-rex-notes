@@ -56,7 +56,7 @@ Call `gameObject.setInteractive(...)` to register touch input of Game Object bef
     ```javascript
     gameObject.setInteractive();
     ```
-- Set hit area from shape
+- Set hit area from game object
     ```javascript
     gameObject.setInteractive(shape, callback);
     ```
@@ -82,12 +82,37 @@ Call `gameObject.setInteractive(...)` to register touch input of Game Object bef
         - shape : `new Phaser.Geom.rexRhombus(x, y, width, height)`
         - callback : `Phaser.Geom.Polygon.Contains`
     - Note: `x`, `y` relate to the **top-left** of the gameObject.
+- Set hit area from input plugin
+    ```javascript
+    scene.input.setHitArea(gameObjects, shape, callback);
+    ```
+    - Circle
+        ```javascript
+        scene.input.setHitAreaCircle(gameObjects, x, y, radius);
+        // scene.input.setHitAreaCircle(gameObjects, x, y, radius, callback); // callback = Circle.Contains
+        ```
+    - Ellipse
+        ```javascript
+        scene.input.setHitAreaEllipse(gameObjects, x, y, width, height);
+        // scene.input.setHitAreaEllipse(gameObjects, x, y, width, height, callback); // callback = Ellipse.Contains
+        ```
+    - Rectangle
+        ```javascript
+        scene.input.setHitAreaRectangle(gameObjects, x, y, width, height);
+        // scene.input.setHitAreaRectangle(gameObjects, x, y, width, height, callback); // callback = Rectangle.Contains
+        ```
+    - Triangle
+        ```javascript
+        scene.input.setHitAreaTriangle(gameObjects, x1, y1, x2, y2, x3, y3);
+        // scene.input.setHitAreaTriangle(gameObjects, x1, y1, x2, y2, x3, y3, callback); // callback = Triangle.Contains
+        ```
+    - Note: `x`, `y` relate to the **top-left** of the gameObject.
 - Set interactive configuration
     ```javascript
     gameObject.setInteractive({
         hitArea: shape,
         hitAreaCallback: callback,
-        pixelPerfect: true,
+        pixelPerfect: false,
         alphaTolerance: 1,
         draggable: true,
         dropZone: true,
@@ -107,6 +132,9 @@ Call `gameObject.setInteractive(...)` to register touch input of Game Object bef
                     return hit;  // true/false
                 }
                 ```
+                - `shape` : Hit area object
+                - `x`, `y` : Local position of texture.
+                - `gameObject` : Game object.
     - [Dragging](touchevents.md#dragging)
         - `draggable` : `true`
     - [Drop zone](touchevents.md#drop-zone)
@@ -124,10 +152,6 @@ Call `gameObject.setInteractive(...)` to register touch input of Game Object bef
 - Disable temporary
     ```javascript
     gameObject.disableInteractive();
-    ```
-    or
-    ```javascript
-    gameObject.setInteractive(false);
     ```
 - Remove interaction
     ```javascript
@@ -328,7 +352,7 @@ scene.input.addPointer(num);  // total points = num + 1
     - `1` in desktop
     - `2` in touch device. (`0` for mouse, `1` for 1 touch pointer)
 
-### Properties of point
+### Pointer
 
 - Position
     - Current touching
@@ -358,23 +382,34 @@ scene.input.addPointer(num);  // total points = num + 1
     - Touching end : `pointer.upTime`
     - Drag : `pointer.getDuration()`
 - Touch state
-    - Is touching :  `pointer.isDown`
-    - Is touching start : `pointer.justDown`
-    - Is touching end : `pointer.justUp`
-    - Is touching move : `pointer.justMoved`
-- Botton down
-    - No botton down : `pointer.noButtonDown()`
-    - Is primary (left) botton down : `pointer.leftButtonDown()`
-    - Is secondary (right) botton down : `pointer.rightButtonDown()`
+    - Is touching/any button down :  `pointer.isDown`
+    - Is primary button down : `pointer.primaryDown`
+- Button state : `pointer.button`
+    - On Touch devices the value is always `0`.
+- Button down
+    - No button down : `pointer.noButtonDown()`
+    - Is primary (left) button down : `pointer.leftButtonDown()`
+    - Is secondary (right) button down : `pointer.rightButtonDown()`
     - Is middle (mouse wheel) button down : `pointer.middleButtonDown()`
-    - Is back botton down : `pointer.backButtonDown()`
+    - Is back button down : `pointer.backButtonDown()`
     - Is forward button down : `pointer.forwardButtonDown()`
+- Button released
+    - Is primary (left) button released : `pointer.leftButtonReleased()`
+    - Is secondary (right) button released : `pointer.rightButtonReleased()`
+    - Is middle (mouse wheel) button released : `pointer.middleButtonReleased()`
+    - Is back button released : `pointer.backButtonReleased()`
+    - Is forward button released : `pointer.forwardButtonReleased()`
 - Index in `scene.input.manager.pointers` : `pointer.id`
 - Motion
     - Angle: `pointer.angle`
     - Disatance: `pointer.distance`
     - Velocity: `pointer.velocity`
         - `pointer.velocity.x`, ``pointer.velocity.y`
+
+### Game object's input object
+
+- `gameObject.input` : Game object's input object.
+- `gameObject.input.localX`, `gameObject.input.localY` : Pointer to local position of texture.
 
 ### Smooth
 

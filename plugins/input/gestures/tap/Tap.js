@@ -5,8 +5,8 @@ const GetValue = Phaser.Utils.Objects.GetValue;
 const DistanceBetween = Phaser.Math.Distance.Between;
 
 class Tap extends OnePointerTracer {
-    constructor(scene, config) {
-        super(scene, config);
+    constructor(gameObject, config) {
+        super(gameObject, config);
 
         var self = this;
         var stateConfig = {
@@ -32,13 +32,14 @@ class Tap extends OnePointerTracer {
                     enter: function () {
                         self.start();
                         self.tapsCount = 0;
-                        self.emit('tappingstart', self);
+                        self.emit('tappingstart', self, self.gameObject, self.lastPointer);
                     },
                 },
                 RECOGNIZED: {
                     enter: function () {
                         self.start();
-                        self.emit('tap', self);
+                        self.emit('tap', self, self.gameObject, self.lastPointer);
+                        self.emit(`${self.tapsCount}tap`, self, self.gameObject, self.lastPointer);
                     },
                 }
             },
@@ -53,10 +54,17 @@ class Tap extends OnePointerTracer {
     resetFromJSON(o) {
         super.resetFromJSON(o);
         this.setMaxHoldTime(GetValue(o, 'time', 250)); // min-hold-time of Press is 251
-        this.setTapInterval(GetValue(o, 'tapInterval', 300));
+        this.setTapInterval(GetValue(o, 'tapInterval', 200));
         this.setDragThreshold(GetValue(o, 'threshold', 9));
         this.setTapOffset(GetValue(o, 'tapOffset', 10));
-        this.setMaxTaps(GetValue(o, 'maxTaps', undefined));
+
+        var taps = GetValue(o, 'taps', undefined);
+        if (taps !== undefined) {
+            this.setTaps(taps);
+        } else {
+            this.setMaxTaps(GetValue(o, 'maxTaps', undefined));
+            this.setMinTaps(GetValue(o, 'minTaps', undefined));
+        }
         return this;
     }
 
@@ -88,9 +96,9 @@ class Tap extends OnePointerTracer {
     onDragEnd() {
         if (this.state === BEGIN) {
             this.tapsCount++; // Try recognize next level
-            this.emit('tapping', this);
+            this.emit('tapping', this, this.gameObject, this.lastPointer);
 
-            if (this.maxTaps && (this.maxTaps === this.tapsCount)) { // Reach to maxTaps, stop here
+            if ((this.maxTaps !== undefined) && (this.tapsCount === this.maxTaps)) { // Reach to maxTaps, stop here                
                 this.state = RECOGNIZED;
             }
         }
@@ -106,20 +114,6 @@ class Tap extends OnePointerTracer {
         }
     }
 
-    onLastPointerMove() {
-        if (this.state === BEGIN) {
-            var pointer = this.lastPointer;
-            var distance = DistanceBetween(
-                pointer.upX,
-                pointer.upY,
-                pointer.x,
-                pointer.y);
-            if (distance > this.tapOffset) { // Can't recognize next level, stop here
-                this.state = RECOGNIZED;
-            }
-        }
-    }
-
     preUpdate(time, delta) {
         if (this.state === BEGIN) {
             var pointer = this.lastPointer;
@@ -131,7 +125,11 @@ class Tap extends OnePointerTracer {
             } else { // isUp
                 var releasedTime = time - pointer.upTime;
                 if (releasedTime > this.tapInterval) {
-                    this.state = RECOGNIZED;
+                    if ((this.minTaps === undefined) || (this.tapsCount >= this.minTaps)) {
+                        this.state = RECOGNIZED;
+                    } else {
+                        this.state = IDLE;
+                    }
                 }
             }
         }
@@ -170,6 +168,19 @@ class Tap extends OnePointerTracer {
 
     setMaxTaps(taps) {
         this.maxTaps = taps;
+        return this;
+    }
+
+    setMinTaps(taps) {
+        this.minTaps = taps;
+        return this;
+    }
+
+    setTaps(minTaps, maxTaps) {
+        if (maxTaps === undefined) {
+            maxTaps = minTaps;
+        }
+        this.setMinTaps(minTaps).setMaxTaps(maxTaps);
         return this;
     }
 }

@@ -4,8 +4,8 @@ import FSM from '../../../fsm.js';
 const GetValue = Phaser.Utils.Objects.GetValue;
 
 class Pan extends OnePointerTracer {
-    constructor(scene, config) {
-        super(scene, config);
+    constructor(gameObject, config) {
+        super(gameObject, config);
 
         var self = this;
         var stateConfig = {
@@ -23,7 +23,7 @@ class Pan extends OnePointerTracer {
                 },
                 RECOGNIZED: {
                     enter: function () {
-                        self.emit('panstart', self);
+                        self.emit('panstart', self, self.gameObject, self.lastPointer);
                     },
                     exit: function () {
                         var pointer = self.lastPointer;
@@ -31,7 +31,7 @@ class Pan extends OnePointerTracer {
                         self.endY = pointer.y;
                         self.endWorldX = pointer.worldX;
                         self.endWorldY = pointer.worldY;
-                        self.emit('panend', self);
+                        self.emit('panend', self, self.gameObject, self.lastPointer);
                     }
                 }
             },
@@ -70,6 +70,11 @@ class Pan extends OnePointerTracer {
                 var p0 = this.pointer.prevPosition;
                 this.dx = p1.x - p0.x;
                 this.dy = p1.y - p0.y;
+                var pointer = this.pointer;
+                self.x = pointer.x;
+                self.y = pointer.y;
+                self.worldX = pointer.worldX;
+                self.worldY = pointer.worldY;
                 this.emit('pan', this);
                 break;
         }

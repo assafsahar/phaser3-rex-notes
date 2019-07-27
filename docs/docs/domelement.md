@@ -18,10 +18,10 @@ Carry DOM element, built-in game object of phaser.
 ```javascript
 var config = {
     // ...
-    parent: divId,    
+    parent: divId,
     dom: {
         createContainer: true
-    }
+    },
     // ...
 }
 var game = new Phaser.Game(config);
@@ -73,7 +73,9 @@ var game = new Phaser.Game(config);
         }
         // ...
 
-        // preUpdate(time, delta) {}
+        // preUpdate(time, delta) {
+        //     super.preUpdate(time, delta);
+        // }
     }
     ```
     - `scene.add.existing(gameObject)` : Adds an existing Game Object to this Scene.

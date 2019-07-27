@@ -5,7 +5,7 @@ import AreTileXYArrayEqual from '../utils/AreTileXYArrayEqual.js';
 const INFINITY = CONST.INFINITY;
 const LINEOFFSET = 0.001;
 
-var IsInLOS = function (chess, visiblePoints) {
+var IsInLOS = function (chess, visiblePoints, originTileXY) {
     // chess: chess object or tileXY
     if ((visiblePoints !== INFINITY) && (visiblePoints <= 0)) {
         return false;
@@ -17,12 +17,14 @@ var IsInLOS = function (chess, visiblePoints) {
         return false;
     }
 
-    var myTileXYZ = this.chessData.tileXYZ;
+    if (originTileXY === undefined) {
+        originTileXY = this.chessData.tileXYZ;
+    }
     if (this.debugLog) {
-        console.log('Visible test from (' + myTileXYZ.x + ',' + myTileXYZ.y + ') to (' + targetTileXY.x + ',' + targetTileXY.y + ')');
+        console.log('Visible test from (' + originTileXY.x + ',' + originTileXY.y + ') to (' + targetTileXY.x + ',' + targetTileXY.y + ')');
     }
 
-    var out = board.tileXYToWorldXY(myTileXYZ.x, myTileXYZ.y, true);
+    var out = board.tileXYToWorldXY(originTileXY.x, originTileXY.y, true);
     var startX = out.x,
         startY = out.y;
     out = board.tileXYToWorldXY(targetTileXY.x, targetTileXY.y, true);
@@ -46,9 +48,11 @@ var IsInLOS = function (chess, visiblePoints) {
     isVisivle = this.isPathVisible(globTileXYArray0, visiblePoints);
     if (isVisivle) {
         globTileXYArray0.length = 0;
-        if (this.debugGraphics) {
-            this.debugGraphics.lineStyle(1, this.debugVisibleLineColor, 1).lineBetween(startX, startY, endX, endY);
-        }
+        drawLine(
+            this.debugGraphics,
+            this.debugVisibleLineColor,
+            startX, startY, endX, endY
+        );
         return true;
     }
 
@@ -63,7 +67,6 @@ var IsInLOS = function (chess, visiblePoints) {
     board.lineToTileXYArray(x0, y0, x1, y1, globTileXYArray1);
     if (this.debugLog) {
         console.log('Line 1: ' + JSON.stringify(globTileXYArray1));
-        this.debugGraphics.lineBetween(x0, y0, x1, y1);
     }
     // No need do visible checking if path is the same as previous one
     if (!AreTileXYArrayEqual(globTileXYArray0, globTileXYArray1)) {
@@ -71,11 +74,18 @@ var IsInLOS = function (chess, visiblePoints) {
     }
     globTileXYArray0.length = 0;
     globTileXYArray1.length = 0;
-    if (this.debugGraphics) {
-        var color = (isVisivle) ? this.debugVisibleLineColor : this.debugInvisibleLineColor;
-        this.debugGraphics.lineStyle(1, color, 1).lineBetween(startX, startY, endX, endY);
-    }
+    drawLine(
+        this.debugGraphics,
+        ((isVisivle) ? this.debugVisibleLineColor : this.debugInvisibleLineColor),
+        startX, startY, endX, endY
+    );
     return isVisivle;
+}
+
+var drawLine = function (graphics, color, startX, startY, endX, endY) {
+    if (graphics && (color !== undefined)) {
+        graphics.lineStyle(1, color, 1).lineBetween(startX, startY, endX, endY);
+    }
 }
 
 var globTileXYArray0 = [],
