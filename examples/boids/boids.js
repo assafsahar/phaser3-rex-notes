@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import BoidsPlugin from '../../plugins/boids-plugin.js';
 
 const Random = Phaser.Math.Between;

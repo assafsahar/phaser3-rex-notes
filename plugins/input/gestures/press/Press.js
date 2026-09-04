@@ -1,11 +1,12 @@
 import OnePointerTracer from "../onepointertracer/OnePointerTracer.js";
 import FSM from '../../../fsm.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
+import { Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
 
 class Press extends OnePointerTracer {
-    constructor(scene, config) {
-        super(scene, config);
+    constructor(gameObject, config) {
+        super(gameObject, config);
 
         var self = this;
         var stateConfig = {
@@ -16,6 +17,7 @@ class Press extends OnePointerTracer {
                         self.y = 0;
                         self.worldX = 0;
                         self.worldY = 0;
+                        self.lastPointer = undefined;
                     },
                     exit: function () {
                         var pointer = self.lastPointer;
@@ -35,10 +37,10 @@ class Press extends OnePointerTracer {
                 },
                 RECOGNIZED: {
                     enter: function () {
-                        self.emit('pressstart', self);
+                        self.emit('pressstart', self, self.gameObject, self.lastPointer);
                     },
                     exit: function () {
-                        self.emit('pressend', self);
+                        self.emit('pressend', self, self.gameObject, self.lastPointer);
                     }
                 }
             },
@@ -53,12 +55,15 @@ class Press extends OnePointerTracer {
     resetFromJSON(o) {
         super.resetFromJSON(o);
         this.setDragThreshold(GetValue(o, 'threshold', 9));
-        this.setMinHoldTime(GetValue(o, 'time', 251));
+        this.setHoldTime(GetValue(o, 'time', 251));
         return this;
     }
 
     onDragStart() {
-        this.state = (this.holdTime === 0) ? RECOGNIZED : BEGIN;
+        this.state = BEGIN;
+        if (this.holdTime === 0) {
+            this.state = RECOGNIZED;
+        }
     }
 
     onDragEnd() {
@@ -76,6 +81,9 @@ class Press extends OnePointerTracer {
     }
 
     preUpdate(time, delta) {
+        if ((!this.isRunning) || (!this.enable)) {
+            return;
+        }
         if (this.state === BEGIN) {
             var holdTime = time - this.pointer.downTime;
             if (holdTime >= this.holdTime) {
@@ -84,17 +92,22 @@ class Press extends OnePointerTracer {
         }
     }
 
-    get isPressed() {
+    get isPressing() {
         return (this.state === RECOGNIZED);
+    }
+
+    // Backward compatible
+    get isPressed() {
+        return this.isPressing;
+    }
+
+    setHoldTime(time) {
+        this.holdTime = time; // ms
+        return this;
     }
 
     setDragThreshold(distance) {
         this.dragThreshold = distance;
-        return this;
-    }
-
-    setMinHoldTime(time) {
-        this.holdTime = time; // ms
         return this;
     }
 }

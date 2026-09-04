@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import MoveToPlugin from '../../plugins/moveto-plugin.js';
 
 class Demo extends Phaser.Scene {
@@ -7,16 +8,21 @@ class Demo extends Phaser.Scene {
         })
     }
 
-    preload() {}
+    preload() { }
 
     create() {
         var dot = this.add.circle(100, 100, 20, 0xffffff);
         dot.moveTo = this.plugins.get('rexMoveTo').add(dot, {
             speed: 400,
             rotateToTarget: true
-        }).on('complete', function () {
-            console.log('Reach target');
         })
+            .on('start', function (dot, moveTo) {
+                console.log(`start moving to ${moveTo.targetX}, ${moveTo.targetY}`);
+            })
+            .on('complete', function () {
+                console.log('Reach target');
+            })
+
         this.input.on('pointerdown', function (pointer) {
             var touchX = pointer.x;
             var touchY = pointer.y;
@@ -24,7 +30,7 @@ class Demo extends Phaser.Scene {
         });
     }
 
-    update() {}
+    update() { }
 }
 
 var config = {

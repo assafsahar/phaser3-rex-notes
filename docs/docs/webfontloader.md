@@ -1,3 +1,6 @@
+!!! note
+    Built-in [font file loader](loader.md#font)
+
 ## Introduction
 
 Load web font by [google webfont loader](https://github.com/typekit/webfontloader) in payload or preload stage.
@@ -5,9 +8,9 @@ Load web font by [google webfont loader](https://github.com/typekit/webfontloade
 - Author: Rex
 - Custom File of loader
 
-## Source code
+## Live demos
 
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/webfontloader-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexwebfontloaderplugin.min.js)
+- [Webfont loader](https://codepen.io/rexrainbow/pen/vjqmXp)
 
 ## Usage
 
@@ -15,43 +18,100 @@ Load web font by [google webfont loader](https://github.com/typekit/webfontloade
 
 ### Install plugin
 
-Install plugin in [configuration of game](game.md#configuration)
+#### Load minify file
 
-```javascript
-var config = {
-    // ...
-    plugins: {
-        global: [{
-            key: 'WebFontLoader',
-            plugin: WebFontLoaderPlugin,
-            start: true
-        },
-        // ...
-        ]
+- Load plugin (minify file) in preload stage
+    ```javascript
+    var sceneConfig = {
+        // ....
+        pack: {
+            files: [{
+                type: 'plugin',
+                key: 'rexwebfontloaderplugin',
+                url: 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/    rexwebfontloaderplugin.min.js',
+                start: true
+            }]
+        }
+    };
+    class MyScene extends Phaser.Scene {
+        constructor() {
+            super(sceneConfig)
+        }
+        // ....
+
+        preload() {
+            // rexwebfontloaderplugin will be installed before preload(), but not added to loader yet
+            // Call addToScene(scene) to add this await loader to loader of this scene
+            this.plugins.get('rexwebfontloaderplugin').addToScene(this);
+
+            this.load.rexWebFont(config);
+        }
     }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+    ```
 
-or install it in previous scene (i.e. a preload scene).
+#### Import plugin
 
-!!! warning
-    The best way of installing this plugin is to load it in game config. 
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import WebFontLoaderPlugin from 'phaser4-rex-plugins/plugins/webfontloader-plugin.js';
+    var config = {
+        // ...
+        plugins: {
+            global: [{
+                key: 'rexWebFontLoader',
+                plugin: WebFontLoaderPlugin,
+                start: true
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- In preload stage
+    ```javascript
+    scene.load.rexWebFont(config);
+    ```
 
-    This custom file loader won't be added into loader of current scene after loader is created (i.e. loading plugin using `this.load.plugin(...)`, or loading in payload of scene)
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import WebFontLoader from 'phaser4-rex-plugins/plugins/webfontloader.js';
+    ```
+- Start loading task
+    ```javascript
+    WebFontLoader.call(scene.load, config);
+    ```
 
 ### Load webfont
 
 In preload stage:
 
 ```javascript
-this.load.rexWebfont({
+this.load.rexWebFont({
     google: {
         families: ['Bangers']
-    }
+    },
+    // testString: undefined,
+    // testInterval: 20,
 });
 ```
+
+- [`testString`](webfontloader.md#test-string) : To test if the font is loaded completed or not.
+    - `undefined` : No testing. Default value.
+    - A string : A test string for all fonts
+    - An object, `{fontFamily: testString}` : Test string for a specific font family.
+- `testInterval` : Retry interval.
 
 or load font in pack
 
@@ -65,7 +125,9 @@ var sceneConfig = {
                 config: {
                     google: {
                         families: ['Bangers']
-                    }
+                    },
+                    // testString: undefined,
+                    // testInterval: 20,
                 }
             }
         ]
@@ -131,3 +193,11 @@ Configuration of loading fonts
     ```javascript
     this.load.on('webfontinactive', function(fileObj, familyName){});
     ```
+
+### Test string
+
+Add string parameter `testString` into config, to test if the font is loaded completed or not.
+
+1. Fill `0` within an internal canvas.
+1. Draw `testString`.
+1. Check if any pixel has non-zero value.

@@ -2,7 +2,7 @@
 
 Drawing text on canvas, built-in game object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
@@ -32,7 +32,13 @@ Default style
         stroke: false,
         fill: false
     },
-    align: 'left',  // 'left'|'center'|'right'
+    align: 'left',  // 'left'|'center'|'right'|'justify'
+    padding: {
+        left: 0,
+        right: 0,
+        top: 0,
+        bottom: 0,
+    },
     maxLines: 0,
     lineSpacing: 0,
     fixedWidth: 0,
@@ -45,7 +51,12 @@ Default style
         callbackScope: null,
         useAdvancedWrap: false
     },
-    // resolution: 1
+    metrics: false,
+    // metrics: {
+    //     ascent: 0,
+    //     descent: 0,
+    //     fontSize: 0
+    // },
 }
 ```
 
@@ -68,9 +79,10 @@ var txt = scene.make.text({
         fontSize: '64px',
         fontFamily: 'Arial',
         color: '#ffffff',
-        align: 'center',
+        align: 'center',  // 'left'|'center'|'right'|'justify'
         backgroundColor: '#ff00ff'
     },
+    // origin: {x: 0.5, y: 0.5},
     add: true
 });
 ```
@@ -111,7 +123,8 @@ var txt = scene.make.text({
             font: 'bold 25px Arial',
             fill: 'white',
             wordWrap: { width: 300 }
-        }
+        },
+        // origin: {x: 0.5, y: 0.5},
     });
     ```
 - Wrap by callback
@@ -125,7 +138,8 @@ var txt = scene.make.text({
             font: 'bold 30px Arial',
             fill: 'white',
             wordWrap: { callback: wordWrap, scope: this }
-        }
+        },
+        // origin: {x: 0.5, y: 0.5},
     });
     
     function wordWrap (text, textObject)
@@ -172,8 +186,18 @@ var txt = scene.make.text({
     ```
 - Set
     ```javascript
-    txt.setText('world');
-    // txt.text = 'world';
+    txt.setText(text);
+    // txt.text = text;
+    ```
+- Append
+    ```javascript
+    txt.appendText(text);
+    // txt.text += '\n' + text;
+    ```
+    or
+    ```javascript
+    txt.appendText(text, false);
+    // txt.text += text;
     ```
 
 ### Set style
@@ -185,6 +209,14 @@ txt.setFontFamily(family);
 txt.setFontSize(size);
 txt.setFontStyle(style);
 ```
+
+### Set align
+
+```javascript
+txt.setAlign(align);
+```
+
+- `align` : `'left'`, `'center'`, `'right'`, `'justify'`
 
 ### Color
 
@@ -250,12 +282,29 @@ This value is *added* to the height of the font when calculating the overall lin
 
 - Get
    ```javascript
-   var lineSpacing = txt.style.lineSpacing;
+   var lineSpacing = txt.lineSpacing;
    ```
 - Set
    ```javascript
    txt.setLineSpacing(value);
    ```
+
+### Letter spacing
+
+- Get
+   ```javascript
+   var letterSpacing = txt.letterSpacing;
+   ```
+- Set
+   ```javascript
+   txt.setLetterSpacing(value);
+   ```
+   - `value` : Positive or negative value.
+
+!!! note
+    Enabling this feature will cause Phaser to render each character in this Text object 
+    one by one, rather than use a draw for the whole string. 
+    This makes it extremely expensive when used with either long strings, or lots of strings in total.
 
 ### Padding
 
@@ -294,3 +343,32 @@ This value is *added* to the height of the font when calculating the overall lin
     ```javascript
     txt.setFixedSize(width, height);
     ```
+
+### Test string
+
+Set the test string to use when measuring the font.
+
+```javascript
+txt.style.setTestString(text);
+```
+
+### RTL
+
+- Set `rtl` in style config when creating this text game object
+- Change `rtl` during runtime
+    ```javascript
+    txt.setRTL(rtl).setText(newContent);
+    ```
+    - Invoke `setRTL` method before setting new content.
+
+### Other properties
+
+See [game object](gameobject.md)
+
+### Create mask
+
+See [mask](mask.md)
+
+### Shader effects
+
+Support [internal and external filters](shader-builtin.md)

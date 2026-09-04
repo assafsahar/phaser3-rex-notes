@@ -1,8 +1,13 @@
 ## Introduction
 
+!!! warning
+
+    The `Geom.Point` class and all related functions will be removed. All functionality for this can be found in the existing Vector2 math classes. All Geometry classes that currently create and return Point objects will be updated to return Vector2 objects instead.
+
+
 Point shape and methods, built-in methods of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
@@ -68,6 +73,10 @@ graphics.fillPointShape(point, size);
     ```javascript
     var x = point.x;
     var y = point.y;
+    ```
+- Type:
+    ```javascript
+    var type = point.type; // 3
     ```
 
 ### Equal

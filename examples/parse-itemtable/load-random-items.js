@@ -1,5 +1,5 @@
-import Parse from 'parse';
-import ItemTable from '../../plugins/parse/itemtable/ItemTable.js';
+import Phaser from 'phaser';
+import ParsePlugin from '../../plugins/parse-plugin.js';
 
 const Random = Phaser.Math.Between;
 class Demo extends Phaser.Scene {
@@ -10,7 +10,9 @@ class Demo extends Phaser.Scene {
         this.txt;
     }
 
-    preload() {}
+    preload() {
+        this.plugins.get('rexParse').preload(this);
+    }
 
     create() {
         Parse.serverURL = 'https://parseapi.back4app.com'; // This is your Server URL
@@ -19,10 +21,11 @@ class Demo extends Phaser.Scene {
             'DbgfGW40cdqUQug8cv6NDAplB1D9daNIjcYtdGSQ' // This is your Javascript key
         );
 
-        var table = new ItemTable({
+        var rexParse = this.plugins.get('rexParse');
+        var table = rexParse.add.itemTable({
             className: 'characters',
             primaryKeys: ['name'],
-            lines: 3,
+            itemCount: 3,
         });
 
         // Save something
@@ -38,23 +41,17 @@ class Demo extends Phaser.Scene {
 
 
         Promise.all(promises)
-            // Load random 2 items
             .then(function () {
-                return table.loadRandomItems(2);
+                return table.loadRandomItems(2);  // Load 2 random items
             })
             .then(function (results) {
                 console.log('---- Load random ----');
                 console.log(JSON.parse(JSON.stringify(results)));
-                return Promise.resolve();
-            })
-            // Load random 2 items
-            .then(function () {
-                return table.loadRandomItems(2);
+                return table.loadRandomItems(2);  // Load 2 random items
             })
             .then(function (results) {
                 console.log('---- Load random ----');
                 console.log(JSON.parse(JSON.stringify(results)));
-                return Promise.resolve();
             })
             .catch(function (error) {
                 console.log(error);
@@ -63,7 +60,7 @@ class Demo extends Phaser.Scene {
 
     }
 
-    update() {}
+    update() { }
 }
 
 var config = {
@@ -75,7 +72,14 @@ var config = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
     },
-    scene: Demo
+    scene: Demo,
+    plugins: {
+        global: [{
+            key: 'rexParse',
+            plugin: ParsePlugin,
+            start: true
+        }]
+    }
 };
 
 var game = new Phaser.Game(config);

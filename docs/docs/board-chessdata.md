@@ -5,10 +5,6 @@ Properties of chess, chess behavior of Board system.
 - Author: Rex
 - Behavior of chess
 
-## Source code
-
-Included in [board plugin](board.md#source-code).
-
 ## Usage
 
 ### Add chess data object
@@ -44,6 +40,8 @@ var board = gameObject.rexChess.board;
 ```
 
 - `board` : [Board object](board.md), or `null` if this chess is not added to any board.
+
+[See also](board.md#get-board)
 
 ### Blocker
 

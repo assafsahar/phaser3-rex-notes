@@ -1,65 +1,78 @@
-/**
- * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
- */
+var GetValue = function (source, key, defaultValue, altSource) {
+    var isValidSource = source && (typeof source === 'object' || typeof source === 'function');
+    var isValidAltSource = altSource && (typeof altSource === 'object' || typeof altSource === 'function')
 
-//  Source object
-//  The key as a string, or an array of keys, i.e. 'banner', or 'banner.hideBanner'
-//  The default value to use if the key doesn't exist
-
-/**
- * Retrieves a value from an object.
- *
- * @function Phaser.Utils.Objects.GetValue
- * @since 3.0.0
- *
- * @param {object} source - The object to retrieve the value from.
- * @param {string} key - The name of the property to retrieve from the object. If a property is nested, the names of its preceding properties should be separated by a dot (`.`) - `banner.hideBanner` would return the value of the `hideBanner` property from the object stored in the `banner` property of the `source` object.
- * @param {*} defaultValue - The value to return if the `key` isn't found in the `source` object.
- *
- * @return {*} The value of the requested key.
- */
-var GetValue = function (source, key, defaultValue)
-{
-    if (!source || typeof source === 'number')
-    {
+    if (!isValidSource && !isValidAltSource) {
         return defaultValue;
     }
-    else if (source.hasOwnProperty(key))
-    {
-        return source[key];
+
+    var keyPath = String(key);
+
+    // Shortcut:
+    // If obj[keyPath] can be read (including prototype chain), return it directly.
+    // This also supports literal keys like "a.b".
+    if (isValidSource && (keyPath in source)) {
+        return source[keyPath];
     }
-    else if (key.indexOf('.') !== -1)
-    {
-        var keys = key.split('.');
-        var parent = source;
-        var value = defaultValue;
+    if (isValidAltSource && (keyPath in altSource)) {
+        return altSource[keyPath];
+    }
 
-        //  Use for loop here so we can break early
-        for (var i = 0; i < keys.length; i++)
-        {
-            if (parent.hasOwnProperty(keys[i]))
-            {
-                //  Yes it has a key property, let's carry on down
-                value = parent[keys[i]];
+    // If there is no dot, we already know it's missing.
+    if (keyPath.indexOf('.') === -1) {
+        return defaultValue;
+    }
 
-                parent = parent[keys[i]];
-            }
-            else
-            {
-                //  Can't go any further, so reset to default
-                value = defaultValue;
-                break;
-            }
+    var keys = keyPath.split('.');
+
+    // 1) Try source path first
+    if (isValidSource) {
+        var sourceResult = WalkPath(source, keys, defaultValue);
+        if (sourceResult.found) {
+            return sourceResult.value;
         }
+    }
 
-        return value;
+    // 2) Then try altSource path
+    if (isValidAltSource) {
+        var altSourceResult = WalkPath(altSource, keys, defaultValue);
+        if (altSourceResult.found) {
+            return altSourceResult.value;
+        }
     }
-    else
-    {
-        return defaultValue;
-    }
+
+    return defaultValue;
 };
 
-module.exports = GetValue;
+
+var WalkPath = function (source, keys, defaultValue) {
+    var parent = source;
+    var value = defaultValue;
+
+    var found;
+    for (var index = 0, cnt = keys.length; index < cnt; index++) {
+        var partKey = keys[index];
+
+        if (parent && (typeof parent === 'object' || typeof parent === 'function')) {
+            found = (partKey in parent);
+        } else {
+            found = false;
+        }
+
+        if (!found) {
+            WalkPathResult.found = false;
+            return WalkPathResult;
+        }
+
+        value = parent[partKey];
+        parent = value;
+    }
+
+    WalkPathResult.found = true;
+    WalkPathResult.value = value;
+    return WalkPathResult;
+};
+
+var WalkPathResult = {}
+
+export default GetValue;

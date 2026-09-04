@@ -2,13 +2,11 @@
 
 Curve shape, built-in game object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
-### Create shape
-
-### Add shape object
+### Create shape object
 
 ```javascript
 var curve = scene.add.curve(x, y, path, fillColor);
@@ -46,10 +44,15 @@ var curve = scene.add.curve(x, y, path, fillColor);
     - Get
         ```javascript
         var color = curve.fillColor;
+        var alpha = curve.fillAlpha;
         ```
     - Set
         ```javascript
         curve.setFillStyle(color, alpha);
+        ```
+    - Clear
+        ```javascript
+        curve.setFillStyle();
         ```
 - Stroke color
     - Get
@@ -60,9 +63,25 @@ var curve = scene.add.curve(x, y, path, fillColor);
         ```javascript
         curve.setStrokeStyle(lineWidth, color, alpha);
         ```
+    - Clear
+        ```javascript
+        curve.setStrokeStyle();
+        ```
 
 !!! warning "No tint methods"
     Uses `curve.setFillStyle(color, alpha)` to change color.
+
+### Alpha
+
+- Get
+    ```javascript
+    var alpha = curve.alpha;
+    ```
+- Set
+    ```javascript
+    curve.setAlpha(alpha);
+    // curve.alpha = alpha;
+    ```
 
 ### Smoothness
 
@@ -76,6 +95,31 @@ or
 curve.smoothness = smoothness;
 ```
 
+### Display size
+
+- Get
+    ```javascript
+    var width = curve.displayWidth;
+    var height = curve.displayHeight;
+    ```
+- Set
+    ```javascript
+    curve.setDisplaySize(width, height);
+    ```
+    or
+    ```javascript
+    curve.displayWidth = width;
+    curve.displayHeight = height;
+    ```
+
 ### Other properties
 
 See [game object](gameobject.md)
+
+### Create mask
+
+See [mask](mask.md)
+
+### Shader effects
+
+Support [internal and external filters](shader-builtin.md)

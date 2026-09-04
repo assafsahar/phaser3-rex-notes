@@ -3,7 +3,8 @@ import {
     QuadGridAlign
 } from './gridalign.js';
 
-class GridAlignPlugin extends Phaser.Plugins.BasePlugin {
+import { Plugins as PhaserPlugins } from 'phaser';
+class GridAlignPlugin extends PhaserPlugins.BasePlugin {
 
     constructor(pluginManager) {
         super(pluginManager);
@@ -11,15 +12,15 @@ class GridAlignPlugin extends Phaser.Plugins.BasePlugin {
 
     start() {
         var eventEmitter = this.game.events;
-        eventEmitter.once('destroy', this.destroy, this);
+        eventEmitter.on('destroy', this.destroy, this);
     }
 
-    hexagon(items, config) {
-        return HexagonGridAlign(items, config);
+    hexagon(items, options) {
+        return HexagonGridAlign(items, options);
     }
 
-    quad(items, config) {
-        return QuadGridAlign(items, config);
+    quad(items, options) {
+        return QuadGridAlign(items, options);
     }
 }
 

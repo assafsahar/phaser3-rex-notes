@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import TagTextPlugin from '../../plugins/tagtext-plugin.js';
 
 class Demo extends Phaser.Scene {
@@ -7,7 +8,9 @@ class Demo extends Phaser.Scene {
         })
     }
 
-    preload() {}
+    preload() {
+        this.load.image('key', 'assets/images/key.png');
+    }
 
     create() {
         var tags = {
@@ -15,11 +18,14 @@ class Demo extends Phaser.Scene {
                 color: 'red',
                 fontStyle: 'bold italic'
             },
+            superscript: {
+                y: -16,
+                size: 20
+            },
             marker: {
                 underline: {
                     color: 'blue',
                     thinkness: 20,
-                    offset: -10
                 }
             },
             tail: {
@@ -28,10 +34,14 @@ class Demo extends Phaser.Scene {
                     color: 'yellow',
                     thinkness: 1
                 }
+            },
+            key: {
+                img: 'key'
             }
         };
         var s1 = `<class='cap'>H</class><class='marker'>ell</class><class='tail'>o</class>
-<style='color:red;size:30px'>W</style><style='size:40px'>o</style><style='size:50px'>r</style><style='u:green 30px -10px'>ld</style>`;
+<style='color:red;size:30px'>W</style><style='size:40px'>o</style><style='size:50px'>r</style><style='u:green 30px'>ld</style>
+<style='color:white;size:30px'>Th</style><style='y:4;size:20px'>is</style> <class='superscript'>is</class> a <class='key'></class>`;
         var text = this.add.rexTagText(100, 100, s1, {
             backgroundColor: '#555',
             fontSize: '60px',
@@ -47,9 +57,19 @@ class Demo extends Phaser.Scene {
         console.log(text.getPlainText());
         console.log(text.getText(undefined, 1, 4));
 
+
+        this.input.once('pointerdown', function () {
+            // Change size of image
+            text.addImage('key', {
+                key: 'key',
+                width: 64,
+            })
+
+            text.updateText()
+        })
     }
 
-    update() {}
+    update() { }
 }
 
 var config = {

@@ -1,17 +1,23 @@
-var GetExpandedChildHeight = function (parent, child) {
-    var newHeight;
-    var childConfig = child.rexSizer;
-    var padding = childConfig.padding;
-    if (parent.orientation === 0) { // x
-        if (childConfig.expand) {
-            newHeight = parent.height - padding.top - padding.bottom;
+var GetExpandedChildHeight = function (child, parentHeight) {
+    if (parentHeight === undefined) {
+        parentHeight = this.height;
+    }
+
+    var childHeight;
+    var sizerConfig = child.rexSizer;
+    if (this.orientation === 0) { // x
+        if (sizerConfig.expand) {
+            var space = this.space;
+            var innerHeight = parentHeight - ((space.top + space.bottom) * this.scaleY);
+            var padding = sizerConfig.padding;
+            childHeight = innerHeight - ((padding.top + padding.bottom) * this.scaleY);
         }
     } else { // y
-        if ((childConfig.proportion > 0) && (parent.proportionLength > 0)) {
-            newHeight = (childConfig.proportion * parent.proportionLength);
+        if ((sizerConfig.proportion > 0) && (this.proportionLength > 0)) {
+            childHeight = (sizerConfig.proportion * this.proportionLength);
         }
     }
-    return newHeight;
+    return childHeight;
 }
 
 export default GetExpandedChildHeight;

@@ -14,6 +14,7 @@ class Node {
         this.key = undefined;
         this.x = undefined;
         this.y = undefined;
+        this.isTileXYZ = true;
         // overwrite
 
         this._px = undefined;
@@ -53,14 +54,14 @@ class Node {
     }
 
     getNeighborNodes() {
-        var neighborsLXY = this.board.getNeighborTileXY(this);
+        var neighborsTileXY = this.board.getNeighborTileXY(this);
         if (this.pathFinder.shuffleNeighbors) {
-            Shuffle(neighborsLXY);
+            Shuffle(neighborsTileXY);
         }
 
         var node, neighborNodes = [];
-        for (var i = 0, cnt = neighborsLXY.length; i < cnt; i++) {
-            node = this.manager.getNode(neighborsLXY[i], true);
+        for (var i = 0, cnt = neighborsTileXY.length; i < cnt; i++) {
+            node = this.manager.getNode(neighborsTileXY[i], true);
             neighborNodes.push(node)
         }
         return neighborNodes;
@@ -78,7 +79,7 @@ class Node {
     }
 
     angleTo(endNode) {
-        return AngleBetween(this.worldX, this.wroldY, endNode.worldX, endNode.wroldY);
+        return AngleBetween(this.worldX, this.worldY, endNode.worldX, endNode.worldY);
     }
 
     get pathFinder() {
@@ -91,14 +92,14 @@ class Node {
 
     get worldX() {
         if (this._px === undefined) {
-            this._px = this.board.tileXYToWroldX(this.x, this.y);
+            this._px = this.board.tileXYToWorldX(this.x, this.y);
         }
         return this._px;
     }
 
-    get wroldY() {
+    get worldY() {
         if (this._py === undefined) {
-            this._py = this.board.tileXYToWroldY(this.x, this.y);
+            this._py = this.board.tileXYToWorldY(this.x, this.y);
         }
         return this._py;
     }
@@ -107,4 +108,5 @@ class Node {
         return this.g;
     }
 }
+
 export default Node;

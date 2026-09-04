@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import ShipPlugin from '../../plugins/ship-plugin.js';
 
 class Demo extends Phaser.Scene {

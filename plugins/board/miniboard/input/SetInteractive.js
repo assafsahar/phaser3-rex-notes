@@ -1,45 +1,25 @@
-import OnPointerDown from './OnPointerDown.js';
-import OnPointerUp from './OnPointerUp.js';
-import OnPointerMove from './OnPointerMove.js';
+import HitAreaCallback from './HitAreaCallback.js';
+import RegisterPointerEvents from './RegisterPointerEvents.js';
+import RegisterDragEvents from './RegisterDragEvents.js';
 
-var SetInteractive = function (enable) {
-    if (enable === undefined) {
-        enable = true;
-    }
-    if (!this.input) {
-        this.input = {
-            enable: true,
-            tilePosition: {
-                x: undefined,
-                y: undefined
-            },
-            pointer: undefined,
-            drag: {
-                enable: false,
-                state: 0,
-                position: {
-                    x: undefined,
-                    y: undefined
-                }
-            }
-        };
-        this.scene.input.on('pointerdown', OnPointerDown, this);
-        this.scene.input.on('pointerup', OnPointerUp, this);
-        this.scene.input.on('pointermove', OnPointerMove, this);
 
-        this.on('destroy', function () {
-            if (this.scene) {
-                this.scene.input.off('pointerdown', OnPointerDown, this);
-                this.scene.input.off('pointerup', OnPointerUp, this);
-                this.scene.input.off('pointermove', OnPointerMove, this);
-            }
-        }, this);
-    }
+import { GameObjects as PhaserGameObjects, Geom as PhaserGeom } from 'phaser';
+const Rectangle = PhaserGeom.Rectangle;
+const SetInteractiveBase = PhaserGameObjects.GameObject.prototype.setInteractive;
 
-    this.input.enable = enable;
-    if (!enable) {
-        this.input.pointer = null;
+var SetInteractive = function (config) {
+
+    if (config === undefined) {
+        config = {};
     }
+    config.hitArea = new Rectangle(0, 0, this.width, this.height);
+    config.hitAreaCallback = HitAreaCallback;
+
+    SetInteractiveBase.call(this, config);
+
+    RegisterPointerEvents.call(this);
+    RegisterDragEvents.call(this);
+
     return this;
 };
 

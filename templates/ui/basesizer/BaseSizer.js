@@ -1,66 +1,82 @@
 import Container from '../container/Container.js';
-import Anchor from '../../../plugins/behaviors/anchor/Anchor.js';
-import GetSizerConfig from '../utils/GetSizerConfig.js';
-import PushIntoBounds from './PushIntoBounds.js';
-import DrawBounds from './DrawBounds.js';
-import AddChildrenMap from './AddChildrenMap.js';
-import GetElement from './GetElement.js';
-import GetChildrenWidth from './GetChildrenWidth.js';
-import GetChildrenHeight from './GetChildrenHeight.js';
-import GetAllChildrenSizers from './GetAllChildrenSizers.js';
-import GetChildrenSizers from './GetChildrenSizers.js';
-import Layout from './Layout.js';
-import LayoutInit from './LayoutInit.js';
-import _layoutInit from './_layoutInit.js';
-import PopUp from './PopUp.js';
-import ScaleDownDestroy from './ScaleDownDestroy.js';
-import FadeIn from './FadeIn.js';
-import FadeOutDestroy from './FadeOutDestroy.js';
-import IsInTouching from './IsInTouching.js';
-import GetTopmostSizer from './GetTopmostSizer.js';
-import LayoutBackgrounds from './LayoutBackgrounds.js';
-import SetDraggable from './SetDraggable.js';
+import Methods from './Methods.js';
+import { GetDisplayWidth, GetDisplayHeight } from '../../../plugins/utils/size/GetDisplaySize.js';
+import Clear from '../../../plugins/utils/object/Clear.js'
 
-const GetValue = Phaser.Utils.Objects.GetValue;
+import { Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
 
 class Base extends Container {
     constructor(scene, x, y, minWidth, minHeight, config) {
-        var anchorX, anchorY;
-        if (typeof (x) === 'string') {
-            anchorX = x;
-            anchorY = y;
-            x = 0;
-            y = 0;
-        }
-
-        super(scene, x, y, 2, 2);
-
+        super(scene, x, y, 1, 1);
         this.isRexSizer = true;
-        this.setMinWidth(minWidth);
-        this.setMinHeight(minHeight);
+
+        var origin = GetValue(config, 'origin', 0.5);
+        var originX = GetValue(config, 'originX', origin);
+        var originY = GetValue(config, 'originY', origin);
+        this.setOrigin(originX, originY);
+
+        this.setMinSize(minWidth, minHeight);
         this.setName(GetValue(config, 'name', ''));
         this.rexSizer = {};
+        this.space = {};
         this.backgroundChildren = undefined;
+        this.sizerChildren = undefined; // [] or {}
+        this.childrenMap = {};
+        this.layoutedChildren = undefined;
 
-        if (anchorX !== undefined) {
-            this._anchor = new Anchor(this, {
-                x: anchorX,
-                y: anchorY,
-            });;
+        // FixWidthSizer uses these flag
+        this.runChildrenWrapFlag = false;
+
+        this.enableLayoutWarn(false);
+
+        var anchorConfig = GetValue(config, 'anchor', undefined);
+        if (anchorConfig) {
+            this.setAnchor(anchorConfig);
         }
 
-        this.setDraggable(GetValue(config, 'draggable', false));
+        this.setInnerPadding(GetValue(config, 'space', 0));
+
+        var draggable = GetValue(config, 'draggable', false);
+        if (draggable) {
+            this.setDraggable(draggable);
+        }
+
+        this.setSizerEventsEnable(GetValue(config, 'sizerEvents', false));
+        this.setDirty(true);
+
+        if (GetValue(config, 'enableLayer', false)) {
+            this.enableLayer();
+        }
     }
 
     destroy(fromScene) {
         //  This Game Object has already been destroyed
-        if (!this.scene) {
+        if (!this.scene || this.ignoreDestroy) {
             return;
         }
-        if (this.backgroundChildren !== undefined) {
-            this.backgroundChildren.length = 0;
+
+        if (fromScene) {
+            // In this case, children will be cleared and destroy in scene level
+            var sizers = this.getAllChildrenSizers([this]);
+            for (var i = 0, cnt = sizers.length; i < cnt; i++) {
+                sizers[i].sizerEventsEnable = false;
+            }
         }
+
         super.destroy(fromScene);
+
+        Clear(this.backgroundChildren);
+        Clear(this.sizerChildren);
+        this.childrenMap = undefined;
+        this.space = undefined;
+        this.rexSizer = undefined;
+        this.layoutedChildren = undefined;
+    }
+
+    setMinSize(minWidth, minHeight) {
+        this.setMinWidth(minWidth).setMinHeight(minHeight);
+        return this;
     }
 
     setMinWidth(minWidth) {
@@ -79,6 +95,36 @@ class Base extends Container {
         return this;
     }
 
+    setDirty(dirty) {
+        if (dirty === undefined) {
+            dirty = true;
+        }
+        this.dirty = dirty;
+        return this;
+    }
+
+    setSizerEventsEnable(enable) {
+        if (enable === undefined) {
+            enable = true;
+        }
+
+        this.sizerEventsEnable = enable;
+        return this;
+    }
+
+    enableLayoutWarn(enable) {
+        if (enable === undefined) {
+            enable = true;
+        }
+        this.layoutWarnEnable = enable;
+        return this;
+    }
+
+    get ignoreLayout() {
+        // Skip hidden or !dirty sizer
+        return this.rexSizer.hidden || (!this.dirty);
+    }
+
     get childrenWidth() {
         if (this._childrenWidth === undefined) {
             this._childrenWidth = this.getChildrenWidth();
@@ -94,7 +140,7 @@ class Base extends Container {
     }
 
     get left() {
-        return this.x - (this.displayWidth * this.originX);
+        return this.x - (GetDisplayWidth(this) * this.originX);
     }
 
     set left(value) {
@@ -107,7 +153,7 @@ class Base extends Container {
     }
 
     get right() {
-        return (this.x - (this.displayWidth * this.originX)) + this.displayWidth;
+        return this.left + GetDisplayWidth(this);
     }
 
     set right(value) {
@@ -120,7 +166,7 @@ class Base extends Container {
     }
 
     get centerX() {
-        return (this.left + this.right) / 2;
+        return this.left + (GetDisplayWidth(this) / 2);
     }
 
     set centerX(value) {
@@ -133,7 +179,7 @@ class Base extends Container {
     }
 
     get top() {
-        return this.y - (this.displayHeight * this.originY);
+        return this.y - (GetDisplayHeight(this) * this.originY);
     }
 
     set top(value) {
@@ -146,7 +192,7 @@ class Base extends Container {
     }
 
     get bottom() {
-        return (this.y - (this.displayHeight * this.originY)) + this.displayHeight;
+        return this.top + GetDisplayHeight(this);
     }
 
     set bottom(value) {
@@ -159,7 +205,7 @@ class Base extends Container {
     }
 
     get centerY() {
-        return (this.top + this.bottom) / 2;
+        return this.top + (GetDisplayHeight(this) / 2);
     }
 
     set centerY(value) {
@@ -171,52 +217,44 @@ class Base extends Container {
         return this;
     }
 
-    pin(gameObject) {
-        super.add(gameObject);
-        return this;
+    get innerLeft() {
+        return this.left + (this.space.left * this.scaleX);
     }
 
-    addBackground(gameObject) {
-        if (this.backgroundChildren === undefined) {
-            this.backgroundChildren = [];
-        }
-
-        super.add(gameObject);
-
-        var config = this.getSizerConfig(gameObject);
-        config.parent = this;
-        this.backgroundChildren.push(gameObject);
-        return this;
+    get innerRight() {
+        return this.right - (this.space.right * this.scaleX);
     }
-}
 
-var methods = {
-    getSizerConfig: GetSizerConfig,
-    pushIntoBounds: PushIntoBounds,
-    drawBounds: DrawBounds,
-    getChildrenWidth: GetChildrenWidth,
-    getChildrenHeight: GetChildrenHeight,
-    addChildrenMap: AddChildrenMap,
-    addElement: AddChildrenMap,
-    getElement: GetElement,
-    getAllChildrenSizers: GetAllChildrenSizers,
-    getChildrenSizers: GetChildrenSizers,
-    layout: Layout,
-    layoutBackgrounds: LayoutBackgrounds,
-    layoutInit: LayoutInit,
-    _layoutInit: _layoutInit,
-    popUp: PopUp,
-    scaleDownDestroy: ScaleDownDestroy,
-    fadeIn: FadeIn,
-    fadeOutDestroy: FadeOutDestroy,
-    isInTouching: IsInTouching,
-    getTopmostSizer: GetTopmostSizer,
-    setDraggable: SetDraggable,
+    get innerTop() {
+        return this.top + (this.space.top * this.scaleY);
+    }
+
+    get innerBottom() {
+        return this.bottom - (this.space.bottom * this.scaleY);
+    }
+
+    get innerWidth() {
+        return (this.width - this.space.left - this.space.right) * this.scaleX;
+    }
+
+    get innerHeight() {
+        return (this.height - this.space.top - this.space.bottom) * this.scaleY;
+    }
+
+    get minInnerWidth() {
+        var result = (this.minWidth - this.space.left - this.space.right) * this.scaleX;
+        return Math.max(result, 0);
+    }
+
+    get minInnerHeight() {
+        var result = (this.minHeight - this.space.top - this.space.bottom) * this.scaleY;
+        return Math.max(result, 0);
+    }
 }
 
 Object.assign(
     Base.prototype,
-    methods
+    Methods
 );
 
 export default Base;

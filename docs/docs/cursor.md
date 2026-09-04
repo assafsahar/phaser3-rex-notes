@@ -2,7 +2,7 @@
 
 Custom cursor, built-in feature of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
@@ -42,4 +42,24 @@ Use pointer (hand cursor).
 gameObject.setInteractive({
     useHandCursor: true
 });
+```
+
+### Change current cursor
+
+```javascript
+scene.input.canvas.style.cursor = cursor;
+```
+
+- `cursor` : CSSString
+
+or
+
+```javascript
+scene.input.setCursor(gameObject.input);
+```
+
+### Reset to default cursor
+
+```javascript
+scene.input.resetCursor(null, true);
 ```

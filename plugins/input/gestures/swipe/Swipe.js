@@ -4,17 +4,31 @@ import VelocityMethods from './VelocityMethods.js';
 import DIRMODE from '../../../utils/math/angle/angletodirections/Const.js';
 import AngleToDirections from '../../../utils/math/angle/angletodirections/AngleToDirections.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
-const RadToDeg = Phaser.Math.RadToDeg;
+import { Math as PhaserMath, Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
+const RadToDeg = PhaserMath.RadToDeg;
 
 class Swipe extends OnePointerTracer {
-    constructor(scene, config) {
-        super(scene, config);
+    constructor(gameObject, config) {
+        super(gameObject, config);
 
         var self = this;
         var stateConfig = {
             states: {
                 IDLE: {
+                    enter: function () {
+                        self.x = 0;
+                        self.y = 0;
+                        self.worldX = 0;
+                        self.worldY = 0;
+                    },
+                    exit: function () {
+                        var pointer = self.lastPointer;
+                        self.x = pointer.x;
+                        self.y = pointer.y;
+                        self.worldX = pointer.worldX;
+                        self.worldY = pointer.worldY;
+                    }
                 },
                 BEGIN: {
                     enter: function () {
@@ -25,7 +39,7 @@ class Swipe extends OnePointerTracer {
                     enter: function () {
                         self.start();
                         self.updateDirectionStates();
-                        self.emit('swipe', self);
+                        self.emit('swipe', self, self.gameObject, self.lastPointer);
                     },
 
                     exit: function () {
@@ -46,8 +60,8 @@ class Swipe extends OnePointerTracer {
     resetFromJSON(o) {
         super.resetFromJSON(o);
         this.setDragThreshold(GetValue(o, 'threshold', 10));
-        this.setMinDragVelocity(GetValue(o, 'velocityThreshold', 1000));
-        this.setDirectionMode(GetValue(o, 'direction', '8dir'));
+        this.setVelocityThreshold(GetValue(o, 'velocityThreshold', 1000));
+        this.setDirectionMode(GetValue(o, 'dir', '8dir'));
         return this;
     }
 
@@ -61,31 +75,39 @@ class Swipe extends OnePointerTracer {
 
     onDrag() {
         if (this.state === BEGIN) {
-            if (!this.vaildDrag) {
-                this.vaildDrag = (this.dragThreshold === 0) || (this.pointer.getDistance() >= this.dragThreshold);
+            if (!this.validDrag) {
+                this.validDrag = (this.dragThreshold === 0) || (this.pointer.getDistance() >= this.dragThreshold);
             }
-            if (this.vaildDrag && (this.dragVelocity > this.minDragVelocity)) {
+            if (this.validDrag && (this.dragVelocity > this.velocityThreshold)) {
                 this.state = RECOGNIZED;
             }
         }
     }
 
     postUpdate(time, delta) {
+        if ((!this.isRunning) || (!this.enable)) {
+            return;
+        }
         // Clear RECOGNIZED after update()
         if (this.state === RECOGNIZED) {
             this.state = IDLE;
         }
     }
 
-    get isSwiped() {
+    get isSwiping() {
         return (this.state === RECOGNIZED);
+    }
+
+    // Backward compatible
+    get isSwiped() {
+        return this.isSwiping;
     }
 
     get dragVelocity() {
         var velocity;
         switch (this.dirMode) {
-            case 0: velocity = this.getVelocityX(); break; // up & down
-            case 1: velocity = this.getVelocityY(); break; // left & right
+            case 0: velocity = this.getVelocityY(); break; // up & down
+            case 1: velocity = this.getVelocityX(); break; // left & right
             default: velocity = this.getVelocity(); break; // 4 dir, 8 dir
         }
         return velocity;
@@ -96,8 +118,8 @@ class Swipe extends OnePointerTracer {
         return this;
     }
 
-    setMinDragVelocity(velocity) {
-        this.minDragVelocity = velocity;
+    setVelocityThreshold(velocity) {
+        this.velocityThreshold = velocity;
         return this;
     }
 
@@ -126,7 +148,7 @@ class Swipe extends OnePointerTracer {
 
 Object.assign(
     Swipe.prototype,
-    VelocityMethods,
+    VelocityMethods
 );
 
 const IDLE = 'IDLE';

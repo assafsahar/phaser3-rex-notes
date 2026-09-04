@@ -2,7 +2,7 @@
 
 Built-in keyboard events of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
@@ -10,20 +10,21 @@ Built-in keyboard events of phaser.
 
 - Is key-down/is key-up
     ```javascript
-    var keyObj = scene.input.keyboard.addKey('W');  // Get key object
-    var isDown = keyObj.isDown;
-    var isUp = keyObj.isUp;
+    var keyObject = scene.input.keyboard.addKey('W');  // Get key object
+    var isDown = keyObject.isDown;
+    var isUp = keyObject.isUp;
+    var shiftKey = keyObject.shiftKey;
     ```
 - Key is down after a duration
     ```javascript
-    var keyObj = scene.input.keyboard.addKey('W');  // Get key object
-    var isDown = scene.input.keyboard.checkDown(keyObj, duration);
+    var keyObject = scene.input.keyboard.addKey('W');  // Get key object
+    var isDown = scene.input.keyboard.checkDown(keyObject, duration);
     ```
 - On key-down/on key-up
     ```javascript
-    var keyObj = scene.input.keyboard.addKey('W');  // Get key object
-    keyObj.on('down', function(event) { /* ... */ });
-    keyObj.on('up', function(event) { /* ... */ });
+    var keyObject = scene.input.keyboard.addKey('W');  // Get key object
+    keyObject.on('down', function(event) { /* ... */ });
+    keyObject.on('up', function(event) { /* ... */ });
     ```
     or
     ```javascript
@@ -32,48 +33,66 @@ Built-in keyboard events of phaser.
     ```
 - Any key-down/any key-up
     ```javascript
-    scene.input.keyboard.on('keydown', function (eventName, event) { /* ... */ });
-    scene.input.keyboard.on('keyup', function (eventName, event) { /* ... */ });
+    scene.input.keyboard.on('keydown', function (event) { /* ... */ });
+    scene.input.keyboard.on('keyup', function (event) { /* ... */ });
     ```
-    - `eventName` : `'keydown-' + 'W'`, or `'keyup-' + 'W'`
+    - `event` : [KeyboardEvent](https://www.w3schools.com/jsref/obj_keyboardevent.asp)
+        - `event.code` : 'Key' + 'W'
 
 ### Key object
 
 - Get key object
     ```javascript
-    var keyObj = scene.input.keyboard.addKey('W');  // see `Key map` section
-    // var keyObj = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-    ```
-- Get key objects
-    ```javascript
-    var keys = scene.input.keyboard.addKeys('W,S,A,D');  // keys.W, keys.S, keys.A, keys.D
+    var keyObject = scene.input.keyboard.addKey('W');  // see `Key map` section
+    // var keyObject = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
     ```
     or
     ```javascript
-    var keys = scene.input.keyboard.addKeys({
-        up: 'up',
-        down: 'down',
-        left: 'left',
-        right: 'right'
-    });  // keys.up, keys.down, keys.left, keys.right
+    var keyObject = scene.input.keyboard.addKey('W', enableCapture, emitOnRepeat);
+    ```
+    - `enableCapture` : Automatically call `preventDefault` on the native DOM browser event for the key codes being added.
+    - `emitOnRepeat` : Controls if the Key will continuously emit a 'down' event while being held down (true), or emit the event just once (false, the default).
+- Get key objects
+    ```javascript
+    var keyObjects = scene.input.keyboard.addKeys('W,S,A,D');  // keyObjects.W, keyObjects.S, keyObjects.A, keyObjects.D
+    // var keyObjects = scene.input.keyboard.addKeys('W,S,A,D', enableCapture, emitOnRepeat);
+    ```
+    or
+    ```javascript
+    var keyObjects = scene.input.keyboard.addKeys({
+        up: 'W',
+        down: 'S',
+        left: 'A',
+        right: 'D'
+    });  // keyObjects.up, keyObjects.down, keyObjects.left, keyObjects.right
     ```
 - Remove key object
     ```javascript
     scene.input.keyboard.removeKey('W');
     // scene.input.keyboard.removeKey(Phaser.Input.Keyboard.KeyCodes.W);
+    // scene.input.keyboard.removeKey(key, destroy, removeCapture);
     ```
+    - `destroy` : Call `Key.destroy` on each removed Key object
+    - `removeCapture` : Remove all key captures for Key objects owened by this plugin?
+- Remove all key objects
+    ```javascript
+    scene.input.keyboard.removeAllKeys(true);
+    // scene.input.keyboard.removeAllKeys(destroy, removeCapture);
+    ```
+    - `destroy` : Call `Key.destroy` on each removed Key object
+    - `removeCapture` : Remove all key captures for Key objects owened by this plugin?
 - Key-down/key-up state
     ```javascript
-    var isDown = keyObj.isDown;
-    var isUp = keyObj.isUp;
+    var isDown = keyObject.isDown;
+    var isUp = keyObject.isUp;
     ```
 - Duration of key-down
     ```javascript
-    var duration = keyObj.getDuration(); // ms
+    var duration = keyObject.getDuration(); // ms
     ```
 - Enable/disable
     ```javascript
-    keyObj.enabled = enabled; // Set false to disable key event
+    keyObject.enabled = enabled; // Set false to disable key event
     ```
 
 ### Key object of cursorkeys
@@ -96,9 +115,9 @@ Built-in keyboard events of phaser.
 
 1. Key-down/key-up events of key object
     ```javascript
-    var keyObj = scene.input.keyboard.addKey('W');  // Get key object
-    keyObj.on('down', function(event) { /* ... */ });
-    keyObj.on('up', function(event) { /* ... */ });
+    var keyObject = scene.input.keyboard.addKey('W');  // Get key object
+    keyObject.on('down', function(event) { /* ... */ });
+    keyObject.on('up', function(event) { /* ... */ });
     ```
     - `event.stopImmediatePropagation()` : Stop any further listeners from being invoked in the current Scene.
     - `event.stopPropagation()` : Stop it reaching any other Scene.
@@ -108,14 +127,24 @@ Built-in keyboard events of phaser.
     scene.input.keyboard.on('keyup-' + 'W', function (event) { /* ... */ });
     ```
     - `event.stopImmediatePropagation()` : Stop any further listeners from being invoked in the current Scene.
-    - `event.stopPropagation()` : Stop it reaching any other Scene.    
+    - `event.stopPropagation()` : Stop it reaching any other Scene.
+    - Invoke `event.preventDefault()` to stop event propagation to native DOM.
 1. Any key-down/on key-up
     ```javascript
-    scene.input.keyboard.on('keydown', function (eventName, event) { /* ... */ });
-    scene.input.keyboard.on('keyup', function (eventName, event) { /* ... */ });
+    scene.input.keyboard.on('keydown', function (event) { /* ... */ });
+    scene.input.keyboard.on('keyup', function (event) { /* ... */ });
     ```
+    - `event.key` : `'a'`
+    - `event.keyCode` : `65`
+    - `event.code` : `'KeyA'`
     - `event.stopImmediatePropagation()` : Stop any further listeners from being invoked in the current Scene.
     - `event.stopPropagation()` : Stop it reaching any other Scene.
+
+### Destroy key object
+
+```javascript
+keyObject.destroy();
+```
 
 ### Key map
 
@@ -136,6 +165,6 @@ Built-in keyboard events of phaser.
 - `PRINT_SCREEN`
 - `INSERT`, `DELETE`
 - `ZERO`, `ONE`, `TWO`, `THREE`, `FOUR`, `FIVE`, `SIX`, `SEVEN`, `EIGHT`, `NINE`
-- `NUMPAD_ZERO`, `NUMPAD_ONE`, `NUMPAD_TWO`, `NUMPAD_THREE`, `NUMPAD_FOUR`, `NUMPAD_FIVE`, `NUMPAD_SIX`, `NUMPAD_SEVEN`, `NUMPAD_EIGHT`, `NUMPAD_NINE`
+- `NUMPAD_ZERO`, `NUMPAD_ONE`, `NUMPAD_TWO`, `NUMPAD_THREE`, `NUMPAD_FOUR`, `NUMPAD_FIVE`, `NUMPAD_SIX`, `NUMPAD_SEVEN`, `NUMPAD_EIGHT`, `NUMPAD_NINE`, `NUMPAD_ADD`, `NUMPAD_SUBTRACT`
 - `OPEN_BRACKET`, `CLOSED_BRACKET`
 - `SEMICOLON_FIREFOX`, `COLON`, `COMMA_FIREFOX_WINDOWS`, `COMMA_FIREFOX`, `BRACKET_RIGHT_FIREFOX`, `BRACKET_LEFT_FIREFOX`

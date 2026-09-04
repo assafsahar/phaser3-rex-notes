@@ -3,23 +3,25 @@ import RadToDeg from '../math/RadToDeg.js';
 import DIRMODE from '../math/angle/angletodirections/Const.js';
 import AngleToDirections from '../math/angle/angletodirections/AngleToDirections.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
-const GetDist = Phaser.Math.Distance.Between;
-const GetAngle = Phaser.Math.Angle.Between;
+import { Math as PhaserMath, Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
+const GetDist = PhaserMath.Distance.Between;
+const GetAngle = PhaserMath.Angle.Between;
 
 class VectorToCursorKeys extends CursorKeys {
-    constructor(config) {
-        super();
+    constructor(scene, config) {
+        super(scene);
         this.resetFromJSON(config);
     }
 
     resetFromJSON(o) {
         if (this.start == undefined) {
-            this.start = {};
+            this.start = { x: 0, y: 0 };
         }
         if (this.end == undefined) {
-            this.end = {};
+            this.end = { x: 0, y: 0 };
         }
+        this._enable = undefined;
         this.setEnable(GetValue(o, 'enable', true));
         this.setMode(GetValue(o, 'dir', '8dir'));
         this.setDistanceThreshold(GetValue(o, 'forceMin', 16));
@@ -57,19 +59,32 @@ class VectorToCursorKeys extends CursorKeys {
         return this;
     }
 
-    setEnable(e) {
-        if (e == undefined) {
-            e = true;
-        } else {
-            e = !!e;
-        }
-        if (e === this.enable) {
+    get enable() {
+        return this._enable;
+    }
+
+    set enable(e) {
+        if (this._enable === e) {
             return;
         }
-        if (e === false) {
+        if (!e) {
             this.clearVector();
         }
+        this._enable = e;
+        return this;
+    }
+
+    setEnable(e) {
+        if (e === undefined) {
+            e = true;
+        }
+
         this.enable = e;
+        return this;
+    }
+
+    toggleEnable() {
+        this.setEnable(!this.enable);
         return this;
     }
 
@@ -91,34 +106,43 @@ class VectorToCursorKeys extends CursorKeys {
     }
 
     setVector(x0, y0, x1, y1) {
-        this.clearVector();
         if (!this.enable) {
-            return this;
-        }
-        if (x0 === null) {
+            // Do nothing
             return this;
         }
 
+        if (x0 === null) {
+            // Clear all keys' state
+            this.clearVector();
+            return this;
+        }
+
+        // (0,0) -> (x0, y0)
         if (x1 === undefined) {
             x1 = x0;
             x0 = 0;
             y1 = y0;
             y0 = 0;
         }
+
         this.start.x = x0;
         this.start.y = y0;
         this.end.x = x1;
         this.end.y = y1;
-        if ((this.forceMin > 0) && (this.force < this.forceMin)) {
-            return this;
-        }
 
-        var dirStates = AngleToDirections(this.angle, this.dirMode, true);
-        for (var dir in dirStates) {
-            if (dirStates[dir]) {
-                this.setKeyState(dir, true);
+        if ((this.forceMin > 0) && (this.force < this.forceMin)) {
+            // No key pressed
+            this.clearAllKeysState();
+
+        } else {
+            // Update keys' state
+            this.noKeyDown = true;
+            var dirStates = AngleToDirections(this.angle, this.dirMode, true);
+            for (var dir in dirStates) {
+                this.setKeyState(dir, dirStates[dir]);
             }
         }
+
 
         return this;
     }
@@ -140,7 +164,7 @@ class VectorToCursorKeys extends CursorKeys {
     }
 
     get angle() {
-        return RadToDeg(this.rotation);; // -180 ~ 180
+        return RadToDeg(this.rotation); // -180 ~ 180
     }
 
     get octant() {

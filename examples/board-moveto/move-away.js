@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import BoardPlugin from '../../plugins/board-plugin.js';
 
 class Demo extends Phaser.Scene {
@@ -7,7 +8,7 @@ class Demo extends Phaser.Scene {
         })
     }
 
-    preload() {}
+    preload() { }
 
     create() {
         var config = {
@@ -117,11 +118,18 @@ class ChessA extends RexPlugins.Board.Shape {
         if (this.moveTo.isRunning) {
             return;
         }
+
         this.moveTo
             .once('complete', function () {
                 this.moveAway(tileX, tileY);
             }, this)
-            .moveAway(tileX, tileY, this.moveAwayMode);
+
+        if (this.moveAwayMode) {
+            this.moveTo.moveAway(tileX, tileY);
+        } else {
+            this.moveTo.moveCloser(tileX, tileY);
+        }
+
     }
 }
 

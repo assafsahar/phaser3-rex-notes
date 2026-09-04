@@ -1,6 +1,6 @@
 import ChessBank from './ChessBank.js';
 import ChessData from './ChessData.js';
-import IsUID from './IsUID';
+import IsUID from './IsUID.js';
 
 var GetChessData = function (gameObject) {
     // game object or uid
@@ -9,7 +9,7 @@ var GetChessData = function (gameObject) {
         return ChessBank.get(gameObject);
     } else {
         // game object
-        if (!gameObject.hasOwnProperty('rexChess')) {
+        if (!gameObject.hasOwnProperty('rexChess') || !gameObject.rexChess) {
             gameObject.rexChess = new ChessData(gameObject);
         }
         return gameObject.rexChess;

@@ -1,6 +1,7 @@
+import Phaser from 'phaser';
 import GridTablePlugin from '../../plugins/gridtable-plugin.js';
 
-const COLOR_PRIMARY = 0x4e342e;
+const COLOR_MAIN = 0x4e342e;
 const COLOR_LIGHT = 0x7b5e57;
 const COLOR_DARK = 0x260e04;
 
@@ -14,18 +15,15 @@ class Demo extends Phaser.Scene {
     preload() { }
 
     create() {
-        var newCellObject = function (cell) {
+        var onCellVisible = function (cell) {
             var scene = cell.scene;
-            var bg = scene.add.rectangle(0, 0, cell.width, cell.height, COLOR_PRIMARY)
+            var bg = scene.add.rectangle(0, 0, cell.width, cell.height, COLOR_MAIN)
                 .setStrokeStyle(2, COLOR_LIGHT)
                 .setOrigin(0);
             var txt = scene.add.text(5, 5, cell.index);
             var container = scene.add.container(0, 0, [bg, txt]);
-            return container;
-        }
 
-        var onCellVisible = function (cell) {
-            cell.setContainer(newCellObject(cell));
+            cell.setContainer(container);
             //console.log('Cell ' + cell.index + ' visible');
         };
         var table = this.add.rexGridTable(400, 300, 400, 250, {

@@ -1,16 +1,24 @@
-import GetSceneObject from '../../utils/system/GetSceneObject.js';
+import ComponentBase from '../../utils/componentbase/ComponentBase.js';
+import GetTickDelta from '../../utils/system/GetTickDelta.js';
+import IsPointerInBounds from '../../utils/input/IsPointerInBounds.js';
 
-const EE = Phaser.Events.EventEmitter;
-const GetValue = Phaser.Utils.Objects.GetValue;
-const DistanceBetween = Phaser.Math.Distance.Between;
+import { Math as PhaserMath, Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
+const DistanceBetween = PhaserMath.Distance.Between;
 
-class DragSpeed extends EE {
+class DragSpeed extends ComponentBase {
     constructor(gameObject, config) {
-        super();
-        this.gameObject = gameObject;
-        this.scene = GetSceneObject(gameObject);
+        super(gameObject, config);
+        // this.parent = gameObject;
 
-        gameObject.setInteractive(GetValue(config, "inputConfig", undefined));
+        this._enable = undefined;
+
+        this.rectBoundsInteractive = GetValue(config, 'rectBoundsInteractive', false);
+
+        if (!this.rectBoundsInteractive) {
+            gameObject.setInteractive(GetValue(config, "inputConfig", undefined));
+        }
+
         this.resetFromJSON(config);
         this.boot();
     }
@@ -25,34 +33,85 @@ class DragSpeed extends EE {
         this.preY = undefined;
         this.localX = undefined;
         this.localY = undefined;
-        this.setEnable(GetValue(o, "enable", true));
-        this.holdThreshold = GetValue(o, "holdThreshold", 50); // ms
+        this.justMoved = false;
+        this.setEnable(GetValue(o, 'enable', true));
+        this.holdThreshold = GetValue(o, 'holdThreshold', 50); // ms
+        this.pointerOutReleaseEnable = GetValue(o, 'pointerOutRelease', true);
         return this;
     }
 
     boot() {
-        this.gameObject.on('pointerdown', this.onPointIn, this);
-        this.gameObject.on('pointerover', this.onPointIn, this);
-        this.gameObject.on('pointerup', this.onPointOut, this);
-        this.gameObject.on('pointerout', this.onPointOut, this);
-        this.gameObject.on('pointermove', this.onPointerMove, this);
-        this.gameObject.on('destroy', this.destroy, this);
-        this.scene.events.on('preupdate', this.preupdate, this);
-    }
+        var scene = this.scene;
+        var gameObject = this.parent;
 
-    shutdown() {
-        super.shutdown();
-        if (this.scene) { // Scene might be destoryed
-            this.scene.events.off('preupdate', this.preupdate, this);
+        if (!this.rectBoundsInteractive) {
+            // Drag start only when pointer down
+            gameObject.on('pointerdown', this.onPointIn, this);
+
+            gameObject.on('pointerup', this.onPointOut, this);
+
+            if (this.pointerOutReleaseEnable) {
+                gameObject.on('pointerout', this.onPointOut, this);
+            }
+
+            gameObject.on('pointermove', this.onPointerMove, this);
+
+        } else {
+            scene.input.on('pointerdown', this.onPointIn, this);
+
+            scene.input.on('pointerup', this.onPointOut, this);
+
+            scene.input.on('pointermove', this.onPointerMove, this);
         }
-        this.pointer = undefined;
-        this.gameObject = undefined;
-        this.scene = undefined;
-        // gameObject events will be removed when this gameObject destroyed 
+
+        scene.sys.events.on('preupdate', this.preupdate, this);
     }
 
-    destroy() {
-        this.shutdown();
+    shutdown(fromScene) {
+        // Already shutdown
+        if (this.isShutdown) {
+            return;
+        }
+
+        var scene = this.scene;
+        var gameObject = this.parent;
+
+        if (!this.rectBoundsInteractive) {
+            // GameObject events will be removed when this gameObject destroyed 
+            // gameObject.off('pointerdown', this.onPointIn, this);
+            // gameObject.off('pointerup', this.onPointOut, this);
+            // gameObject.off('pointerout', this.onPointOut, this);
+            // gameObject.off('pointermove', this.onPointerMove, this);
+
+        } else {
+            scene.input.off('pointerdown', this.onPointIn, this);
+
+            scene.input.off('pointerup', this.onPointOut, this);
+
+            scene.input.off('pointermove', this.onPointerMove, this);
+        }
+
+        scene.sys.events.off('preupdate', this.preupdate, this);
+
+        this.pointer = undefined;
+
+        super.shutdown(fromScene);
+    }
+
+    get enable() {
+        return this._enable;
+    }
+
+    set enable(e) {
+        if (this._enable === e) {
+            return;
+        }
+
+        if (!e) {
+            this.isInTouched = false;
+            this.pointer = undefined;
+        }
+        this._enable = e;
     }
 
     setEnable(e) {
@@ -60,16 +119,20 @@ class DragSpeed extends EE {
             e = true;
         }
 
-        if (this.enable === e) {
-            return this;
-        }
-
-        if (!e) {
-            this.isInTouched = false;
-            this.pointer = undefined;
-        }
         this.enable = e;
-        this.gameObject.input.enabled = e;
+        return this;
+    }
+
+    toggleEnable() {
+        this.setEnable(!this.enable);
+        return this;
+    }
+
+    setPointerOutReleaseEnable(enable) {
+        if (enable === undefined) {
+            enable = true;
+        }
+        this.pointerOutReleaseEnable = enable;
         return this;
     }
 
@@ -78,11 +141,7 @@ class DragSpeed extends EE {
     }
 
     get isUp() {
-        return this.pointer === undefined;
-    }
-
-    get justMoved() {
-        return this.pointer && this.pointer.justMoved;
+        return !this.isDown;
     }
 
     get dx() {
@@ -94,8 +153,7 @@ class DragSpeed extends EE {
     }
 
     get dt() {
-        var game = this.scene.sys.game;
-        var delta = game.loop.delta;
+        var delta = GetTickDelta(this.scene);
         return delta;
     }
 
@@ -118,47 +176,73 @@ class DragSpeed extends EE {
 
     // internal
     onPointIn(pointer, localX, localY) {
-        if (!pointer.isDown ||
+        if ((!this.enable) ||
+            (!pointer.isDown) ||
             (this.pointer !== undefined)) {
             return;
         }
+
+        if (
+            this.rectBoundsInteractive &&
+            !IsPointerInBounds(this.parent, pointer)
+        ) {
+            return;
+        }
+
         this.pointer = pointer;
         this.localX = localX;
         this.localY = localY;
     }
 
     onPointOut(pointer) {
-        if (this.pointer !== pointer) {
+        if ((!this.enable) ||
+            (this.pointer !== pointer)) {
             return;
         }
         this.pointer = undefined;
     }
 
     onPointerMove(pointer, localX, localY) {
-        if (!pointer.isDown ||
+        if ((!this.enable) ||
+            (!pointer.isDown) ||
             (this.pointer !== pointer)) {
             return;
         }
+
+        if (
+            this.rectBoundsInteractive &&
+            this.pointerOutReleaseEnable &&
+            !IsPointerInBounds(this.parent, pointer)
+        ) {
+            this.onPointOut(pointer);
+            return;
+        }
+
         this.localX = localX;
         this.localY = localY;
     }
 
     preupdate(time, delta) {
+        if (!this.enable) {
+            return;
+        }
+
         var pointer = this.pointer;
+        this.justMoved = false;
         if (pointer && (!this.isInTouched)) {
-            // touch start
-            this.x = pointer.x;
-            this.y = pointer.y;
-            this.preX = pointer.x;
-            this.preY = pointer.y;
+            // Touch start
+            this.x = pointer.worldX;
+            this.y = pointer.worldY;
+            this.preX = pointer.worldX;
+            this.preY = pointer.worldY;
             this.isInTouched = true;
             this.holdStartTime = undefined;
             this.emit('touchstart', pointer, this.localX, this.localY);
 
         } else if (pointer && this.isInTouched) {
-            // in touch
+            // In touch
             if ((this.x === pointer.x) && (this.y === pointer.y)) {
-                // hold
+                // Hold
                 if (this.holdStartTime === undefined) {
                     this.holdStartTime = time;
                 } else if (time - this.holdStartTime > this.holdThreshold) {
@@ -166,17 +250,18 @@ class DragSpeed extends EE {
                     this.preY = this.y;
                 }
             } else {
-                // move
+                // Move
                 this.preX = this.x;
                 this.preY = this.y;
-                this.x = pointer.x;
-                this.y = pointer.y;
+                this.x = pointer.worldX;
+                this.y = pointer.worldY;
                 this.holdStartTime = undefined;
+                this.justMoved = true;
                 this.emit('touchmove', pointer, this.localX, this.localY);
             }
 
         } else if ((!pointer) && this.isInTouched) {
-            // touch end
+            // Touch end
             this.isInTouched = false;
             this.holdStartTime = undefined;
             this.emit('touchend', pointer);

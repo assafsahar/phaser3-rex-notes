@@ -1,8 +1,4 @@
-var GetElement = function (mapNameList) {
-    if (this.childrenMap === undefined) {
-        return undefined;
-    }
-
+var GetElement = function (mapNameList, recursive) {
     if (typeof (mapNameList) === 'string') {
         mapNameList = mapNameList.split('.');
     }
@@ -10,26 +6,51 @@ var GetElement = function (mapNameList) {
         return undefined;
     }
 
+    if (recursive === undefined) {
+        recursive = false;
+    }
+
     var name = mapNameList.shift(),
-        element;
-    if (name.charAt(0) === '#') {
+        element = null;
+    if (name.charAt(0) === '#') { // Get element by name
         name = name.substring(1);
-        var elements = GetAllElements(this.childrenMap, tmpArray);
-        for (var i = 0, cnt = elements.length; i < cnt; i++) {
-            if (elements[i].name === name) {
-                element = elements[i];
-                break;
+        element = this.getByName(name, recursive);
+    } else if ((mapNameList.length === 0) && recursive) { // Get element by single key and recursive        
+        var childrenMap = this.childrenMap;
+        if (childrenMap) {
+            var queue = [childrenMap];
+            var child;
+            while (queue.length) {
+                childrenMap = queue.shift();
+
+                for (var key in childrenMap) {
+                    child = childrenMap[key];
+                    if (key === name) {
+                        element = child;
+                        break;  // Leave for-loop
+                    } else if (child && (typeof (child) === 'object') && child.childrenMap) {
+                        queue.push(child.childrenMap);
+                    }
+                }
+
+                if (element) { // leave while-loop
+                    break;
+                }
             }
         }
-        tmpArray.length = 0;
-    } else if (name.indexOf('[') === (-1)) {
-        element = this.childrenMap[name];
-    } else { // name[]
+
+    } else if (name.indexOf('[') === (-1)) { // Get element by key
+        if (this.childrenMap) {
+            element = this.childrenMap[name];
+        }
+    } else { // Get element by key[]
         var innerMatch = name.match(RE_OBJ);
         if (innerMatch != null) {
-            var elements = this.childrenMap[innerMatch[1]];
-            if (elements) {
-                element = elements[innerMatch[2]];
+            if (this.childrenMap) {
+                var elements = this.childrenMap[innerMatch[1]];
+                if (elements) {
+                    element = elements[innerMatch[2]];
+                }
             }
         }
     }
@@ -43,23 +64,6 @@ var GetElement = function (mapNameList) {
     }
 };
 
-var GetAllElements = function (children, out) {
-    if (out === undefined) {
-        out = [];
-    }
-    var child;
-    for (var key in children) {
-        child = children[key];
-        if (child.name !== undefined) {
-            out.push(child);
-        } else {
-            GetAllElements(child, out);
-        }
-    }
-    return out;
-}
-
 const RE_OBJ = /(\S+)\[(\d+)\]/i;
-var tmpArray = [];
 
 export default GetElement;

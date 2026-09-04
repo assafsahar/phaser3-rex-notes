@@ -1,13 +1,14 @@
 import CSVToHashTable from './csvtohashtable.js';
 
-class CSVToHashTablePlugin extends Phaser.Plugins.BasePlugin {
+import { Plugins as PhaserPlugins } from 'phaser';
+class CSVToHashTablePlugin extends PhaserPlugins.BasePlugin {
     constructor(pluginManager) {
         super(pluginManager);
     }
 
     start() {
         var eventEmitter = this.game.events;
-        eventEmitter.once('destroy', this.destroy, this);
+        eventEmitter.on('destroy', this.destroy, this);
     }
 
     add(config) {

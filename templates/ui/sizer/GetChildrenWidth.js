@@ -9,27 +9,55 @@ var GetChildrenWidth = function (minimumMode) {
 
     var result = 0;
     var children = this.sizerChildren;
-    var child, padding, childWidth;
+    var child, sizerConfig, proportion, padding, childWidth;
+    var hasUnknownChildWidth = false;
+    var totalProportion = this.childrenProportion; // To update this.hasProportion0Child member
+
     if (this.orientation === 0) { // x
         // Get summation of minimum width
+        var isFirstChild = true;
         for (var i = 0, cnt = children.length; i < cnt; i++) {
             child = children[i];
-            if (child.rexSizer.hidden) {
+            if (!child.hasOwnProperty('rexSizer')) {
                 continue;
             }
 
-            if (
-                (child.rexSizer.proportion === 0) ||
-                (minimumMode && (child.rexSizer.proportion > 0))
-            ) {
-                childWidth = (child.isRexSizer) ?
-                    Math.max(child.minWidth, child.childrenWidth) :
-                    child.width;
+            sizerConfig = child.rexSizer;
+            if (sizerConfig.hidden) {
+                continue;
+            }
+
+            proportion = sizerConfig.proportion;
+            if ((proportion === 0) || minimumMode) {
+                childWidth = this.getChildWidth(child);
+                if ((sizerConfig.fitRatio > 0) && (!sizerConfig.resolved)) {
+                    childWidth = undefined;
+                }
+
+                if (childWidth === undefined) {
+                    if ((proportion !== 0) && (!this.hasProportion0Child)) {
+                        childWidth = 0;
+                    } else {
+                        hasUnknownChildWidth = true;
+                    }
+                }
             } else {
                 childWidth = 0;
             }
+
+            if (hasUnknownChildWidth) {
+                continue;
+            }
+
             padding = child.rexSizer.padding;
-            childWidth += (padding.left + padding.right);
+            childWidth += (padding.left + padding.right) * this.scaleX;
+
+            if (isFirstChild) {
+                isFirstChild = false;
+            } else {
+                childWidth += (this.space.item * this.scaleX);
+            }
+
             result += childWidth;
         }
     } else {
@@ -39,20 +67,33 @@ var GetChildrenWidth = function (minimumMode) {
             if (!child.hasOwnProperty('rexSizer')) {
                 continue;
             }
-            if (child.rexSizer.hidden) {
+
+            sizerConfig = child.rexSizer;
+            if (sizerConfig.hidden) {
                 continue;
             }
 
-            childWidth = (child.isRexSizer) ?
-                Math.max(child.minWidth, child.childrenWidth) :
-                child.width;
+            childWidth = this.getChildWidth(child);
+            if (childWidth === undefined) {
+                hasUnknownChildWidth = true;
+            }
 
-            padding = child.rexSizer.padding;
-            childWidth += (padding.left + padding.right);
+            if (hasUnknownChildWidth) {
+                continue;
+            }
+
+            padding = sizerConfig.padding;
+            childWidth += (padding.left + padding.right) * this.scaleX;
+
             result = Math.max(childWidth, result);
         }
     }
-    return result;
+
+    if (hasUnknownChildWidth) {
+        return undefined;
+    }
+
+    return result + (this.space.left + this.space.right) * this.scaleX;
 }
 
 export default GetChildrenWidth;

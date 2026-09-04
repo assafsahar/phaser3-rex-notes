@@ -1,4 +1,9 @@
+import Phaser from 'phaser';
 import UIPlugin from '../../templates/ui/ui-plugin.js';
+
+const COLOR_MAIN = 0x4e342e;
+const COLOR_LIGHT = 0x7b5e57;
+const COLOR_DARK = 0x260e04;
 
 class Demo extends Phaser.Scene {
     constructor() {
@@ -8,36 +13,66 @@ class Demo extends Phaser.Scene {
 
     }
 
-    preload() {}
+    preload() { }
 
     create() {
-        var label0 = createLabel(this, 'Label0').setPosition(200, 300);
-        var label1 = createLabel(this, 'Label1').alignTop(label0.top).alignLeft(label0.right);
+        this.rexUI.add.sizer({
+            x: 400, y: 100,
+            width: 700, height: 50,
+            orientation: 0
+        })
+            .add(
+                createLabel(this, 'b0', 'left'),  // child
+                { proportion: 1, expand: true }
+            )
+            .add(
+                createLabel(this, 'b1', 'center'),  // child
+                { proportion: 1, expand: true }
+            )
+            .add(
+                createLabel(this, 'b2', 'right'),  // child
+                { proportion: 1, expand: true }
+            )
+            .layout()
 
-        var graphics = this.add.graphics();
-        label0.drawBounds(graphics, 0xff0000);
-        label1.drawBounds(graphics, 0xff0000);
+        this.rexUI.add.sizer({
+            x: 400, y: 300,
+            width: 300, height: 50,
+            orientation: 1
+        })
+            .setOrigin(0.5, 0)
+            .add(
+                createLabel(this, 'b0', 'left'),  // child
+                { proportion: 1, expand: true }
+            )
+            .add(
+                createLabel(this, 'b1', 'center'),  // child
+                { proportion: 1, expand: true }
+            )
+            .add(
+                createLabel(this, 'b2', 'right'),  // child
+                { proportion: 1, expand: true }
+            )
+            .layout()
     }
 
-    update() {}
+    update() { }
 }
 
-var createLabel = function (scene, text) {
+var createLabel = function (scene, text, align) {
     return scene.rexUI.add.label({
-            background: scene.rexUI.add.roundRectangle(0, 0, 2, 2, 20, 0x1a237e),
-            text: scene.add.text(0, 0, text, {
-                fontSize: '24px'
-            }),
-            icon: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 20, 0x534bae),
-            space: {
-                left: 20,
-                right: 20,
-                top: 20,
-                bottom: 20,
-                icon: 10
-            }
-        })
-        .layout();
+        background: scene.rexUI.add.roundRectangle(0, 0, 2, 2, 20).setStrokeStyle(2, COLOR_LIGHT),
+        text: scene.add.text(0, 0, text),
+        icon: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 10, COLOR_LIGHT),
+        align: align,
+        space: {
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: 20,
+            icon: 10
+        }
+    });
 }
 
 var config = {

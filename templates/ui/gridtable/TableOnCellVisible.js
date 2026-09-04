@@ -1,23 +1,36 @@
 var TableOnCellVisible = function (table) {
-    table.on('cellvisible', function (cell) {
+    table.on('cellvisible', function (cell, cellContainer, table) {
         var callback = this.createCellContainerCallback;
         var scope = this.createCellContainerCallbackScope;
         cell.item = this.items[cell.index];
-        var container;
+        cell.items = this.items;
+        cell.gridTable = this;
+        var cellContainer;
         if (scope) {
-            container = callback.call(scope, cell);
+            cellContainer = callback.call(scope, cell, cellContainer, this);
         } else {
-            container = callback(cell);
+            cellContainer = callback(cell, cellContainer, this);
         }
-        if (container.setOrigin) {
-            container.setOrigin(0);
-        }
-        if (container.isRexSizer) {
-            container.layout(); // Use original size
+
+        if (cellContainer) {
+            if (cell.cellContainerAlign == null) {
+                if (cellContainer.isRexSizer && !cellContainer.dirty) {
+                    cellContainer.changeOrigin(0); // Won't be layout later
+                } else if (cellContainer.setOrigin) {
+                    cellContainer.setOrigin(0);
+                }
+
+            }
+
+            if (cellContainer.isRexSizer) {
+                cellContainer.layout(); // Use original size
+            }
         }
 
         cell.item = undefined;
-        cell.setContainer(container);
+        cell.items = undefined;
+        cell.gridTable = undefined;
+        cell.setContainer(cellContainer);
     }, this);
 }
 export default TableOnCellVisible;

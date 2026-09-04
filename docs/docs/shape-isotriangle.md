@@ -2,16 +2,14 @@
 
 Iso-triangle shape, built-in game object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
-### Create shape
-
-### Add shape object
+### Create shape object
 
 ```javascript
-var isoTriangle = scene.add.isotriangle(x, y, size, height, reversed, fillTop, fillLeft, fillRight);
+var isoTriangle = scene.add.isotriangle(x, y, width, height, reversed, fillTop, fillLeft, fillRight);
 ```
 
 ### Custom class
@@ -19,8 +17,8 @@ var isoTriangle = scene.add.isotriangle(x, y, size, height, reversed, fillTop, f
 - Define class
     ```javascript
     class MyIsoTriangle extends Phaser.GameObjects.IsoTriangle {
-        constructor(scene, x, y, size, height, reversed, fillTop, fillLeft, fillRight) {
-            super(scene, x, y, size, height, reversed, fillTop, fillLeft, fillRight);
+        constructor(scene, x, y, width, height, reversed, fillTop, fillLeft, fillRight) {
+            super(scene, x, y, width, height, reversed, fillTop, fillLeft, fillRight);
             // ...
             scene.add.existing(this);
         }
@@ -34,7 +32,7 @@ var isoTriangle = scene.add.isotriangle(x, y, size, height, reversed, fillTop, f
         - If it has a `preUpdate` method, it will be added to the Update List.
 - Create instance
     ```javascript
-    var isoTriangle = new MyIsoTriangle(scene, x, y, size, height, reversed, fillTop, fillLeft, fillRight);
+    var isoTriangle = new MyIsoTriangle(scene, x, y, width, height, reversed, fillTop, fillLeft, fillRight);
     ```
 
 ### Set color
@@ -51,6 +49,18 @@ var isoTriangle = scene.add.isotriangle(x, y, size, height, reversed, fillTop, f
 
 !!! warning "No tint methods"
     Uses `isoTriangle.setFillStyle(fillTop, fillLeft, fillRight)` to change color.
+
+### Alpha
+
+- Get
+    ```javascript
+    var alpha = isoTriangle.alpha;
+    ```
+- Set
+    ```javascript
+    isoTriangle.setAlpha(alpha);
+    // isoTriangle.alpha = alpha;
+    ```
 
 ### Projection
 
@@ -79,10 +89,35 @@ var isoTriangle = scene.add.isotriangle(x, y, size, height, reversed, fillTop, f
    ```
    or
    ```javascript
-   isotrianhle.reversed = reversed;
+   isoTriangle.reversed = reversed;
    ```
    - Set `true` to render upside down.
+
+### Display size
+
+- Get
+    ```javascript
+    var width = isoTriangle.displayWidth;
+    var height = isoTriangle.displayHeight;
+    ```
+- Set
+    ```javascript
+    isoTriangle.setDisplaySize(width, height);
+    ```
+    or
+    ```javascript
+    isoTriangle.displayWidth = width;
+    isoTriangle.displayHeight = height;
+    ```
 
 ### Other properties
 
 See [game object](gameobject.md)
+
+### Create mask
+
+See [mask](mask.md)
+
+### Shader effects
+
+Support [internal and external filters](shader-builtin.md)

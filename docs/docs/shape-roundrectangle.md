@@ -5,11 +5,9 @@ Round rectangle shape.
 - Author: Rex
 - Game object
 
-## Source code
+## Live demos
 
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/roundrectangle-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexroundrectangleplugin.min.js)
-
-[Class](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/roundrectangle.js)
+- [Round rectangle](https://codepen.io/rexrainbow/pen/ZqqJjG)
 
 ## Usage
 
@@ -17,32 +15,88 @@ Round rectangle shape.
 
 ### Install plugin
 
-Install plugin in [configuration of game](game.md#configuration)
+#### Load minify file
+
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.plugin('rexroundrectangleplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexroundrectangleplugin.min.js', true);
+    ```
+- Add shape object
+    ```javascript
+    var rect = scene.add.rexRoundRectangle(x, y, width, height, radius, fillColor, fillAlpha);
+    ```
+
+#### Import plugin
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import RoundRectanglePlugin from 'phaser4-rex-plugins/plugins/roundrectangle-plugin.js';
+    var config = {
+        // ...
+        plugins: {
+            global: [{
+                key: 'rexRoundRectanglePlugin',
+                plugin: RoundRectanglePlugin,
+                start: true
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add shape object
+    ```javascript
+    var rect = scene.add.rexRoundRectangle(x, y, width, height, radius, fillColor, fillAlpha);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import RoundRectangle from 'phaser4-rex-plugins/plugins/roundrectangle.js';
+    ```
+- Add shape object
+    ```javascript    
+    var rect = new RoundRectangle(scene, x, y, width, height, radius, fillColor, fillAlpha);
+    scene.add.existing(rect);
+    ```
+
+### Create shape object
 
 ```javascript
-var config = {
-    // ...
-    plugins: {
-        global: [{
-            key: 'rexRoundRectanglePlugin',
-            plugin: RoundRectanglePlugin,
-            start: true
-        },
-        // ...
-        ]
-    }
-    // ...
-};
-var game = new Phaser.Game(config);
+var rect = scene.add.rexRoundRectangle(x, y, width, height, radius, fillColor, fillAlpha);
 ```
 
-### Create shape
-
-### Add shape object
+or
 
 ```javascript
-var rect = scene.add.rexRoundRectangle(x, y, width, height, radius, fillColor);
-// var rect = scene.add.rexRoundRectangle(x, y, width, height, radius, fillColor, fillAlpha);
+var rect = scene.add.rexRoundRectangle({
+    x: 0,
+    y: 0,
+    width: undefined,
+    height: undefined,
+    radius: 0,
+
+    color: undefined,
+    alpha: undefined,
+
+    strokeColor: undefined,
+    strokeAlpha: undefined,
+    strokeWidth: 2,
+
+    dashPattern: undefined,
+    dashOffset: undefined,
+});
 ```
 
 - `width`, `height` : Size of rectangle.
@@ -102,8 +156,24 @@ var rect = scene.add.rexRoundRectangle(x, y, width, height, radius, fillColor);
                 iteration: 0
             }
             ```
+            - `radius` : 
+                - `0`  : No round corner
+                - `> 0` : Convex round corner
+                - `< 0` : Concave round corner
             - `iteration` : Number of interpolation points in each round corner. Default value is `4`.
                 - `0` : Draw a straight line instead of arc.
+- `dashPattern` : Default style is solid line.
+    - An array 
+        - `[drawLength, skipLength]`, or 
+        - `[drawLengthA, skipLengthA, drawLengthB, skipLengthB, ...]`
+    - An plain object
+        ```javascript
+        {
+            segments: 10,
+            drawRatio: 0.5
+        }
+        ```
+- `dashOffset` : Offset of 1st dashed segment. Default value is `0`
 
 #### Deform
 
@@ -139,8 +209,8 @@ var rect = scene.add.rexRoundRectangle(x, y, width, height, radius, fillColor);
 - Define class
     ```javascript
     class MyRoundRectangle extends RexPlugins.GameObjects.RoundRectangle {
-        constructor(x, y, width, height, radius, fillColor, fillAlpha) {
-            super(x, y, width, height, radius, fillColor, fillAlpha);
+        constructor(scene, x, y, width, height, radius, fillColor, fillAlpha) {
+            super(scene, x, y, width, height, radius, fillColor, fillAlpha);
             // ...
             scene.add.existing(this);
         }
@@ -154,7 +224,7 @@ var rect = scene.add.rexRoundRectangle(x, y, width, height, radius, fillColor);
         - If it has a `preUpdate` method, it will be added to the Update List.
 - Create instance
     ```javascript
-    var rect = new MyRoundRectangle(x, y, width, height, radius, fillColor, fillAlpha);
+    var rect = new MyRoundRectangle(scene, x, y, width, height, radius, fillColor, fillAlpha);
     ```
 
 ### Color
@@ -163,10 +233,15 @@ var rect = scene.add.rexRoundRectangle(x, y, width, height, radius, fillColor);
     - Get
         ```javascript
         var color = rect.fillColor;
+        var alpha = rect.fillAlpha;
         ```
     - Set
         ```javascript
         rect.setFillStyle(color, alpha);
+        ```
+    - Clear
+        ```javascript
+        rect.setFillStyle();
         ```
 - Stroke color
     - Get
@@ -177,9 +252,25 @@ var rect = scene.add.rexRoundRectangle(x, y, width, height, radius, fillColor);
         ```javascript
         rect.setStrokeStyle(lineWidth, color, alpha);
         ```
+    - Clear
+        ```javascript
+        rect.setStrokeStyle();
+        ```
 
 !!! warning "No tint methods"
     Uses `rect.setFillStyle(color, alpha)` to change color.
+
+### Alpha
+
+- Get
+    ```javascript
+    var alpha = rect.alpha;
+    ```
+- Set
+    ```javascript
+    rect.setAlpha(alpha);
+    // rect.alpha = alpha;
+    ```
 
 ### Size
 
@@ -198,11 +289,32 @@ var rect = scene.add.rexRoundRectangle(x, y, width, height, radius, fillColor);
     rect.height = height;
     ```
 
+### Display size
+
+- Get
+    ```javascript
+    var width = rect.displayWidth;
+    var height = rect.displayHeight;
+    ```
+- Set
+    ```javascript
+    rect.setDisplaySize(width, height);
+    ```
+    or
+    ```javascript
+    rect.displayWidth = width;
+    rect.displayHeight = height;
+    ```
+
 ### Radius
 
 - Get
     ```javascript
     var radius = rect.radius;
+    var radiusTL = rect.radiusTL;
+    var radiusTR = rect.radiusTR;
+    var radiusBL = rect.radiusBL;
+    var radiusBR = rect.radiusBR;
     ```
     or
     ```javascript
@@ -212,22 +324,33 @@ var rect = scene.add.rexRoundRectangle(x, y, width, height, radius, fillColor);
     - `cornerRadius` : JSON object of 4 corners.
         ```javascript
         {
-            tl: {x : radiusX, y: radiusY},
-            tr: {x : radiusX, y: radiusY},
-            bl: {x : radiusX, y: radiusY},
-            br: {x : radiusX, y: radiusY},
+            tl: {x : radiusX, y: radiusY, convex : true},
+            tr: {x : radiusX, y: radiusY, convex : true},
+            bl: {x : radiusX, y: radiusY, convex : true},
+            br: {x : radiusX, y: radiusY, convex : true},
         }
         ```
 - Set
     ```javascript
     rect.setRadius(value);
+    rect.setRadiusTL(value);  // number, or {x,y}
+    rect.setRadiusTR(value);  // number, or {x,y}
+    rect.setRadiusBL(value);  // number, or {x,y}
+    rect.setRadiusBR(value);  // number, or {x,y}
     ```
     or
     ```javascript
     rect.radius = radius;
+    rect.radiusTL = radius;  // number, or {x,y}
+    rect.radiusTR = radius;  // number, or {x,y}
+    rect.radiusBL = radius;  // number, or {x,y}
+    rect.radiusBR = radius;  // number, or {x,y}
     ```
     - `radius` :
         - Number : 4 corners with the same radius.
+            - `0`  : No round corner
+            - `> 0` : Convex round corner
+            - `< 0` : Concave round corner
         - JSON
             - 4 corners with the same radius X/Y
                 ```javascript
@@ -253,7 +376,34 @@ var rect = scene.add.rexRoundRectangle(x, y, width, height, radius, fillColor);
                     bl: {x : radiusX, y: radiusY},
                     br: {x : radiusX, y: radiusY},
                 }
-                ```
+
+
+### Dashed
+
+- Set dash pattern
+    ```javascript
+    rect.setDashPattern(pattern, offset);
+    ```
+    - `pattern` :
+        - An array 
+            - `[drawLength, skipLength]`, or 
+            - `[drawLengthA, skipLengthA, drawLengthB, skipLengthB, ...]`
+        - An plain object
+            ```javascript
+            {
+                segments: 10,
+                drawRatio: 0.5
+            }
+            ```
+    - `offset` : Offset of 1st dashed segment. Default value is `0`
+- Clear dashed
+    ```javascript
+    rect.setDashed(false);
+    ```
+    or
+    ```javascript
+    rect.clearDashPattern();
+    ```
 
 ### Iteration
 
@@ -277,3 +427,11 @@ Number of interpolation points in each round corner. Default value is `4`.
 ### Other properties
 
 See [game object](gameobject.md)
+
+### Create mask
+
+See [mask](mask.md)
+
+### Shader effects
+
+Support [internal and external filters](shader-builtin.md)

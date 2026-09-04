@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import RDataPlugin from '../../plugins/restorabledata-plugin.js';
 
 class Demo extends Phaser.Scene {

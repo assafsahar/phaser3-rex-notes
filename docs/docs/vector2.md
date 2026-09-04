@@ -2,7 +2,7 @@
 
 A representation of a vector in 2D space (`{x, y}`), built-in object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
@@ -32,11 +32,30 @@ var newVector = vector.clone();
     vector.copy({x, y});
     // vector.setFromObject({x, y});
     ```
+- Set angle
+    ```javascript
+    vector.setAngle(angle);
+    ```
+    - `angle` : Angle in radians.
+- Rotate
+    ```javascript
+    vector.rotate(delta);
+    ```
+    - `delta` : The angle to rotate by, in radians.
+- Project
+    ```javascript
+    vector.project(srcVector2);
+    ```
+- Set length
+    ```javascript
+    vector.setLength(length);
+    ```
 - Set from polar coordinate
     ```javascript
     vector.setToPolar(azimuth, radius);
     ```
     - `azimuth` : The angular coordinate, in radians.
+    - `radius` : The radial coordinate (length). Default is `1`.
 - Reset to (0, 0)
     ```javascript
     vector.reset();
@@ -68,6 +87,10 @@ var newVector = vector.clone();
     ```javascript
     vector.scale(value);
     ```
+- Limit the length
+    ```javascript
+    vector.limit(value);
+    ```
 - Normalize
     ```javascript
     vector.normalize();
@@ -76,6 +99,22 @@ var newVector = vector.clone();
     ```javascript
     vector.negate();
     ```
+- Rotate perpendicular
+    ```javascript
+    vector.normalizeRightHand();
+    vector.normalizeLeftHand();
+    ```
+- Reflect
+    - Reflect this Vector off a line defined by a normal.
+        ```javascript
+        vector.reflect(normal);
+        ```
+        - `normal` : A vector perpendicular to the line.
+    - Reflect this Vector across another.
+        ```javascript
+        vector.mirror(axis);
+        ```
+        - `axis` : A vector to reflect across.
 
 #### Vector methods
 
@@ -102,6 +141,11 @@ var newVector = vector.clone();
 - Cross
     ```javascript
     var value = vector.cross(src); // src: {x, y}
+    ```
+- Fuzzy Equal
+    ```javascript
+    var equal = vector.fuzzyEquals(src); // src: {x, y}
+    // var equal = vector.fuzzyEquals(src, epsilon);
     ```
 
 #### Points method

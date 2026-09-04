@@ -1,21 +1,75 @@
 ## Introduction
 
-Get matched chess.
+Get matched chess in lines, or neighbors grouping.
 
 - Author: Rex
 - Application of Board system
 
-## Source code
+## Live demos
 
-Included in [board plugin](board.md#source-code).
+- [Match line](https://codepen.io/rexrainbow/pen/RwPaVvg)
+- [Match neighbors](https://codepen.io/rexrainbow/pen/wvaGdQm)
 
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/board-match)
 
-### Install scene plugin
+### Install plugin
 
-Included in board plugin.
+#### Load minify file
+
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.scenePlugin('rexboardplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexboardplugin.min.js', 'rexBoard', 'rexBoard');
+    ```
+- Add match object
+    ```javascript
+    var match = scene.rexBoard.add.match(config);
+    ```
+
+#### Import plugin
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import BoardPlugin from 'phaser4-rex-plugins/plugins/board-plugin.js';
+    var config = {
+        // ...
+        plugins: {
+            scene: [{
+                key: 'rexBoard',
+                plugin: BoardPlugin,
+                mapping: 'rexBoard'
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add match object
+    ```javascript
+    var match = scene.rexBoard.add.match(config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import { Match } from 'phaser4-rex-plugins/plugins/board-components.js';
+    ```
+- Add match object
+    ```javascript
+    var match = new Match(config);
+    ```
 
 ### Add match object
 
@@ -105,26 +159,17 @@ match.refreshSymbols(function(tileXY, board) {
 match.setSymbol(tileX, tileY, symbol);
 ```
 
-or
-
-```javascript
-match.setSymbol(tileX, tileY, (function(tileXY, board) {
-    // var chess = board.tileXYZToChess(tileXY.x, tileXY.y, 0);
-    // if (chess == null) { return null; }
-    return symbol;
-}, scope);
-```
-
 #### Get symbol
 
 ```javascript
 var symbol = match.getSymbol(tileX, tileY);
 ```
 
-#### Dump symbols
+#### For each symbol cahce
 
 ```javascript
-match.dumpSymobls(function(tileXY, symbol, board) {
+match.forEach(function(tileXY, symbol, board) {
+    // return true; // Break for each loop
 }, scope)
 ```
 
@@ -132,6 +177,21 @@ match.dumpSymobls(function(tileXY, symbol, board) {
 - `symbol` : A string or a number
     - `null` : No symbol
 - `board` : [Board](board.md) object
+
+#### Wildcard symbol
+
+- Set
+    ```javascript
+    match.setWildcard(symbol);
+    ```
+    or
+    ```javascript
+    match.wildcard = symbol;
+    ```
+- Get
+    ```javascript
+    var wildcard = match.wildcard;
+    ```
 
 ### Directions mask
 
@@ -147,7 +207,7 @@ match.setDirMask(dir, value);
     - [Hexagon grid](board-hexagongrid.md) : `0`, `1`, `2`
 - `value` : `true` or `false`
 
-### Match
+### Line grouping
 
 #### Match-N
 
@@ -155,6 +215,8 @@ match.setDirMask(dir, value);
 match.match(n, function (result, board) {
     // var chess = board.tileXYArrayToChess(result.tileXY, 0);
     // GroupCall(chess, function (chess) { chess.setScale(0.8); });
+
+    // return true; // Break for each loop
 }, scope);
 ```
 
@@ -197,3 +259,12 @@ match.match(pattern, function (result, board) {
 ```javascript
 var hasAnyMatchN = match.anyMatch(pattern);
 ```
+
+### Neighbors grouping
+
+- Group by neighbors with the same symbol
+    ```javascript
+    tileXYArray = match.group(startTileX, startTileY);
+    // out = match.group(startTileX, startTileY, out);
+    ```
+    - `startTileX`, `startTileY` : Tile position of grouping, to group neighbors with the same symbol. Can't start from `null`, `undefined` or wildcard symbol.

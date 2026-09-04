@@ -2,7 +2,7 @@
 
 Line shape and methods, built-in methods of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
@@ -174,6 +174,10 @@ graphics.strokeLineShape(line);
         ```javascript
         var reflectAngle = Phaser.Geom.Line.ReflectAngle(aimLine, reflectingLine);
         ```
+- Type:
+    ```javascript
+    var type = line.type; // 2
+    ```
 
 ### Point(s) & shape
 
@@ -203,6 +207,15 @@ graphics.strokeLineShape(line);
     var points = Phaser.Geom.Line.BresenhamPoints(line, step);
     // var points = Phaser.Geom.Line.BresenhamPoints(line, step, points);  // push points
     ```
+- Get points using easing function
+    ```javascript
+    var points = Phaser.Geom.Line.GetEasedPoints(line, ease, quantity);
+    // var points = Phaser.Geom.Line.GetEasedPoints(line, ease, quantity, collinearThreshold, easeParams);
+    ```
+    - `ease` : String of [ease function](tween.md#ease-equations), or a custom function (`function (t) { return value}`).
+    - `quantity` : The number of points to return.
+    - `collinearThreshold` : Each point is spaced out at least this distance apart. This helps reduce clustering in noisey eases.
+    - `easeParams` : Array of ease parameters to go with the ease.
 - Get the nearest point on a line perpendicular to the given point.
     ```javascript
     var point = Phaser.Geom.Line.GetNearestPoint(line, pointIn);
@@ -237,7 +250,7 @@ x1, y2, x2, y2 are equal.
     // var out = Phaser.Geom.Intersects.GetLineToCircle(line, circle, out);
     ```
 
-### Line to [rectangle](geom-rectangle.md)
+#### Line to [rectangle](geom-rectangle.md)
 
 - Is intersection
     ```javascript
@@ -265,10 +278,12 @@ x1, y2, x2, y2 are equal.
 
 - Is intersection
     ```javascript
-    var result = Phaser.Geom.Intersects.LineToLine(line1, line2);
+    var isIntersection = Phaser.Geom.Intersects.LineToLine(line1, line2);
     ```
-    - `out` : intersected point
-- Get intersection points
+    - `isIntersection` : Return `true` if line1 and line2 are intersectioned
+- Get intersection point
     ```javascript
-    var result = Phaser.Geom.Intersects.LineToLine(line1, line2, out);
+    var isIntersection = Phaser.Geom.Intersects.LineToLine(line1, line2, out);
     ```
+    - `isIntersection` : Return `true` if line1 and line2 are intersectioned
+    - `out` : intersected point

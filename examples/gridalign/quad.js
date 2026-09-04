@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import GridAlignPlugin from '../../plugins/gridalign-plugin.js';
 import RhombusPlugin from '../../plugins/rhombus-plugin.js';
 

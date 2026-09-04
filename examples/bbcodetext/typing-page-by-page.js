@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import BBCodeText from '../../plugins/bbcodetext.js';
 import TextPage from '../../plugins/textpage.js'
 import TextTyping from '../../plugins/texttyping.js';
@@ -19,7 +20,7 @@ class PageTypingText extends BaseTextClass {
     start(text, speed) {
         this.page.setText(text);
         if (speed !== undefined) {
-            this.typing.setTypeSpeed(speed);
+            this.typing.setTypingSpeed(speed);
         }
         this.typeNextPage();
     }

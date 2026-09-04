@@ -1,6 +1,5 @@
-import Parse from 'parse';
-import ItemTable from '../../plugins/parse/itemtable/ItemTable.js';
-import QuickLogin from '../../plugins/parse/quicklogin/QuickLogin.js';
+import Phaser from 'phaser';
+import ParsePlugin from '../../plugins/parse-plugin.js';
 
 class Demo extends Phaser.Scene {
     constructor() {
@@ -10,7 +9,9 @@ class Demo extends Phaser.Scene {
         this.txt;
     }
 
-    preload() {}
+    preload() {
+        this.plugins.get('rexParse').preload(this);
+    }
 
     create() {
         Parse.serverURL = 'https://parseapi.back4app.com'; // This is your Server URL
@@ -19,18 +20,17 @@ class Demo extends Phaser.Scene {
             'DbgfGW40cdqUQug8cv6NDAplB1D9daNIjcYtdGSQ' // This is your Javascript key
         );
 
-        var table = new ItemTable({
+        var rexParse = this.plugins.get('rexParse');
+        var table = rexParse.add.itemTable({
             className: 'ownerTest',
             primaryKeys: ['name'],
             ownerWrite: true,
         });
 
-        QuickLogin('rex', 'aabb')
+        rexParse.quickLogin('rex', 'aabb')
             .then(function () {
                 console.log('login');
-                return Promise.resolve();
-            })
-            .then(function () {
+
                 return table
                     .save({
                         name: 'player0',
@@ -44,7 +44,7 @@ class Demo extends Phaser.Scene {
 
     }
 
-    update() {}
+    update() { }
 }
 
 var config = {
@@ -56,7 +56,14 @@ var config = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
     },
-    scene: Demo
+    scene: Demo,
+    plugins: {
+        global: [{
+            key: 'rexParse',
+            plugin: ParsePlugin,
+            start: true
+        }]
+    }
 };
 
 var game = new Phaser.Game(config);

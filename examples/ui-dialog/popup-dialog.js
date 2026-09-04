@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import UIPlugin from '../../templates/ui/ui-plugin.js';
 
 class Demo extends Phaser.Scene {
@@ -21,7 +22,7 @@ class Demo extends Phaser.Scene {
 
             if (dialog === undefined) {
                 dialog = createDialog(this, x, y, function (color) {
-                    scene.rexUI.add.roundRectangle(x, y, 0, 0, 20, color)
+                    scene.add.circle(x, y, 20, color);
                     scene.print.text = 'Add object at (' + x + ',' + y + ')';
                     dialog.scaleDownDestroy(100);
                     dialog = undefined;
@@ -79,16 +80,18 @@ var createDialog = function (scene, x, y, onClick) {
         .layout()
         .pushIntoBounds()
         //.drawBounds(this.add.graphics(), 0xff0000)
+        .on('popup.complete', function () { console.log('popup.complete') })
+        .on('scaledown.complete', function () { console.log('scaledown.complete') })
         .popUp(500);
 
     dialog
-        .on('button.click', function (button, groupName, index) {
+        .on('button.click', function (button, groupName, index, pointer, event) {
             onClick(button.fillColor);
         })
-        .on('button.over', function (button, groupName, index) {
+        .on('button.over', function (button, groupName, index, pointer, event) {
             button.setStrokeStyle(2, 0xffffff);
         })
-        .on('button.out', function (button, groupName, index) {
+        .on('button.out', function (button, groupName, index, pointer, event) {
             button.setStrokeStyle();
         });
 
@@ -100,10 +103,6 @@ var config = {
     parent: 'phaser-example',
     width: 800,
     height: 600,
-    scale: {
-        mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH,
-    },
     scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,

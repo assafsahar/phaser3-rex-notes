@@ -1,4 +1,4 @@
-const frag = `
+const frag = `\
 vec3 RGBToHSL(vec3 color) {
   vec3 hsl = vec3(0.0, 0.0, 0.0);
 	

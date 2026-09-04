@@ -1,6 +1,7 @@
+import Phaser from 'phaser';
 import UIPlugin from '../../templates/ui/ui-plugin.js';
 
-const COLOR_PRIMARY = 0x4e342e;
+const COLOR_MAIN = 0x4e342e;
 const COLOR_LIGHT = 0x7b5e57;
 const COLOR_DARK = 0x260e04;
 
@@ -70,7 +71,7 @@ var CreateMainPanel = function (scene, config) {
         if (button === prevButton) {
             return;
         }
-        button.getElement('background').setFillStyle(COLOR_PRIMARY);
+        button.getElement('background').setFillStyle(COLOR_MAIN);
         if (prevButton) {
             prevButton.getElement('background').setFillStyle(COLOR_DARK);
         }
@@ -107,9 +108,11 @@ var CreateButtons = function (scene, keys) {
 }
 
 var CreatePages = function (scene, keys) {
-    var pages = scene.rexUI.add.pages()
+    var pages = scene.rexUI.add.pages({
+        space: { left: 20, right: 20, top: 20, bottom: 20 }
+    })
         .addBackground(
-            scene.rexUI.add.roundRectangle(0, 0, 10, 10, 0, COLOR_PRIMARY)
+            scene.rexUI.add.roundRectangle(0, 0, 10, 10, 0, COLOR_MAIN)
         );
 
     var createPageCallback = {
@@ -122,10 +125,7 @@ var CreatePages = function (scene, keys) {
         key = keys[i];
         pages.addPage(
             createPageCallback[key](scene), // game object
-            key, // key
-            'left-top', // align
-            20, // padding
-            true, // extend
+            key // key
         )
     }
     return pages;

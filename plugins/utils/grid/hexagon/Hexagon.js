@@ -23,19 +23,37 @@ class Hexagon {
 
     resetFromJSON(o) {
         this.setType(GetValue(o, 'staggeraxis', 1), GetValue(o, 'staggerindex', 1));
+        this.setDirectionMode();
         this.setOriginPosition(GetValue(o, 'x', 0), GetValue(o, 'y', 0));
-        this.size = GetValue(o, 'size', undefined);
-        if (this.size !== undefined) {
-            var hexagon = {
-                size: this.size,
-                type: this.staggeraxis
-            }
-            var cellWidth = GetCellWidth(hexagon);
-            var cellHeight = GetCellHeight(hexagon);
-            this.setCellSize(cellWidth, cellHeight);
+        var size = GetValue(o, 'size', undefined);
+        if (size !== undefined) {
+            this.setCellRadius(size);
         } else {
             this.setCellSize(GetValue(o, 'cellWidth', 0), GetValue(o, 'cellHeight', 0));
         }
+    }
+
+    setType(staggeraxis, staggerindex) {
+        if (typeof (staggeraxis) === 'string') {
+            staggeraxis = STAGGERAXIS[staggeraxis]
+        }
+        if (typeof (staggerindex) === 'string') {
+            staggerindex = STAGGERINDEX[staggerindex]
+        }
+        this.staggeraxis = staggeraxis; // 0|y(flat), or 1|x(pointy)
+        this.staggerindex = staggerindex; // even, or odd
+
+        if (staggeraxis === 0) { // flat
+            this.mode = (staggerindex === 0) ? EVEN_Q : ODD_Q;
+        } else { // pointy
+            this.mode = (staggerindex === 0) ? EVEN_R : ODD_R;
+        }
+        return this;
+    }
+
+    setDirectionMode() {
+        this.directions = 6;
+        return this;
     }
 
     setOriginPosition(x, y) {
@@ -68,6 +86,18 @@ class Hexagon {
         return this;
     }
 
+    setCellRadius(size) {
+        this.size = size;
+        var hexagon = {
+            size: this.size,
+            type: this.staggeraxis
+        }
+        var cellWidth = GetCellWidth(hexagon);
+        var cellHeight = GetCellHeight(hexagon);
+        this.setCellSize(cellWidth, cellHeight);
+        return this;
+    }
+
     get cellWidth() {
         return this.width;
     }
@@ -80,26 +110,8 @@ class Hexagon {
         return this.height;
     }
 
-    set cellHieght(value) {
+    set cellHeight(value) {
         this.height = value;
-    }
-
-    setType(staggeraxis, staggerindex) {
-        if (typeof (staggeraxis) === 'string') {
-            staggeraxis = STAGGERAXIS[staggeraxis]
-        }
-        if (typeof (staggerindex) === 'string') {
-            staggerindex = STAGGERINDEX[staggerindex]
-        }
-        this.staggeraxis = staggeraxis; // 0|y(flat), or 1|x(pointy)
-        this.staggerindex = staggerindex; // even, or odd
-
-        if (staggeraxis === 0) { // flat
-            this.mode = (staggerindex === 0) ? EVEN_Q : ODD_Q;
-        } else { // pointy
-            this.mode = (staggerindex === 0) ? EVEN_R : ODD_R;
-        }
-        return this;
     }
 }
 
@@ -107,7 +119,7 @@ var methods = {
     getWorldXY: GetWorldXY,
     getWorldX: GetWorldX,
     getWorldY: GetWorldY,
-    getTileXY:GetTileXY,
+    getTileXY: GetTileXY,
     getTileX: GetTileX,
     getTileY: GetTileY,
 }

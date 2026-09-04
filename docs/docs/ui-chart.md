@@ -5,46 +5,84 @@ Draw [chart](https://www.chartjs.org/) on [canvas](canvas.md).
 - Author: Rex
 - Game object
 
-## Source code
+## Live demos
 
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/templates/ui/ui-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexuiplugin.min.js)
-
-[Class](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/templates/ui/chart/Chart.js)
+- [Radar chart](https://codepen.io/rexrainbow/pen/qwVBNy)
 
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/ui-chart)
 
-### Install scene plugin
-
-Install plugin in [configuration of game](game.md#configuration)
-
-```javascript
-import UIPlugin from 'rexTemplates/ui/ui-plugin.js';
-
-var config = {
-    // ...
-    plugins: {
-        scene: [{
-            key: 'rexUI',
-            plugin: UIPlugin,
-            mapping: 'rexUI'
-        },
-        // ...
-        ]
-    }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+### Install plugin
 
 #### Install chart.js
 
 [Chart.js](https://www.chartjs.org/) is not included in rexUI, installs it before creating any chart.
 
 ```javascript
-scene.load.script('chartjs', 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js');
+scene.load.script('chartjs', 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.8.0/chart.min.js');
 ```
+or
+```javascript
+scene.load.script('chartjs', 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js');
+```
+
+#### Load minify file
+
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.script('chartjs', 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.8.0/Chart.min.js');
+    scene.load.scenePlugin('rexuiplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexuiplugin.min.js', 'rexUI', 'rexUI');
+    ```
+- Add chart object
+    ```javascript
+    var chart = scene.rexUI.add.chart(config);
+    ```
+
+#### Import plugin
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import UIPlugin from 'phaser4-rex-plugins/templates/ui/ui-plugin.js';
+    var config = {
+        // ...
+        plugins: {
+            scene: [{
+                key: 'rexUI',
+                plugin: UIPlugin,
+                mapping: 'rexUI'
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add chart object
+    ```javascript
+    var chart = scene.rexUI.add.chart(config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import { Chart } from 'phaser4-rex-plugins/templates/ui/ui-components.js';
+    ```
+- Add chart object
+    ```javascript    
+    var chart = new Chart(scene, config);
+    scene.add.existing(chart);
+    ```
 
 ### Add chart object
 
@@ -65,6 +103,7 @@ var chart = scene.rexUI.add.chart(x, y, width, height, config);
         constructor(scene, x, y, width, height, config) {
             super(scene, x, y, width, height, config);
             // ...
+            scene.add.existing(this);
         }
         // ...
     }

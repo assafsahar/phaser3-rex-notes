@@ -5,78 +5,146 @@ Fires 'click' event when touch releasd after pressed.
 - Author: Rex
 - Behavior of game object
 
-## Source code
-
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/button-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexbuttonplugin.min.js)
-
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/button)
 
-User could import class directly, or install it by global plugin.
+### Install plugin
 
-### Import class
+#### Load minify file
 
-```javascript
-import rexButton from './plugins/button.js';
-```
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.plugin('rexbuttonplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexbuttonplugin.min.js', true);
+    ```
+- Add button behavior
+    ```javascript
+    var button = scene.plugins.get('rexbuttonplugin').add(gameObject, config);
+    ```
 
-### Install global plugin
+#### Import plugin
 
-Install plugin in [configuration of game](game.md#configuration)
-
-```javascript
-import ButtonPlugin from './plugins/button-plugin.js';
-
-var config = {
-    // ...
-    plugins: {
-        global: [{
-            key: 'rexButton',
-            plugin: ButtonPlugin,
-            start: true
-        },
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import ButtonPlugin from 'phaser4-rex-plugins/plugins/button-plugin.js';
+    var config = {
         // ...
-        ]
-    }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+        plugins: {
+            global: [{
+                key: 'rexButton',
+                plugin: ButtonPlugin,
+                start: true
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add button behavior
+    ```javascript
+    var button = scene.plugins.get('rexButtonn').add(gameObject, config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import Button from 'phaser4-rex-plugins/plugins/button.js';
+    ```
+- Add button behavior
+    ```javascript
+    var button = new Button(gameObject, config);
+    ```
 
 ### Create instance
 
 ```javascript
 var button = scene.plugins.get('rexButton').add(gameObject, {
     // enable: true,
-    // mode: 1,            // 0|'press'|1|'release'
-    // clickInterval: 100  // ms
+    // mode: 1,              // 0|'press'|1|'release'
+    // clickInterval: 100    // ms
+    // threshold: undefined
 });
 ```
 
-- `enable` : drag-able
+- `enable` : Clickable.
 - `mode` :
     - `'pointerdown'`, `'press'`, or `0` : Fire 'click' event when touch pressed.
     - `'pointerup'`, `'release'`, or `1` : Fire 'click' event when touch released after pressed.
 - `clickInterval` : Interval between 2 'click' events, in ms.
+- `threshold` : Cancel clicking detecting when dragging distance is larger then this threshold.
+    - `undefined` : Ignore this feature. Default behavior.
 
 ### Events
 
-```javascript
-button.on('click', function (button, gameObject, pointer) {
-    // ...
-}, scope);
-```
+- Click
+    ```javascript
+    button.on('click', function (button, gameObject, pointer, event) {
+        // ...
+    }, scope);
+    ```
+    - Cancel remaining touched events : `event.stopPropagation()`
+- Enable
+    ```javascript
+    button.on('enable', function (button, gameObject) {
+        // ...
+    }, scope);
+    ```
+- Disable
+    ```javascript
+    button.on('disable', function (button, gameObject) {
+        // ...
+    }, scope);
+    ```
+- Pointer over
+    ```javascript
+    button.on('over', function (button, gameObject, pointer, event) {
+        // ...
+    }, scope);
+    ```
+- Pointer out
+    ```javascript
+    button.on('out', function (button, gameObject, pointer, event) {
+        // ...
+    }, scope);
+    ```
+- Pointer down
+    ```javascript
+    button.on('down', function (button, gameObject, pointer, event) {
+        // ...
+    }, scope);
+    ```
+- Pointer up
+    ```javascript
+    button.on('up', function (button, gameObject, pointer, event) {
+        // ...
+    }, scope);
+    ```
 
 ### Enable
 
 - Get
     ```javascript
-    var enable = drag.enable;  // enable: true, or false
+    var enabled = button.enable;  // enabled: true, or false
     ```
 - Set
     ```javascript
-    drag.setEnable(enable);  // enable: true, or false
+    button.setEnable(enabled);  // enabled: true, or false
+    // button.enable = enabled;
+    ```
+- Toggle
+    ```javascript
+    button.toggleEnable();
     ```
 
 ### Set mode
@@ -93,4 +161,10 @@ button.setMode(mode);
 
 ```javascript
 button.setClickInterval(interval);  // interval in ms
+```
+
+### Set dragging threshold
+
+```javascript
+button.setDragThreshold(distance);  // distance in pixels
 ```

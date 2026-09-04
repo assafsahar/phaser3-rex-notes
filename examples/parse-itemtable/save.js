@@ -1,5 +1,5 @@
-import Parse from 'parse';
-import ItemTable from '../../plugins/parse/itemtable/ItemTable.js';
+import Phaser from 'phaser';
+import ParsePlugin from '../../plugins/parse-plugin.js';
 
 class Demo extends Phaser.Scene {
     constructor() {
@@ -9,7 +9,9 @@ class Demo extends Phaser.Scene {
         this.txt;
     }
 
-    preload() {}
+    preload() {
+        this.plugins.get('rexParse').preload(this);
+    }
 
     create() {
         Parse.serverURL = 'https://parseapi.back4app.com'; // This is your Server URL
@@ -18,52 +20,55 @@ class Demo extends Phaser.Scene {
             'DbgfGW40cdqUQug8cv6NDAplB1D9daNIjcYtdGSQ' // This is your Javascript key
         );
 
-        var table = new ItemTable({
+        var rexParse = this.plugins.get('rexParse');
+        var table = rexParse.add.itemTable({
             className: 'characters',
             primaryKeys: ['name']
         });
 
         table
             // Save json data
-            .save({
-                name: 'player0',
-                hp: 20,
-                mp: 5,
-                coin: 20
-            })
-            .then(function (item) {
-                console.log(JSON.parse(JSON.stringify(item)));
-                return table.loadItem(item.id);
-            })
-            .then(function (item) {
-                console.log(JSON.parse(JSON.stringify(item)));
-            })
-            .catch(function (error) {
-                console.log(error);
-            });
-
-        table
-            // save parse item
             .save(
-                table.createItem()
-                .set('name', 'player1')
-                .set('hp', 100)
-                .increment('mp', 1)
-                .set('coin', 100)
+                {
+                    name: 'player0',
+                    hp: 20,
+                    mp: 5,
+                    coin: 20
+                }
             )
             .then(function (item) {
-                console.log(JSON.parse(JSON.stringify(item)));
+                console.log('Save result:', JSON.parse(JSON.stringify(item)));
                 return table.loadItem(item.id);
             })
             .then(function (item) {
-                console.log(JSON.parse(JSON.stringify(item)));
+                console.log('Load result', JSON.parse(JSON.stringify(item)));
+                return table.save({
+                    name: 'player0',
+                    coin: 30
+                })
             })
+            .then(function (item) {
+                console.log('Save result:', JSON.parse(JSON.stringify(item)));
+                return table.loadItem(item.id);
+            })
+            .then(function (item) {
+                console.log('Load result', JSON.parse(JSON.stringify(item)));
+                return table.save([
+                    { name: 'player0', hp: 1 },
+                    { name: 'player1', hp: 3 }
+                ])
+            })
+            .then(function (items) {
+                console.log('Save result', JSON.parse(JSON.stringify(items)));
+            })
+
             .catch(function (error) {
                 console.log(error);
             });
+
     }
 
-    update() {}
+    update() { }
 }
 
 var config = {
@@ -75,7 +80,14 @@ var config = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
     },
-    scene: Demo
+    scene: Demo,
+    plugins: {
+        global: [{
+            key: 'rexParse',
+            plugin: ParsePlugin,
+            start: true
+        }]
+    }
 };
 
 var game = new Phaser.Game(config);

@@ -1,35 +1,80 @@
-import GeomRoundRectangle from './geom/RoundRectangle.js';
-import LineTo from '../utils/LineTo.js';
-import ArcTo from '../utils/ArcTo.js';
-import Earcut from '../utils/Earcut.js';
-import Render from './PolygonRender.js';
+import PolygnBase from '../utils/polygonbase/PolygnBase.js';
+import RoundRectangleGeom from '../../../geom/roundrectangle/RoundRectangle.js';
+import IsArcCorner from '../utils/IsArcCorner.js';
+import LineTo from '../../../geom/pathdata/LineTo.js';
+import ArcTo from '../../../geom/pathdata/ArcTo.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
+import { Geom as PhaserGeom, Utils as PhaserUtils } from 'phaser';
+const IsPlainObject = PhaserUtils.Objects.IsPlainObject;
+const GetValue = PhaserUtils.Objects.GetValue;
+const Earcut = PhaserGeom.Polygon.Earcut;
 
-class RoundRectangle extends Phaser.GameObjects.Shape {
+const GetDefaultIteration = function (radius) {
+    return Math.max(6, Math.min(16, Math.ceil(radius / 2)));
+};
+
+class RoundRectangle extends PolygnBase {
     constructor(scene, x, y, width, height, radiusConfig, fillColor, fillAlpha) {
-        if (x === undefined) {
-            x = 0;
-        }
-        if (y === undefined) {
-            y = 0;
+        var strokeColor, strokeAlpha, strokeWidth, shapeType;
+        var dashPattern, dashOffset;
+        if (IsPlainObject(x)) {
+            var config = x;
+
+            x = config.x;
+            y = config.y;
+            width = config.width;
+            height = config.height;
+            radiusConfig = config.radius;
+            fillColor = config.color;
+            fillAlpha = config.alpha;
+
+            strokeColor = config.strokeColor;
+            strokeAlpha = config.strokeAlpha;
+            strokeWidth = config.strokeWidth;
+
+            shapeType = config.shape;
+
+            dashPattern = config.dashPattern;
+            dashOffset = config.dashOffset;
         }
 
-        var iteration = GetValue(radiusConfig, 'iteration', undefined);
-        radiusConfig = GetValue(radiusConfig, 'radius', radiusConfig);
-        var geom = new GeomRoundRectangle(0, 0, width, height, radiusConfig);
-        super(scene, 'RoundRectangle', geom);
+        if (x === undefined) { x = 0; }
+        if (y === undefined) { y = 0; }
+        if (width === undefined) { width = 1; }
+        if (height === undefined) { height = width; }
+        if (radiusConfig === undefined) { radiusConfig = 0; }
+        if (shapeType === undefined) { shapeType = 0; }
 
-        this.setIteration(iteration);
+        var geom = new RoundRectangleGeom();  // Configurate it later
+        super(scene, 'rexRoundRectangleShape', geom);
+        this.init();
+
+        this.setShapeType(shapeType);
+
+        if (this.shapeType === 0) {
+            var radius = GetValue(radiusConfig, 'radius', radiusConfig);
+            geom.setTo(0, 0, width, height, radius);
+        } else {
+            var radius = { x: (width / 2), y: (height / 2) };
+            geom.setTo(0, 0, width, height, radius);
+        }
+
+        this.setIteration(GetValue(radiusConfig, 'iteration', undefined));
         this.setPosition(x, y);
-        // this.setSize(this.geom.width, this.geom.height);
 
-        if (fillColor !== undefined) {
-            this.setFillStyle(fillColor, fillAlpha);
+        this.setFillStyle(fillColor, fillAlpha);
+
+        if (strokeWidth === undefined) {
+            strokeWidth = 2;
+        }
+        this.setStrokeStyle(strokeWidth, strokeColor, strokeAlpha);
+
+        if (dashPattern) {
+            this.setDashPattern(dashPattern, dashOffset);
         }
 
         this.updateDisplayOrigin();
-        this.updateData();
+        this.dirty = true;
     }
 
     updateData() {
@@ -38,119 +83,111 @@ class RoundRectangle extends Phaser.GameObjects.Shape {
 
         pathData.length = 0;
 
-        var cornerRadius = geom.cornerRadius,
+        var width = geom.width,
+            height = geom.height,
+            cornerRadius = geom.cornerRadius,
             radius,
             iteration = this.iteration + 1;
-        // bottom-right
-        radius = cornerRadius.br;
-        if (isArcCorner(radius)) {
-            var centerX = geom.width - radius.x;
-            var centerY = geom.height - radius.y;
-            ArcTo(centerX, centerY, radius, 0, 90, false, iteration, pathData);
-        } else {
-            LineTo(geom.width, geom.height, pathData);
-        }
 
-        // bottom-left
-        radius = cornerRadius.bl;
-        if (isArcCorner(radius)) {
-            var centerX = radius.x;
-            var centerY = geom.height - radius.y;
-            ArcTo(centerX, centerY, radius, 90, 180, false, iteration, pathData);
-        } else {
-            LineTo(0, geom.height, pathData);
-        }
-
-        // top-left
+        // Top-left
         radius = cornerRadius.tl;
-        if (isArcCorner(radius)) {
-            var centerX = radius.x;
-            var centerY = radius.y;
-            ArcTo(centerX, centerY, radius, 180, 270, false, iteration, pathData);
+        if (IsArcCorner(radius)) {
+            if (radius.convex) {
+                var centerX = radius.x;
+                var centerY = radius.y;
+                ArcTo(centerX, centerY, radius.x, radius.y, 180, 270, false, iteration, pathData);
+            } else {
+                var centerX = 0;
+                var centerY = 0;
+                ArcTo(centerX, centerY, radius.x, radius.y, 90, 0, true, iteration, pathData);
+            }
         } else {
             LineTo(0, 0, pathData);
         }
 
-        // top-right
+        // Top-right
         radius = cornerRadius.tr;
-        if (isArcCorner(radius)) {
-            var centerX = geom.width - radius.x;
-            var centerY = radius.y;
-            ArcTo(centerX, centerY, radius, 270, 360, false, iteration, pathData);
+        if (IsArcCorner(radius)) {
+            if (radius.convex) {
+                var centerX = width - radius.x;
+                var centerY = radius.y;
+                ArcTo(centerX, centerY, radius.x, radius.y, 270, 360, false, iteration, pathData);
+            } else {
+                var centerX = width;
+                var centerY = 0;
+                ArcTo(centerX, centerY, radius.x, radius.y, 180, 90, true, iteration, pathData);
+            }
         } else {
-            LineTo(geom.width, 0, pathData);
+            LineTo(width, 0, pathData);
+        }
+
+        // Bottom-right
+        radius = cornerRadius.br;
+        if (IsArcCorner(radius)) {
+            if (radius.convex) {
+                var centerX = width - radius.x;
+                var centerY = height - radius.y;
+                ArcTo(centerX, centerY, radius.x, radius.y, 0, 90, false, iteration, pathData);
+            } else {
+                var centerX = width;
+                var centerY = height;
+                ArcTo(centerX, centerY, radius.x, radius.y, 270, 180, true, iteration, pathData);
+            }
+        } else {
+            LineTo(width, height, pathData);
+        }
+
+        // Bottom-left
+        radius = cornerRadius.bl;
+        if (IsArcCorner(radius)) {
+            if (radius.convex) {
+                var centerX = radius.x;
+                var centerY = height - radius.y;
+                ArcTo(centerX, centerY, radius.x, radius.y, 90, 180, false, iteration, pathData);
+            } else {
+                var centerX = 0;
+                var centerY = height;
+                ArcTo(centerX, centerY, radius.x, radius.y, 360, 270, true, iteration, pathData);
+            }
+        } else {
+            LineTo(0, height, pathData);
         }
 
         pathData.push(pathData[0], pathData[1]); // Repeat first point to close curve
         this.pathIndexes = Earcut(pathData);
+
+        super.updateData();
+
         return this;
     }
 
-    get width() {
-        return this.geom.width;
-    }
-    set width(value) {
-        // Change width value
-        if (this.width === value) {
-            return;
+    setShapeType(shapeType) {
+        if (typeof (shapeType) === 'string') {
+            shapeType = ShapeTypeMap[shapeType];
         }
-        this.geom.width = value;
-        this.updateDisplayOrigin();
-        this.updateData();
+
+        this.shapeType = shapeType;
+        return this;
     }
 
-    get height() {
-        return this.geom.height;
-    }
-    set height(value) {
-        // Change height value
-        if (this.height === value) {
-            return;
-        }
-        this.geom.height = value;
-        this.updateDisplayOrigin();
-        this.updateData();
-    }
-
-    resize(width, height) {
+    setSize(width, height) {
+        // Override Shape's setSize method
         if (height === undefined) {
             height = width;
         }
         if ((this.geom.width === width) && (this.geom.height === height)) {
             return this;
         }
-        this.geom.height = height;
-        this.geom.width = width
+        this.geom.setSize(width, height);
+
+        if (this.shapeType === 1) {
+            this.setRadius({ x: (width / 2), y: (height / 2) })
+        }
+
         this.updateDisplayOrigin();
-        this.updateData();
-        return this;
-    }
+        this.dirty = true;
 
-    get iteration() {
-        return this._iteration;
-    }
-
-    set iteration(value) {
-        // Set iteration first time
-        if (this._iteration === undefined) {
-            this._iteration = value;
-            return;
-        }
-
-        // Change iteration value
-        if (this._iteration === value) {
-            return;
-        }
-
-        this._iteration = value;
-        this.updateData();
-    }
-
-    setIteration(iteration) {
-        if (iteration === undefined) {
-            iteration = 6;
-        }
-        this.iteration = iteration;
+        super.setSize(width, height);
         return this;
     }
 
@@ -161,7 +198,43 @@ class RoundRectangle extends Phaser.GameObjects.Shape {
     set radius(value) {
         this.geom.setRadius(value);
         this.updateDisplayOrigin();
-        this.updateData();
+        this.dirty = true;
+    }
+
+    get radiusTL() {
+        return this.geom.radiusTL;
+    }
+
+    set radiusTL(value) {
+        this.geom.radiusTL = value;
+        this.dirty = true;
+    }
+
+    get radiusTR() {
+        return this.geom.radiusTR;
+    }
+
+    set radiusTR(value) {
+        this.geom.radiusTR = value;
+        this.dirty = true;
+    }
+
+    get radiusBL() {
+        return this.geom.radiusBL;
+    }
+
+    set radiusBL(value) {
+        this.geom.radiusBL = value;
+        this.dirty = true;
+    }
+
+    get radiusBR() {
+        return this.geom.radiusBR;
+    }
+
+    set radiusBR(value) {
+        this.geom.radiusBR = value;
+        this.dirty = true;
     }
 
     setRadius(value) {
@@ -169,6 +242,38 @@ class RoundRectangle extends Phaser.GameObjects.Shape {
             value = 0;
         }
         this.radius = value;
+        return this;
+    }
+
+    setRadiusTL(value) {
+        if (value === undefined) {
+            value = 0;
+        }
+        this.radiusTL = value;
+        return this;
+    }
+
+    setRadiusTR(value) {
+        if (value === undefined) {
+            value = 0;
+        }
+        this.radiusTR = value;
+        return this;
+    }
+
+    setRadiusBL(value) {
+        if (value === undefined) {
+            value = 0;
+        }
+        this.radiusBL = value;
+        return this;
+    }
+
+    setRadiusBR(value) {
+        if (value === undefined) {
+            value = 0;
+        }
+        this.radiusBR = value;
         return this;
     }
 
@@ -183,16 +288,45 @@ class RoundRectangle extends Phaser.GameObjects.Shape {
     setCornerRadius(value) {
         return this.setRadius(value);
     }
+
+    get iteration() {
+        if (this._useDynamicIteration) {
+            return GetDefaultIteration(this.radius);
+        }
+
+        return this._iteration;
+    }
+
+    set iteration(value) {
+        var useDynamicIteration = (value === undefined);
+
+        // Set iteration first time
+        if (this._useDynamicIteration === undefined) {
+            this._useDynamicIteration = useDynamicIteration;
+            this._iteration = value;
+            return;
+        }
+
+        // Change iteration value
+        if ((this._iteration === value) && (this._useDynamicIteration === useDynamicIteration)) {
+            return;
+        }
+
+        this._useDynamicIteration = useDynamicIteration;
+        this._iteration = value;
+        this.dirty = true;
+    }
+
+    setIteration(iteration) {
+        this.iteration = iteration;
+        return this;
+    }
+
 }
 
-var isArcCorner = function (radius) {
-    return ((radius.x !== 0) && (radius.y !== 0));
+const ShapeTypeMap = {
+    rectangle: 0,
+    circle: 1
 }
-
-
-Object.assign(
-    RoundRectangle.prototype,
-    Render
-);
 
 export default RoundRectangle;

@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import FSM from '../../plugins/fsm.js';
 
 class State extends FSM {

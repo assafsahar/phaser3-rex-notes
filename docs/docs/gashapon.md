@@ -5,44 +5,66 @@ Pick random item from box.
 - Author: Rex
 - Member of scene, or game object
 
-## Source code
-
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/gashapon-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexgashaponplugin.min.js)
-
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/gashapon)
 
-User could import class directly, or install it by global plugin.
+### Install plugin
 
-### Import class
+#### Load minify file
 
-```javascript
-import rexGashapon from './plugins/gashapon.js';
-```
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.plugin('rexgashaponplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexgashaponplugin.min.js', true);
+    ```
+- Add gashapon object
+    ```javascript
+    var gashapon = scene.plugins.get('rexgashaponplugin').add(config);
+    ```
 
-### Install global plugin
+#### Import plugin
 
-Install plugin in [configuration of game](game.md#configuration)
-
-```javascript
-import GashaponPlugin from './plugins/gashapon-plugin.js';
-
-var config = {
-    // ...
-    plugins: {
-        global: [{
-            key: 'rexGashapon',
-            plugin: GashaponPlugin,
-            start: true
-        },
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import GashaponPlugin from 'phaser4-rex-plugins/plugins/gashapon-plugin.js';
+    var config = {
         // ...
-        ]
-    }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+        plugins: {
+            global: [{
+                key: 'rexGashapon',
+                plugin: GashaponPlugin,
+                start: true
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add gashapon object
+    ```javascript
+    var gashapon = scene.plugins.get('rexGashapon').add(config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import Gashapon from 'phaser4-rex-plugins/plugins/gashapon.js';
+    ```
+- Add gashapon object
+    ```javascript
+    var gashapon = new Gashapon(config);
+    ```
 
 ### Create instance
 
@@ -55,6 +77,7 @@ var gashapon = scene.plugins.get('rexGashapon').add({
         c:3 
     },
     reload: true,     // true|false
+    rnd: undefined,
 });
 ```
 
@@ -62,97 +85,109 @@ var gashapon = scene.plugins.get('rexGashapon').add({
     - `'shuffle'`, or `0` : pick item from box without put it back.
     - `'random'`, or `1` : pick item from box then put it back.
 - `reload` : set `true` to reload items when box is empty for `shuffle` mode.
-- `items` : initial items in box
+- `items` : initial items `{ name:count }` in box.
+- `rnd` : Use [random data generator](random-data-generator.md) to generate result.
+    - `undefined` : Use `Math.random()` to generate result.
+    - `Phaser.Math.RND` : Use pre-defined random data generator.
 
 ### Pick item
 
-#### Pick a random item
-
-```javascript
-var item = gashapon.next();
-```
-
-- return `null` if pick nothing
-
-#### Pick specific item
-
-```javascript
-var item = gashapon.next('a');
-```
-
-- return `null` if pick nothing
-
-#### Last picked item
-
-```javascript
-var item = gashapon.result;
-```
+- Pick a random item
+    ```javascript
+    var item = gashapon.next();
+    ```
+    - return `null` if pick nothing
+- Pick specific item
+    ```javascript
+    var item = gashapon.next(name);
+    ```
+    - return `null` if pick nothing
+- Last picked item
+    ```javascript
+    var item = gashapon.result;
+    ```
 
 ### Set item
 
-#### Set item
-
-```javascript
-gashapon.setItem('a', 1);
-// gashapon.setItem('a', 1).setItem('b', 2).setItem('c', 3);
-```
-
-#### Add item
-
-```javascript
-gashapon.addItem('a',1);
-```
+- Set item
+    ```javascript
+    gashapon.setItem(name, count);
+    ```
+- Add item
+    ```javascript
+    gashapon.addItem(name, count);
+    ```
+- Put item back
+    ```javascript
+    gashapon.putItemBack(name, count);
+    ```
 
 ### Remove item
 
-#### Remove item
-
-```javascript
-gashapon.removeItem('a');
-// gashapon.removeItem('b').gashapon.removeItem('c');
-```
-
-#### Remove all items
-
-```javascript
-gashapon.removeAllItems();
-```
+- Remove item
+    ```javascript
+    gashapon.removeItem(name);
+    ```
+- Remove all items
+    ```javascript
+    gashapon.removeAllItems();
+    ```
 
 ### Current status
 
-#### Get current status
-
-```javascript
-var status = gashapon.toJSON();
-```
-
-#### Clone object
-
-```javascript
-var status = gashapon.toJSON();
-var gashapon2 = new Gashapon(status);
-```
-
-#### Overwrite current status
-
-```javascript
-var status = gashapon.toJSON();
-// gashapon.next()...
-gashapon.resetFromJSON(status);
-```
+- Get current status
+    ```javascript
+    var status = gashapon.toJSON();
+    ```
+- Clone object
+    ```javascript
+    var state = gashapon.toJSON();
+    var gashapon2 = new Gashapon(state);
+    ```
+- Overwrite current status
+    ```javascript
+    var status = gashapon.toJSON();
+    // gashapon.next()...
+    gashapon.resetFromJSON(status);
+    ```
 
 ### Get items
 
-#### For each item
+- Get initial items
+    ```javascript
+    var items = gashapon.getItems();
+    ```
+- Get remainder items
+    ```javascript
+    var items = gashapon.getRemain();
+    ```
+- Get initial item count
+    ```javascript
+    var count = gashapon.getItemCount(name);
+    ```
+- Get remainder item count
+    ```javascript
+    var count = gashapon.getRemainCount(name);
+    ```
+- For each initial item
+    ```javascript
+    gashapon.forEachItem(function(name, count) {
+
+    }, scope);
+    ```
+- For each remainder item
+    ```javascript
+    gashapon.forEachRemain(function(name, count) {
+
+    }, scope);
+    ```
+
+### Set random generator
 
 ```javascript
-gashapon.eachItem(function(name, count){
-    console.log(name + ": " + count);
-});
+gashapon.setRND(rnd);
 ```
 
-#### Get items
-
-```javascript
-var items = gashapon.getItems();
-```
+- `rnd` : Use [random data generator](random-data-generator.md) to generate result.
+    - `undefined`, or `null` : Use `Math.random()` to generate result.
+    - `Phaser.Math.RND` : Use pre-defined random data generator.

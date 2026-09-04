@@ -1,4 +1,5 @@
-const HSVToRGB = Phaser.Display.Color.HSVToRGB;
+import Phaser from 'phaser';
+
 const DegToRad = Phaser.Math.DegToRad;
 
 class Demo extends Phaser.Scene {

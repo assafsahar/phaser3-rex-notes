@@ -1,7 +1,8 @@
-const TextKlass = Phaser.GameObjects.Text;
+import { GameObjects as PhaserGameObjects } from 'phaser';
+const TextClass = PhaserGameObjects.Text;
 
 var IsTextGameObject = function (gameObject) {
-    return (gameObject instanceof TextKlass);
+    return (gameObject instanceof TextClass);
 }
 
 export default IsTextGameObject;

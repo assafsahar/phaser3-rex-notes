@@ -1,28 +1,33 @@
+import EventEmitterMethods from '../../../utils/eventemitter/EventEmitterMethods.js';
+import GetValue from '../../../utils/object/GetValue.js';
 import RunCommands from '../../../runcommands.js';
 import ArrayCopy from '../../../utils/array/Copy.js';
 
-const EE = Phaser.Events.EventEmitter;
-const GetFastValue = Phaser.Utils.Objects.GetFastValue;
+const STATE_IDLE = 0;
+const STATE_RUN = 1;
+const STATE_RUNLAST = 2;
+const STATE_COMPLETE = 3;
 
-class Sequence extends EE {
+class Sequence {
     constructor(config) {
-        super();
+        // Event emitter
+        this.setEventEmitter(GetValue(config, 'eventEmitter', undefined));
 
         this.commands = [];
         this.scope = undefined;
         this.config = undefined;
         this.index = 0;
         this.indexStep = 1; // 1, or -1
-        this.setYoyo(GetFastValue(config, 'yoyo', false));
-        this.setRepeat(GetFastValue(config, 'repeat', 0));
-        this.setLoop(GetFastValue(config, 'loop', false));
-        this.state = 0; // 0: idle, 1: run, 2: run-last
+        this.setYoyo(GetValue(config, 'yoyo', false));
+        this.setRepeat(GetValue(config, 'repeat', 0));
+        this.setLoop(GetValue(config, 'loop', false));
+        this.state = STATE_IDLE;
         this.task = undefined;
     }
 
     shutdown() {
-        super.shutdown();
         this.stop();
+        this.destroyEventEmitter();
         this.commands.length = 0;
         this.scope = undefined;
         this.config = undefined;
@@ -31,12 +36,12 @@ class Sequence extends EE {
     destroy() {
         this.shutdown();
     }
-    
+
     load(commands, scope, config) {
         this.stop();
-        this.setYoyo(GetFastValue(config, 'yoyo', this.yoyo));
-        this.setRepeat(GetFastValue(config, 'repeat', this.repeat));
-        this.setLoop(GetFastValue(config, 'loop', this.loop));
+        this.setYoyo(GetValue(config, 'yoyo', this.yoyo));
+        this.setRepeat(GetValue(config, 'repeat', this.repeat));
+        this.setLoop(GetValue(config, 'loop', this.loop));
 
         this.commands = ArrayCopy(this.commands, commands);
         this.scope = scope;
@@ -50,7 +55,7 @@ class Sequence extends EE {
         this.resetRepeatCount();
         this.index = 0;
         this.indexStep = 1;
-        this.state = 1;
+        this.state = STATE_RUN;
         if (this.commands.length > 0) {
             this.runNextCommands();
         } else {
@@ -60,16 +65,19 @@ class Sequence extends EE {
     }
 
     stop() {
-        this.state = 0;
         if (this.task) {
             this.task.off('complete', this.runNextCommands, this);
             this.task = undefined;
         }
+        this.state = STATE_IDLE;
         return this;
     }
 
-    setYoyo(m) {
-        this.yoyo = m;
+    setYoyo(yoyo) {
+        if (yoyo === undefined) {
+            yoyo = true;
+        }
+        this.yoyo = yoyo;
         return this;
     }
 
@@ -79,8 +87,11 @@ class Sequence extends EE {
         return this;
     }
 
-    setLoop(m) {
-        this.loop = m;
+    setLoop(loop) {
+        if (loop === undefined) {
+            loop = true;
+        }
+        this.loop = loop;
         this.resetRepeatCount();
         return this;
     }
@@ -91,7 +102,7 @@ class Sequence extends EE {
     }
 
     get completed() {
-        return (this.state === 0);
+        return (this.state === STATE_COMPLETE);
     }
 
     get currentCommandIndex() {
@@ -101,7 +112,7 @@ class Sequence extends EE {
     runNextCommands() {
         var task, isFirstCommand, isLastCommand;
         while (1) {
-            if (this.state === 2) {
+            if (this.state === STATE_RUNLAST) {
                 this.complete();
                 return;
             }
@@ -122,7 +133,7 @@ class Sequence extends EE {
                     if (this.repeatCount > 0) {
                         this.repeatCount--;
                     } else {
-                        this.state = 2; // goto idle at next running
+                        this.state = STATE_RUNLAST; // goto completed at next running
                     }
                 } else {
                     this.index += this.indexStep;
@@ -135,7 +146,7 @@ class Sequence extends EE {
                     if (this.repeatCount > 0) {
                         this.repeatCount--;
                     } else {
-                        this.state = 2; // goto idle at next running
+                        this.state = STATE_RUNLAST; // goto completed at next running
                     }
                 } else {
                     this.index += this.indexStep;
@@ -149,9 +160,14 @@ class Sequence extends EE {
     }
 
     complete() {
-        this.state = 0;
-        this.emit('complete', this);
+        this.state = STATE_COMPLETE;
+        this.emit('complete', this.scope, this);
     }
 }
+
+Object.assign(
+    Sequence.prototype,
+    EventEmitterMethods
+);
 
 export default Sequence;

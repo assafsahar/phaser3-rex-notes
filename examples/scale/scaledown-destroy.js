@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import ScalePlugin from '../../plugins/scale-plugin.js';
 
 class Demo extends Phaser.Scene {
@@ -7,22 +8,24 @@ class Demo extends Phaser.Scene {
         })
     }
 
-    preload() {}
+    preload() { }
 
     create() {
         var obj;
         this.input.on('pointerdown', function (pointer) {
             if (obj) {
-                this.plugins.get('rexScale').scaleDownDestroy(obj, 500);
+                this.plugins.get('rexScale').scaleDownDestroy(obj, 500)
+                    .once('complete', function () { console.log('scaleDownDestroy') })
                 obj = undefined;
             } else {
                 obj = this.add.rectangle(pointer.x, pointer.y, 200, 200, 0x00bcd4);
-                this.plugins.get('rexScale').popup(obj, 1000);
+                this.plugins.get('rexScale').popup(obj, 1000)
+                    .once('complete', function () { console.log('popup') })
             }
         }, this);
     }
 
-    update() {}
+    update() { }
 }
 
 var config = {

@@ -1,50 +1,99 @@
 ## Introduction
 
-Grid (polygon) shape object.
+[Grid (polygon) shape](shape-polygon.md) chess object.
 
 - Author: Rex
-- Polygon Shape Game object of Board system
-
-## Source code
-
-Included in [board plugin](board.md#source-code).
+- Chess Game object of Board system
 
 ## Usage
 
-[Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/board)
+[Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/board-chess)
 
-### Install scene plugin
+### Install plugin
 
-Included in board plugin.
+#### Load minify file
 
-### Add shape object
-
-- Create shape object and add to board
+- Load plugin (minify file) in preload stage
     ```javascript
-    var shape = scene.rexBoard.add.shape(board, tileX, tileY, tileZ, fillColor);
-    // var shape = scene.rexBoard.add.shape(board, tileX, tileY, tileZ, fillColor, fillAlpha);
+    scene.load.scenePlugin('rexboardplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexboardplugin.min.js', 'rexBoard', 'rexBoard');
+    ```
+- Add chess object
+    ```javascript
+    var chess = scene.rexBoard.add.shape(board, tileX, tileY, tileZ, fillColor);
+    ```
+
+#### Import plugin
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import BoardPlugin from 'phaser4-rex-plugins/plugins/board-plugin.js';
+    var config = {
+        // ...
+        plugins: {
+            scene: [{
+                key: 'rexBoard',
+                plugin: BoardPlugin,
+                mapping: 'rexBoard'
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add chess object
+    ```javascript
+    var chess = scene.rexBoard.add.shape(board, tileX, tileY, tileZ, fillColor);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import { Shape } from 'phaser4-rex-plugins/plugins/board-components.js';
+    ```
+- Add chess object
+    ```javascript
+    var chess = new Shape(board, tileX, tileY, tileZ, fillColor);
+    scene.add.existing(chess);
+    ```
+
+### Add chess object
+
+- Create chess object and add to board
+    ```javascript    
+    var chess = scene.rexBoard.add.shape(board, tileX, tileY, tileZ, fillColor, fillAlpha);
     ```
     - `board` : [Board object](board.md)
     - `tileX`, `tileY`, `tileZ` : Tile position
-    - `fillColor`, `fillAlpha` : Color of this shape object
-- Create shape object but *not* add to board
+    - `fillColor`, `fillAlpha` : Color of this shape chess object
+- Create chess object but *not* add to board
     ```javascript
-    var shape = scene.rexBoard.add.shape(board, x, y, undefined, fillColor, fillAlpha, false);
+    var chess = scene.rexBoard.add.shape(board, x, y, undefined, fillColor, fillAlpha, false);
     ```
     - `board` : [Board object](board.md)
     - `x`, `y` : World position
-    - `fillColor`, `fillAlpha` : Color of this shape object
+    - `fillColor`, `fillAlpha` : Color of this shape chess object
 
 
 ### Set color
 
 - Fill color
     ```javascript
-    polygon.setFillStyle(color, alpha)
+    chess.setFillStyle(color, alpha)
     ```
 - Stroke color
     ```javascript
-    polygon.setStrokeStyle(lineWidth, color, alpha)
+    chess.setStrokeStyle(lineWidth, color, alpha)
     ```
 
 !!! warning "No tint methods"
@@ -52,4 +101,4 @@ Included in board plugin.
 
 ### Other properties
 
-See [game object](gameobject.md)
+See [polygon shape game object](shape-polygon.md), [game object](gameobject.md)

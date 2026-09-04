@@ -1,16 +1,18 @@
+import ComponentBase from '../../utils/componentbase/ComponentBase.js';
+import Methods from './Methods.js';
 import GetChessData from '../chess/GetChessData.js';
-import GetPath from './GetPath.js';
-import GetNextTile from './GetNextTile.js';
-import GetCost from './GetCost.js';
 import CONST from './const.js';
 import GetValue from '../../utils/object/GetValue.js';
 
 const BLOCKER = CONST.BLOCKER;
 const STOP = CONST.STOP;
 
-class Monopoly {
+class Monopoly extends ComponentBase {
     constructor(gameObject, config) {
-        this.gameObject = gameObject;
+        super(gameObject, { eventEmitter: false });
+        // No event emitter
+        // this.parent = gameObject;
+
         this.chessData = GetChessData(gameObject);
         this.resetFromJSON(config);
     }
@@ -29,21 +31,15 @@ class Monopoly {
         return this;
     }
 
-    boot() {
-        if (this.gameObject.on) { // oops, bob object does not have event emitter
-            this.gameObject.on('destroy', this.destroy, this);
+    shutdown(fromScene) {
+        // Already shutdown
+        if (this.isShutdown) {
+            return;
         }
-    }
 
-    shutdown() {
-        this.gameObject = undefined;
         this.chessData = undefined;
-        return this;
-    }
 
-    destroy() {
-        this.shutdown();
-        return this;
+        super.shutdown(fromScene);
     }
 
     setFace(direction) {
@@ -87,14 +83,9 @@ class Monopoly {
     }
 }
 
-var methods = {
-    getPath: GetPath,
-    getNextTile: GetNextTile,
-    getCost: GetCost,
-};
 Object.assign(
     Monopoly.prototype,
-    methods
+    Methods
 );
 
 const PATHMODE = {

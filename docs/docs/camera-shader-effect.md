@@ -2,93 +2,73 @@
 
 Shader effect of camera.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
-### Setup
+### Register post-fx pipeline
 
-1. Create filter
-   ```javascript
+- Register post-fx pipeline in game config
+    ```javascript
+    import PostFxClass from 'path';
     var config = {
-        game: scene.game,
-        renderer: scene.game.renderer,
-        fragShader: '...'  // GLSL shader
+        // ...
+        pipeline: [PostFxClass]
+        // ...
     };
-    var customPipeline = new Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline(config);
-    var filter = scene.game.renderer.addPipeline(pipelineName, customPipeline);
+    var game = new Phaser.Game(config);
     ```
-    - `pipelineName` : Name of this render pipeline, a string.
-1. Add filter
+
+Some post-fx pipelines:
+
+- [Barrel](shader-barrel.md): Barrel post processing filter.
+- [Color replace](shader-colorreplace.md): Replace color post processing filter.
+- [Cross-stitching](shader-crossstitching.md): Cross-stitching post processing filter.
+- [CRT](shader-crt.md): CRT post processing filter.
+- [Dissolve](shader-dissolve.md): Dissolve transition post processing filter.
+- [Fish eye](shader-fisheye.md): Fish-eye post processing filter.
+- [Hsl-adjust](shader-hsladjust.md): Adjust color in HSL domain, post processing filter.
+- [Horri-fi](shader-horrifi.md): 6-in-1 post processing filter.
+- [Toonify](shader-toonify.md): Draw outlines and quantize color in HSV domain, post processing filter.
+- [Shockwave](shader-shockwave.md): Shockwave post processing filter.
+- [Split](shader-split.md): Split image into 4 parts.
+- [Swirl](shader-swirl.md): Swirl post processing filter.
+- [Warp](shader-warp.md): Warp post processing filter. 
+
+### Add post-fx pipeline
+
+```javascript
+camera.setPostPipeline(PostFxClass);
+```
+
+- `PostFxClass` : Class of post-fx pipeline.
+
+### Remove post-fx pipeline
+
+- Remove a kind of post-fx pipeline
     ```javascript
-    camera.setRenderToTexture(filter);
+    camera.removePostPipeline(PostFxClass);
     ```
-1. Set/change properties of filter
-    - Property with 1 value
-        - Float
-            ```javascript
-            filter.setFloat1(name, value0);
-            ```
-        - uniform1fv
-            ```javascript
-            filter.setFloat1v(name, value0);
-            ```
-        - Int
-            ```javascript
-            filter.setInt1(name, value0);
-            ```
-    - Property with 2 values
-        - Float
-            ```javascript
-            filter.setFloat2(name, value0, value1);
-            ```
-        - uniform2fv
-            ```javascript
-            filter.setFloat2v(name, value0, value1);
-            ```
-        - Int
-            ```javascript
-            filter.setInt2(name, value0, value1);
-            ``` 
-    - Property with 3 value
-        - Float
-            ```javascript
-            filter.setFloat3(name, value0, value1, value2);
-            ```
-        - uniform3fv
-            ```javascript
-            filter.setFloat3v(name, value0, value1, value2);
-            ```
-        - Int
-            ```javascript
-            filter.setInt3(name, value0, value1, value2);
-            ```
-    - Property with 4 values
-        - Float
-            ```javascript
-            filter.setFloat4(name, value0, value1, value2, value3);
-            ```
-        - uniform4fv
-            ```javascript
-            filter.setFloat4v(name, value0, value1, value2, value3);
-            ```
-        - Int
-            ```javascript
-            filter.setInt4(name, value0, value1, value2, value3);
-            ```
-
-### Other methods
-
-- Change filter
+- Remove all post-fx pipelines
     ```javascript
-    camera.setPipeline(pipelineName);
+    camera.resetPipeline(true);
     ```
     or
     ```javascript
-    camera.setPipeline(filter);
+    camera.postPipelines = [];
+    camera.hasPostPipeline = false;
     ```
-    - `pipelineName` : Name of this render pipeline, a string.
-- Clear filter
-    ```javascript
-    camera.clearRenderToTexture();
-    ```
+
+### Get post-fx pipeline
+
+```javascript
+var pipelineInstance = camera.getPostPipeline(PostFxClass);
+```
+
+- `pipelineInstance` : 
+    - A pipeline instance
+    - An array of pipeline instances
+
+### Add effect properties
+
+See [Add effect properties behavior](effect-properties.md)

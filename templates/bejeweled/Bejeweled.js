@@ -1,71 +1,80 @@
-import BoardPlugin from '../../plugins/board-plugin.js';
+import ComponentBase from '../../plugins/utils/componentbase/ComponentBase.js';
 import MainState from './states/MainState.js';
-import Board from './board/Board.js';
+import Board from './board/BoardWrapper.js';
+import Input from './input/Input.js';
+import WaitEvents from '../../plugins/waitevents.js';
+import InputMethods from './methods/InputMethods.js';
+import BoardMethods from './methods/BoardMethods.js';
+import WaitEventMethods from './methods/WaitEventMethods.js';
+import DataManagerMethods from '../../plugins/utils/data/DataManagerMethods.js';
+import CommandMethods from './methods/CommandMethods.js';
+import SetMethods from './methods/SetMethods.js';
 
-const EE = Phaser.Events.EventEmitter;
+import { Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
 
-class Bejeweled extends EE {
+class Bejeweled extends ComponentBase {
     constructor(scene, config) {
-        loadRexBoardPlugin(scene);
-        super();
+        super(scene, config);
+        // this.scene
 
-        this.scene = scene;
-        this.board = new Board(scene, config);
+        this.rexBoard = scene[GetValue(config, 'rexBoard', 'rexBoard')];
+
+        this.boardWrapper = new Board(scene, config);
+
+        var defaultInput = GetValue(config, 'input', true);
+        if (defaultInput) {
+            this.input = new Input(this, config);
+        } else {
+            this.input = undefined;
+        }
+
+        this.waitEvents = new WaitEvents();
+
         this.mainState = new MainState(this, config);
 
         this.boot();
     }
 
     boot() {
-        // touch control
-        this.board
-            .onPointerDown(this.selectChess, this)
-            .onPointerMove(this.selectChess, this)
-            .onPointerUp(this.cancelSelecting, this);
-
-        this.scene.events.on('destroy', this.destroy, this);
+        this.scene.events.once('shutdown', this.destroy, this);
     }
 
-    shutdown() {
-        super.shutdown();
-        this.board.shutdown();
-        this.mainState.shutdown();
+    shutdown(fromScene) {
+        super.shutdown(fromScene);
 
-        this.scene = undefined;
-        this.board = undefined;
+        if (this.input) {
+            this.input.destroy();
+        }
+        this.boardWrapper.destroy();
+        this.mainState.destroy();
+        this.waitEvents.destroy();
+
+        this.destroyDataManager();
+
+        this.boardWrapper = undefined;
         this.mainState = undefined;
+        this.input = undefined;
+        this.waitEvents = undefined;
+
         return this;
     }
 
-    destroy() {
+    destroy(fromScene) {
         this.emit('destroy');
-        this.shutdown();
+        super.destroy(fromScene);
         return this;
-    }
-
-    setBoardSize(width, height) {
-        this.board.setBoardWidth(width).setBoardHeight(height);
-        return this;
-    }
-
-    start() {
-        this.mainState.goto('START');
-        return this;
-    }
-
-    selectChess(pointer, chess) {
-        this.mainState.selectChess(chess);
-    }
-
-    cancelSelecting() {
-        this.mainState.selectChess();
     }
 }
 
-var loadRexBoardPlugin = function (scene) {
-    if (Phaser.Plugins.PluginCache.hasCustom('RexBoardPlugin')) {
-        return;
-    }
-    scene.load.scenePlugin('RexBoardPlugin', BoardPlugin, 'rexBoard', 'rexBoard').start();
-}
+Object.assign(
+    Bejeweled.prototype,
+    InputMethods,
+    BoardMethods,
+    WaitEventMethods,
+    DataManagerMethods,
+    CommandMethods,
+    SetMethods,
+);
+
 export default Bejeweled;

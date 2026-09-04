@@ -2,7 +2,7 @@
 
 Control the position and angle of children game objects, built-in game object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
@@ -137,7 +137,7 @@ var amount = container.count(property, value, startIndex, endIndex);
 // value: the value to test the property against. Must pass a strict (`===`) comparison check.
 ```
 
-#### Sort choldren
+#### Sort children
 
 ```javascript
 container.sort(property);
@@ -171,12 +171,7 @@ container.removeAll();
 // container.removeAll(true);  // remove all children objects and destroy them
 ```
 
-#### Replace child
-
-```javascript
-container.replace(oldChild, newChild);
-// container.replace(oldChild, newChild, true);  // destroy oldChild
-```
+Removing child from container without destroying will put back into scene's display list.
 
 #### Order of child
 
@@ -201,6 +196,14 @@ container.moveDown(child);
 ```
 
 ```javascript
+container.moveAbove(child1, child2);  // Move child1 above child2
+```
+
+```javascript
+container.moveBelow(child1, child2);  // Move child1 below child2
+```
+
+```javascript
 container.swap(child1, child2);
 ```
 
@@ -210,6 +213,13 @@ container.reverse();
 
 ```javascript
 container.shuffle();
+```
+
+#### Replace child
+
+```javascript
+container.replace(oldChild, newChild);
+// container.replace(oldChild, newChild, true);  // destroy oldChild
 ```
 
 #### Set properties
@@ -225,19 +235,70 @@ container.setAll(property, value, startIndex, endIndex);
     container.iterate(callback);
     // container.iterate(callback, context);
     // container.iterate(callback, context, arg0, arg1, ...);
-    // var callback = function(child, arg0, arg1, ...) {};
     ```
+    - `callback` : 
+        ```javascript
+        function(child, arg0, arg1, ...) {
+
+        }
+        ```    
 - Iterate a copy of current children list
     ```javascript
     container.each(callback);
     // container.each(callback, context);
     // container.each(callback, context, arg0, arg1, ...);
-    // var callback = function(child, arg0, arg1, ...) {};
     ```
+    - `callback` : 
+        ```javascript
+        function(child, arg0, arg1, ...) {
 
-## Compare with [group object](group.md)
+        }
+        ```
 
-- Container and group objects are all has a children list.
+#### Get world position, rotation, scale
+
+```javascript
+var matrix = child.getWorldTransformMatrix();
+var x = matrix.tx;
+var y = matrix.ty;
+var rotation = matrix.rotation;
+var scaleX = matrix.scaleX;
+var scaleY = matrix.scaleY;
+```
+
+### Alpha
+
+- Set alpha to all children
+    ```javascript    
+    container.alpha = value;
+    // container.setAlpha(value);
+    ```
+- Set alpha to rendering result of container
+    1. Eanble dedicated framebuffer
+        ```javascript
+        container.enableFilters().filtersForceComposite = true;
+        ```
+    2. Set alpha to internal camera
+        ```javascript
+        var camera = container.filters.internal.camera;
+        camera.alpha = value;
+        ```
+
+### Other properties
+
+See [game object](gameobject.md)
+
+### Create mask
+
+See [mask](mask.md)
+
+### Shader effects
+
+Support [internal and external filters](shader-builtin.md)
+
+### Compare with [group object](group.md)
+
+- Container and group objects are all have a children list.
 - Container has position, angle, alpha, visible, ...etc, but group does not have.
 - Container controls properties of children (position, angle, alpha, visible, ...etc), but group won't.
-- A game object could be added to many group, but it only could be added to a container (`exclusive` mode).
+- A game object could be added to many groups, but it only could be added to one container (`exclusive` mode).

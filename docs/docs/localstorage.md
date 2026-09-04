@@ -4,6 +4,9 @@ Store small data in key-value pairs locally within the user's browser.
 
 - Author: Built-in javascript function
 
+!!! note "Max Size"
+    5MB per app per browser.
+
 ## Usage
 
 [Reference](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)
@@ -21,6 +24,10 @@ localStorage.setItem(key, value);
 ```javascript
 var value = localStorage.getItem(key);
 ```
+
+!!! note
+    The keys and the values are always strings. 
+    Objects, integer keys will be automatically converted to strings.
 
 ### Remove data
 

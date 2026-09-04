@@ -2,13 +2,12 @@
 
 Ellipse shape, built-in game object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
-### Create shape
+### Create shape object
 
-### Add shape object
 
 ```javascript
 var ellipse = scene.add.ellipse(x, y, width, height, fillColor);
@@ -44,10 +43,15 @@ var ellipse = scene.add.ellipse(x, y, width, height, fillColor);
     - Get
         ```javascript
         var color = ellipse.fillColor;
+        var alpha = ellipse.fillAlpha;
         ```
     - Set
         ```javascript
         ellipse.setFillStyle(color, alpha);
+        ```
+    - Clear
+        ```javascript
+        ellipse.setFillStyle();
         ```
 - Stroke color
     - Get
@@ -58,22 +62,55 @@ var ellipse = scene.add.ellipse(x, y, width, height, fillColor);
         ```javascript
         ellipse.setStrokeStyle(lineWidth, color, alpha);
         ```
+    - Clear
+        ```javascript
+        ellipse.setStrokeStyle();
+        ```
 
 !!! warning "No tint methods"
     Uses `ellipse.setFillStyle(color, alpha)` to change color.
 
-### Propertirs
+### Alpha
 
-- Size
-    - Get
-        ```javascript
-        var width = ellipse.width;
-        var height = ellipse.height;
-        ```
-    - Set
-        ```javascript
-        ellipse.setSize(width, height);
-        ```
+- Get
+    ```javascript
+    var alpha = ellipse.alpha;
+    ```
+- Set
+    ```javascript
+    ellipse.setAlpha(alpha);
+    // ellipse.alpha = alpha;
+    ```
+
+### Size
+
+- Get
+    ```javascript
+    var width = ellipse.width;
+    var height = ellipse.height;
+    ```
+- Set
+    ```javascript
+    ellipse.setSize(width, height);
+    ```
+
+### Display size
+
+- Get
+    ```javascript
+    var width = ellipse.displayWidth;
+    var height = ellipse.displayHeight;
+    ```
+- Set
+    ```javascript
+    ellipse.setDisplaySize(width, height);
+    ```
+    or
+    ```javascript
+    ellipse.displayWidth = width;
+    ellipse.displayHeight = height;
+    ```
+
 ### Smoothness
 
 The number of points used when rendering it. Increase this value for smoother curves, at the cost of more polygons being rendered.
@@ -89,3 +126,11 @@ ellipse.smoothness = smoothness;
 ### Other properties
 
 See [game object](gameobject.md)
+
+### Create mask
+
+See [mask](mask.md)
+
+### Shader effects
+
+Support [internal and external filters](shader-builtin.md)

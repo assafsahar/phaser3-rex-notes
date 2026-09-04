@@ -1,6 +1,8 @@
+import Phaser from 'phaser';
 import UIPlugin from '../../templates/ui/ui-plugin.js';
+import GetRandomWord from '../../plugins/utils/string/GetRandomWord.js';
 
-const COLOR_PRIMARY = 0x4e342e;
+const COLOR_MAIN = 0x4e342e;
 const COLOR_LIGHT = 0x7b5e57;
 const COLOR_DARK = 0x260e04;
 
@@ -12,7 +14,7 @@ class Demo extends Phaser.Scene {
         })
     }
 
-    preload() {}
+    preload() { }
 
     create() {
         var sizer = this.rexUI.add.sizer({
@@ -35,13 +37,13 @@ class Demo extends Phaser.Scene {
         sizer.drawBounds(this.add.graphics(), 0xff0000);
     }
 
-    update() {}
+    update() { }
 }
 
 var createList = function (scene) {
     var sizer = scene.rexUI.add.sizer({
-            orientation: 'y'
-        })
+        orientation: 'y'
+    })
         .add(
             createTitle(scene),
             0
@@ -57,10 +59,10 @@ var createList = function (scene) {
 }
 
 var createTitle = function (scene) {
-    var text = genText();
+    var word = GetRandomWord(2, 4);
     return scene.rexUI.add.label({
         background: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 14, COLOR_LIGHT),
-        text: scene.add.text(0, 0, text, {
+        text: scene.add.text(0, 0, word, {
             fontSize: 20
         }),
         space: {
@@ -96,9 +98,9 @@ var createGrid = function (scene) {
 }
 
 var createItem = function (scene) {
-    var text = genText();
+    var text = GetRandomWord(2, 4);
     return scene.rexUI.add.label({
-        background: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 14, COLOR_PRIMARY),
+        background: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 14, COLOR_MAIN),
         text: scene.add.text(0, 0, text, {
             fontSize: 18
         }),
@@ -109,17 +111,6 @@ var createItem = function (scene) {
             bottom: 10,
         }
     });
-}
-
-const RandomInt = Phaser.Math.Between;
-const RandomItem = Phaser.Utils.Array.GetRandom;
-const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-var genText = function () {
-    var s = '';
-    for (var j = 0, jcnt = RandomInt(2, 4); j < jcnt; j++) {
-        s += RandomItem(possible);
-    }
-    return s;
 }
 
 var config = {

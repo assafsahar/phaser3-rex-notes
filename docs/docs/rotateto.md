@@ -5,50 +5,74 @@ Rotate game object towards target position with a steady speed.
 - Author: Rex
 - Behavior of game object
 
-## Source code
-
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/rotateto-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexrotatetoplugin.min.js)
-
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/rotateto)
 
-User could import class directly, or install it by global plugin.
+### Install plugin
 
-### Import class
+#### Load minify file
 
-```javascript
-import rexRotateTo from './plugins/rotateto.js';
-```
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.plugin('rexrotatetoplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexrotatetoplugin.min.js', true);
+    ```
+- Add rotate-to behavior
+    ```javascript
+    var rotateTo = scene.plugins.get('rexrotatetoplugin').add(gameObject, config);
+    ```
 
-### Install global plugin
+#### Import plugin
 
-Install plugin in [configuration of game](game.md#configuration)
-
-```javascript
-import RotateToPlugin from './plugins/rotateto-plugin.js';
-
-var config = {
-    // ...
-    plugins: {
-        global: [{
-            key: 'rexRotateTo',
-            plugin: RotateToPlugin,
-            start: true
-        },
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import RotateToPlugin from 'phaser4-rex-plugins/plugins/rotateto-plugin.js';
+    var config = {
         // ...
-        ]
-    }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+        plugins: {
+            global: [{
+                key: 'rexRotateTo',
+                plugin: RotateToPlugin,
+                start: true
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add rotate-to behavior
+    ```javascript
+    var rotateTo = scene.plugins.get('rexRotateTo').add(gameObject, config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import RotateTo from 'phaser4-rex-plugins/plugins/rotateto.js';
+    ```
+- Add rotate-to behavior
+    ```javascript
+    var rotateTo = new RotateTo(gameObject, config);
+    ```
 
 ### Create instance
 
 ```javascript
 var rotateTo = scene.plugins.get('rexRotateTo').add(gameObject, {
-    // speed: 180
+    // speed: 180,
+    // enable: true,
+    // timeScale: 1,
 });
 ```
 
@@ -66,11 +90,13 @@ var rotateTo = scene.plugins.get('rexRotateTo').add(gameObject, {
 - Clockwise/counter-clockwise
     ```javascript
     rotateTo.rotateTowardsPosition(x, y, dir);
+    // rotateTo.rotateTowardsPosition(x, y, dir, speed);
     ```
     - `dir` :
         - `0` : Shortest angle
         - `1`, or `'cw'` : Clockwise
         - `2`, or `'ccw'` : Counter-clockwise
+    - `speed` : Turn speed, degrees in second
 
 #### Rotate game object to angle
 
@@ -88,6 +114,7 @@ var rotateTo = scene.plugins.get('rexRotateTo').add(gameObject, {
         - `0` : Shortest angle
         - `1`, or `cw` : Clockwise
         - `2`, or `ccw` : Counter-clockwise
+    - `speed` : Turn speed, degrees in second
 
 ### Enable
 
@@ -127,6 +154,10 @@ rotateTo.setSpeed(speed);
 
 ### Events
 
+- On rotating start
+    ```javascript
+    rotateTo.on('start', function(gameObject, rotateTo){});
+    ```
 - On reached target
     ```javascript
     rotateTo.on('complete', function(gameObject, rotateTo){});

@@ -2,7 +2,7 @@
 
 Circle shape and methods, built-in methods of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
@@ -106,6 +106,10 @@ var circle1 = Phaser.Geom.Circle.Clone(circle0);
 - Circumference
     ```javascript
     var circumference = Phaser.Geom.Circle.Circumference(circle);
+    ```
+- Type:
+    ```javascript
+    var type = circle.type; // 0
     ```
 
 ### Point(s) & shape

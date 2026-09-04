@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import CSVScenarioPlugin from '../../plugins/csvscenario-plugin.js';
 
 var csvString =
@@ -47,7 +48,8 @@ class Demo extends Phaser.Scene {
                 console.log('scenario complete')
             })
             .on('labelchange', function (curLabel, prevLabel) {
-                console.log('Label: "' + prevLabel + '"->"' + curLabel + '"')
+                console.log(`Label ${prevLabel} -> ${curLabel}`)
+                console.log(`Label ${scenario.previousLabel} -> ${scenario.lastLabel}`);
             })
             .load(csvString, myCmds, {
                 timeUnit: 'sec'
@@ -57,7 +59,7 @@ class Demo extends Phaser.Scene {
             });
     }
 
-    update() {}
+    update() { }
 }
 
 var config = {

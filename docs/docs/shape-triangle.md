@@ -2,13 +2,11 @@
 
 Triangle shape, built-in game object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
-### Create shape
-
-### Add shape object
+### Create shape object
 
 ```javascript
 var triangle = scene.add.triangle(x, y, x1, y1, x2, y2, x3, y3, fillColor);
@@ -44,10 +42,15 @@ var triangle = scene.add.triangle(x, y, x1, y1, x2, y2, x3, y3, fillColor);
     - Get
         ```javascript
         var color = triangle.fillColor;
+        var alpha = triangle.fillAlpha;
         ```
     - Set
         ```javascript
         triangle.setFillStyle(color, alpha);
+        ```
+    - Clear
+        ```javascript
+        triangle.setFillStyle();
         ```
 - Stroke color
     - Get
@@ -58,9 +61,25 @@ var triangle = scene.add.triangle(x, y, x1, y1, x2, y2, x3, y3, fillColor);
         ```javascript
         triangle.setStrokeStyle(lineWidth, color, alpha);
         ```
+    - Clear
+        ```javascript
+        triangle.setStrokeStyle();
+        ```
 
 !!! warning "No tint methods"
     Uses `triangle.setFillStyle(color, alpha)` to change color.
+
+### Alpha
+
+- Get
+    ```javascript
+    var alpha = triangle.alpha;
+    ```
+- Set
+    ```javascript
+    triangle.setAlpha(alpha);
+    // triangle.alpha = alpha;
+    ```
 
 ### Set vertices
 
@@ -76,6 +95,31 @@ triangle.setLineWidth(startWidth, endWidth);
 
 - `endWidth` : The end width of the triangle. Only used in WebGL.
 
+### Display size
+
+- Get
+    ```javascript
+    var width = triangle.displayWidth;
+    var height = triangle.displayHeight;
+    ```
+- Set
+    ```javascript
+    triangle.setDisplaySize(width, height);
+    ```
+    or
+    ```javascript
+    triangle.displayWidth = width;
+    triangle.displayHeight = height;
+    ```
+
 ### Other properties
 
 See [game object](gameobject.md)
+
+### Create mask
+
+See [mask](mask.md)
+
+### Shader effects
+
+Support [internal and external filters](shader-builtin.md)

@@ -5,11 +5,14 @@ Viewer of grid table, to manipulate game object of each visible cell.
 - Author: Rex
 - Game object
 
-## Source code
+## Live demos
 
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/gridtable-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexgridtableplugin.min.js)
-
-[Class](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/gridtable.js)
+- [Grid table](https://codepen.io/rexrainbow/pen/vjJeMR)
+- [Grid table & slider](https://codepen.io/rexrainbow/pen/rrPyXL)
+- [Grid table & scroller](https://codepen.io/rexrainbow/pen/GXjPrL)
+- [Grid table & slider & scroller](https://codepen.io/rexrainbow/pen/xaLdyr)
+- [Horizontal scrolling](https://codepen.io/rexrainbow/pen/QVjXRM)
+- [Varying cell height](https://codepen.io/rexrainbow/pen/VGwPJz)
 
 ## Usage
 
@@ -17,65 +20,150 @@ Viewer of grid table, to manipulate game object of each visible cell.
 
 ### Install plugin
 
-Install plugin in [configuration of game](game.md#configuration)
+#### Load minify file
 
-```javascript
-var config = {
-    // ...
-    plugins: {
-        global: [{
-            key: 'rexGridTablePlugin',
-            plugin: GridTablePlugin,
-            start: true
-        },
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.plugin('rexgridtableplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexgridtableplugin.min.js', true);
+    ```
+- Add table object
+    ```javascript
+    var table = scene.add.rexGridTable(x, y, width, height, config);
+    ```
+
+#### Import plugin
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import GridTablePlugin from 'phaser4-rex-plugins/plugins/gridtable-plugin.js';
+    var config = {
         // ...
-        ]
-    }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+        plugins: {
+            global: [{
+                key: 'rexGridTablePlugin',
+                plugin: GridTablePlugin,
+                start: true
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add table object
+    ```javascript
+    var table = scene.add.rexGridTable(x, y, width, height, config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import GridTable from 'phaser4-rex-plugins/plugins/gridtable.js';
+    ```
+- Add table object
+    ```javascript    
+    var table = new GridTable(scene, x, y, width, height, config);
+    scene.add.existing(table);
+    ```
 
 ### Create instance
 
 ```javascript
-var config = {
+var table = scene.add.rexGridTable(x, y, width, height, {
+    scrollMode: 0,        // 0|'v'|'vertical'|1|'h'|'horizontal'
     cellsCount: 0,
     columns: 1,
+    // rows: 1,
     cellHeight: 30,
     cellWidth: 30,
+    // fixedCellSize: false,
 
     cellVisibleCallback: null,
+    // cellVisibleCallback: function (cell, cellContainer, table) {},
     cellVisibleCallbackScope: undefined,
+    reuseCellContainer: false,
 
     cellInvisibleCallback: null,
-    cellInvisibleCallbackScope: undefined,
-
-    clamplTableOXY: true,
-    scrollMode: 0,        // 0|'v'|'vertical'|1|'h'|'horizontal'
+    // cellInvisibleCallback: function(cell) {},
+    // cellInvisibleCallbackScope: undefined,
+    // clampTableOXY: true,
+    // startFromBottom: false,
+    
     mask: {
-        padding: 0
-    }
-}
-var table = scene.add.rexGridTable(x, y, width, height, config);
+        padding: 0, // or {left, right, top, bottom}
+        // maskType: 'children',
+        // updateMode: 0,
+        // layer: undefined,
+    },
+    // enableLayer: false
+});
 ```
 
+- `scrollMode` :
+    - `0`, or `'v'`, or `'vertical'` : Scroll table vertically.
+    - `1`, or `'h'`, or `'horizontal'` : Scroll table horizontally.
 - `cellsCount` : Total cells count.
-- `columns` : Columns count of each row.
+- `columns` : Columns count of each row. Can be used in *vertical* or *horizontal* scroll mode.
+- `rows` : Rows count of each column. Can be used in *horizontal* scroll mode.
 - `cellHeight` : Default height of each cell.
     - Expand cell height to fit table height : set `cellHeight` to `undefined`, and `scrollMode` is `'horizontal'`.
 - `cellWidth` : Width of each cell.
     - Expand cell width to fit table width : set `cellWidth` to `undefined`, and `scrollMode` is `'vertical'`.
-- `cellVisibleCallback` , `cellVisibleCallbackScope` : Callback when cell begins visible.
-- `cellInvisibleCallback`, `cellInvisibleCallbackScope`: Callback when cell begins invisible.
-- `clamplTableOXY` : Set `true` to clamp `tableOX`, `tableOY` when out-of-bound,
-    - Set `false` when dragging by [scroller](scroller.md)
-- `scrollMode` :
-    - `0`, or `'v'`, or `'vertical'` : Scroll table vertically.
-    - `1`, or `'h'`, or `'horizontal'` : Scroll table horizontally.
+- `fixedCellSize` : Assign `columns` according to `cellWidth` (if `scrollMode` is `0`) or `cellHeight` (if `scrollMode` is `1`) , when initialize and resizing.
+　　- `false` : Ignore this parameter. Default behavior.
+    - `true` : Set `columns` according to `cellWidth`/`cellHeight`.
+- `cellVisibleCallback` , `cellVisibleCallbackScope` : [Callback when cell begins visible](gridtable.md#cell-begins-visible).
+    ```javascript
+    function (cell, cellContainer, table) {
+        if (cellContainer === null) { // No reusable cell container, create a new one
+            var scene = cell.scene;
+            // cellContainer = scene.add.container();
+        }
+        // Set child properties of cell container ...
+        cell.setContainer(cellContainer); // Assign cell container
+    }
+    ```
+- `reuseCellContainer` : Set `true` to reuse cell container when cell is visible.
+- `cellInvisibleCallback`, `cellInvisibleCallbackScope`: [Callback when cell begins invisible](gridtable.md#cell-begins-invisible)
+    ```javascript
+    function (cell) {
+        // var container = cell.popContainer();
+    }
+    ```
+- `clampTableOXY` : 
+    - `true` : Clamp `tableOX`, `tableOY` when out-of-bound,
+    - `false` : No clamping, default behavior.
+- `startFromBottom` :
+    - `false` : Start from top. Default behavior.
+    - `true` : If cells' height is less then a page, align cells to bottom.
 - `mask` : A rectangle mask of cells
-    - `mask.padding` : Extra left/right/top/bottom padding spacing of this rectangle mask. Default value is `0`.
+    - `mask.padding` : 
+        - A number : Extra left/right/top/bottom padding spacing of this rectangle mask. Default value is `0`.
+        - A plain object `{left, right, top, bottom}`    
+    - `mask.maskType` :
+        - `children` or `undefined` : Applies the mask to each partially visible child.
+        - `layer` : Applies one shared layer mask and only toggles child visibility.
+        - `stencil` : Uses a stencil mask and only toggles child visibility.
+    - `mask.updateMode` : When to update cells mask
+        - `0`, or `update` : Apply mask to cell container only when `table.updateTable()` is invoked. Default behavior.
+        - `1`, or `everyTick` : Apply mask to cell container every tick. Use this mode if game objects of cell are moved after `table.updateTable()` and still been masked.
+    - `mask.layer` :
+        - `undefined`, `false`, `null` : Disable this feature, default behavior
+        - [Layer game object](layer.md) : Draw children game object of panel on this layer game object, then apply mask on this layer game object.     
     - `false` : No mask.
+- `enableLayer` : 
+    - `false` : Add cell game objects into scene's display list. Default behavior.
+    - `true` : Add cell game objects into an internal [layer game object](layer.md). [See also](containerlite.md#renderer-layer).
 
 Add grid table from JSON
 
@@ -88,6 +176,7 @@ var table = scene.make.rexGridTable({
 
     // cellsCount: 0,   // total cells count
     // ...
+    // origin: {x: 0.5, y: 0.5},
 });
 ```
 
@@ -119,8 +208,13 @@ var table = scene.make.rexGridTable({
 Add [container](container.md) of cell when it begins visible in event `cellvisible`. 
 
 ```javascript
-table.on('cellvisible', function(cell){
-    cell.setContainer(customContainer);
+table.on('cellvisible', function(cell, cellContainer, table){
+    if (cellContainer === null) { // No reusable cell container, create a new one
+        var scene = cell.scene;
+        // cellContainer = scene.add.container();
+    }
+    // Set child properties of cell container ...
+    cell.setContainer(cellContainer); // Assign cell container
 })
 ```
 
@@ -129,34 +223,92 @@ It is equal to `cellVisibleCallback` in configuration.
 ```javascript
 {
     // ...
-    cellVisibleCallback: function(cell) { cell.setContainer(customContainer); },
+    cellVisibleCallback: function(cell, cellContainer, table) {
+        cell.setContainer(cellContainer); // Assign cell container
+    },
     // ...
 }
 ```
 
+- `cell`
+    - Scene object of grid table.
+        ```javascript
+        var scene = cell.scene;
+        ```
+    - Index of cell.
+        ```javascript
+        var index = cell.index;
+        ```
+    - Size of cell.
+        ```javascript
+        var cellWidth = cell.width;
+        var cellHeight = cell.height;
+        ```
+        - Change size of cell : 
+            - Change cell height in scoll-vertical mode.
+                ```javascript
+                cell.setHeight(newHeight);
+                // cell.height = newHeight;
+                ```
+                or
+                ```javascript
+                cell.setDeltaHeight(deltaHeight);
+                // cell.deltaHeight = deltaHeight;
+                ```
+            - Reset cell height in scoll-vertical mode.
+                ```javascript
+                cell.setDeltaHeight(0);
+                // cell.deltaHeight = 0;
+                ```
+            - Change cell width in scroll-horizontal mode.
+                ```javascript
+                cell.setWidth(newWidth);
+                // cell.width = newWidth;
+                ```
+                or
+                ```javascript
+                cell.setDeltaWidth(deltaWidth);
+                // cell.deltaWidth = deltaWidth;
+                ```
+            - Reset cell height in scroll-horizontal mode.
+                ```javascript
+                cell.setDeltaWidth(0);
+                // cell.deltaWidth = 0;
+                ```
+    - Assign cell container. Set origin point of this cell container to (0,0).
+        ```javascript
+        cell.setContainer(cellContainer);
+        ```
+    - Alignment of cellContainer : 
+        ```javascript
+        cell.setCellContainerAlign(align);
+        ```
+        - `align` :
+            - `undefined` : Set position of cellContainer to left-top of cell space. Default behavior.
+            - `'center'`, or `Phaser.Display.Align.CENTER` : Align game object at center of cell space.
+            - `'left'`, or `Phaser.Display.Align.LEFT_CENTER` : Align game object at left-center of cell space.
+            - `'right'`, or `Phaser.Display.Align.RIGHT_CENTER` : Align game object at right-center of cell space.
+            - `'top'`, or `Phaser.Display.Align.RIGHT_CENTER` : Align game object at top-center of cell space.
+            - `'bottom'`, or `Phaser.Display.Align.BOTTOM_CENTER` : Align game object at bottom-center of cell space.         
+- `cellContainer` : Cell container picked from object pool for reusing. Set `reuseCellContainer` to `true` to enable this feature.
+    - `null` : No cell container available.
+    - Game object : Reusable cell container.
+- `table` : Grid table.
+
 Each cell only has **one** container gameObject, old container will be destroyed when assigning a new container.
-
-#### Properties of cell object
-
-- Scene object, for creating Game Object.
-    ```javascript
-    var scene = cell.scene;
-    ```
-- Index of table grid
-    ```javascript
-    var index = cell.index;
-    ```
 
 ### Cell begins invisible
 
 Container of an invisible cell will be destroyed automatically.
 
-To resue container gameObject, user could pop that container by `cell.popContainer()` in event `cellinvisible`.
+To resue container gameObject
+
+- Set `reuseCellContainer` to `true` to put invisible cell container into object pool.
+- Or, pop that container by `cell.popContainer()` in event `cellinvisible`.
 
 ```javascript
 table.on('cellinvisible', function(cell){
-    var container = cell.popContainer();
-    // put this container into an object pool
+    // var container = cell.popContainer();
 })
 ```
 
@@ -165,7 +317,9 @@ It is equal to `cellInvisibleCallback` in configuration.
 ```javascript
 {
     // ...
-    cellInvisibleCallback: function(cell) { var container = cell.popContainer(); /*... */ },
+    cellInvisibleCallback: function(cell) {
+        // var container = cell.popContainer();
+    },
     // ...
 }
 ```
@@ -219,13 +373,41 @@ It is equal to `cellInvisibleCallback` in configuration.
 !!! note "Use case"
     Scroll table by [slider](slider.md) behavior.
 
-### Refresh table content
-
-Refresh all visible cells.
+#### Scroll to bottom
 
 ```javascript
-table.updateTable(true);
+table.scrollToBottom();
 ```
+
+#### Scroll to row
+
+- Scroll to next row
+    ```javascript
+    table.scrollToNextRow();
+    ```
+- Scroll to next n row
+    ```javascript
+    table.scrollToNextRow(n);
+    ```
+- Scroll to row
+    ```javascript
+    table.scrollToRow(rowIndex);
+    ```
+- Get current row index
+    ```javascript
+    var rowIndex = table.startRowIndex;
+    ```
+
+### Refresh table content
+
+- Refresh all visible cells.
+    ```javascript
+    table.updateTable(true);
+    ```
+- Update a visible cell
+    ```javascript
+    table.updateVisibleCell(cellIndex);
+    ```
 
 ### Table size in cells
 
@@ -253,7 +435,7 @@ table.updateTable(true);
     ```
 - Set
     ```javascript
-    table.setColumnCount(count).updateTable();
+    table.setColumnCount(count).updateTable(true);
     ```
 
 ### Table size in pixels
@@ -300,7 +482,14 @@ table.resize(width, height);
 #### Get cell
 
 ```javascript
-var cell = table.getCell(cellIndxe);
+var cell = table.getCell(cellIndex);
+```
+
+#### Get cell from position
+
+```javascript
+var cellIndex = table.pointToCellIndex(x, y);
+var cell = table.getCell(cellIndex);
 ```
 
 #### Cell height
@@ -309,14 +498,55 @@ var cell = table.getCell(cellIndxe);
     ```javascript
     var height = cell.height;
     ```
-- Set
+- Set cell height, only worked in scoll-vertical mode.
     ```javascript
     cell.height = height;
+    // cell.setHeight(height);
     ```
     or
     ```javascript
-    cell.setHeight(height);
+    table.setCellHeight(cellIndex, cellHeight);
     ```
+    - Refresh table after the cell size is changed.
+        ```javascript
+        table.updateTable(true);
+        ```
+    - Emit `'cellheightchange'` event.
+        ```javascript
+        table.on('cellheightchange', function (cell, cellContainer, table) {
+        });
+        ```
+
+#### Cell width
+
+- Get
+    ```javascript
+    var width = cell.width;
+    ```
+- Set cell width, only worked in scoll-horizontal mode.
+    ```javascript
+    cell.width = width;
+    // cell.setWidth(width);
+    ```
+    or
+    ```javascript
+    table.setCellWidth(cellIndex, cellWidth);
+    ```
+    - Refresh table after the cell size is changed.
+        ```javascript
+        table.updateTable(true);
+        ```
+    - Emit `'cellwidthchange'` event.
+        ```javascript
+        table.on('cellwidthchange', function (cell, cellContainer, table) {
+        });
+        ```
+
+#### Reset size of all cells
+
+```javascript
+table.resetAllCellsSize(width, height);
+```
 
 #### Fore each visible cell
 
@@ -357,3 +587,7 @@ var cell = table.getCell(cellIndxe);
 ```javascript
 var cellIndex = cell.index;
 ```
+
+### Other properties
+
+See [game object](gameobject.md)

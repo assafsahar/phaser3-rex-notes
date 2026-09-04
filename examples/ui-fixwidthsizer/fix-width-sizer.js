@@ -1,6 +1,7 @@
+import Phaser from 'phaser';
 import UIPlugin from '../../templates/ui/ui-plugin.js';
 
-const COLOR_PRIMARY = 0x4e342e;
+const COLOR_MAIN = 0x4e342e;
 const COLOR_LIGHT = 0x7b5e57;
 const COLOR_DARK = 0x260e04;
 
@@ -12,56 +13,47 @@ class Demo extends Phaser.Scene {
         })
     }
 
-    preload() {}
+    preload() { }
 
     create() {
-        var x = 400,
-            y = 300,
-            minWidth = 250;
-        var sizer = this.rexUI.add.fixWidthSizer(x, y, minWidth, undefined, 'x', {
+        var align = 'justify-right'  // 'left', 'right', 'center', 'justify'/'justify-left', 'justify-right', 'justify-center'
+        var rtl = true;
+        var sizer = this.rexUI.add.fixWidthSizer({
+            x: 400, y: 300,
+            width: 250, height: undefined,
+            space: {
                 left: 3,
                 right: 3,
                 top: 3,
                 bottom: 3,
                 item: 8,
                 line: 8,
-            })
+            },
+            rtl: rtl,
+            align: align
+        })
             .addBackground(this.rexUI.add.roundRectangle(0, 0, 10, 10, 0, COLOR_DARK));
-        for (var i = 0; i < 20; i++) {
-            sizer.add(createItem(this));
+
+        for (var i = 0; i < 22; i++) {
+            sizer.add(this.rexUI.add.label({
+                background: this.rexUI.add.roundRectangle(0, 0, 0, 0, 14, COLOR_LIGHT),
+                text: this.add.text(0, 0, `${i}`, {
+                    fontSize: 18
+                }),
+                space: {
+                    left: 10,
+                    right: 10,
+                    top: 10,
+                    bottom: 10,
+                }
+            }));
         }
+
         sizer.layout();
         sizer.drawBounds(this.add.graphics(), 0xff0000);
     }
 
-    update() {}
-}
-
-var createItem = function (scene) {
-    var text = genText();
-    return scene.rexUI.add.label({
-        background: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 14, COLOR_LIGHT),
-        text: scene.add.text(0, 0, text, {
-            fontSize: 18
-        }),
-        space: {
-            left: 10,
-            right: 10,
-            top: 10,
-            bottom: 10,
-        }
-    });
-}
-
-const RandomInt = Phaser.Math.Between;
-const RandomItem = Phaser.Utils.Array.GetRandom;
-const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-var genText = function () {
-    var s = '';
-    for (var j = 0, jcnt = RandomInt(3, 6); j < jcnt; j++) {
-        s += RandomItem(possible);
-    }
-    return s;
+    update() { }
 }
 
 var config = {

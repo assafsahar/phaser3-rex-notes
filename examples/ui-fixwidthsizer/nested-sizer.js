@@ -1,6 +1,8 @@
+import Phaser from 'phaser';
 import UIPlugin from '../../templates/ui/ui-plugin.js';
+import GetRandomWord from '../../plugins/utils/string/GetRandomWord.js';
 
-const COLOR_PRIMARY = 0x4e342e;
+const COLOR_MAIN = 0x4e342e;
 const COLOR_LIGHT = 0x7b5e57;
 const COLOR_DARK = 0x260e04;
 
@@ -57,10 +59,10 @@ var createList = function (scene) {
 }
 
 var createTitle = function (scene) {
-    var text = genText();
+    var word = GetRandomWord(3, 6);
     return scene.rexUI.add.label({
         background: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 14, COLOR_LIGHT),
-        text: scene.add.text(0, 0, text, {
+        text: scene.add.text(0, 0, word, {
             fontSize: 20
         }),
         space: {
@@ -74,7 +76,6 @@ var createTitle = function (scene) {
 
 var createItems = function (scene) {
     var sizer = scene.rexUI.add.fixWidthSizer({
-        orientation: 'x',
         space: {
             left: 3,
             right: 3,
@@ -91,10 +92,10 @@ var createItems = function (scene) {
 }
 
 var createItem = function (scene) {
-    var text = genText();
+    var word = GetRandomWord(3, 6);
     return scene.rexUI.add.label({
-        background: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 14, COLOR_PRIMARY),
-        text: scene.add.text(0, 0, text, {
+        background: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 14, COLOR_MAIN),
+        text: scene.add.text(0, 0, word, {
             fontSize: 18
         }),
         space: {
@@ -104,17 +105,6 @@ var createItem = function (scene) {
             bottom: 10,
         }
     });
-}
-
-const RandomInt = Phaser.Math.Between;
-const RandomItem = Phaser.Utils.Array.GetRandom;
-const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-var genText = function () {
-    var s = '';
-    for (var j = 0, jcnt = RandomInt(3, 6); j < jcnt; j++) {
-        s += RandomItem(possible);
-    }
-    return s;
 }
 
 var config = {

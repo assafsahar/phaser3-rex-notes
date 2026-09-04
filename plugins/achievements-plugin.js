@@ -1,17 +1,18 @@
 import Achievements from './achievements.js'
 
-class AchievementsPlugin extends Phaser.Plugins.BasePlugin {
+import { Plugins as PhaserPlugins } from 'phaser';
+class AchievementsPlugin extends PhaserPlugins.BasePlugin {
     constructor(pluginManager) {
         super(pluginManager);
     }
 
     start() {
         var eventEmitter = this.game.events;
-        eventEmitter.once('destroy', this.destroy, this);
+        eventEmitter.on('destroy', this.destroy, this);
     }
 
-    add(config) {
-        return new Achievements(config);
+    add() {
+        return new Achievements();
     }
 }
 

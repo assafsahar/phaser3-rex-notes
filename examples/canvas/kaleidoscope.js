@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import CanvasPlugin from '../../plugins/canvas-plugin.js'
 import TouchStatePlugin from '../../plugins/touchstate-plugin.js';
 
@@ -17,8 +18,7 @@ class Demo extends Phaser.Scene {
     preload() {}
 
     create() {
-        this.bg = this.add.rexCanvas(300, 350, 600, 600)
-            .fill('#050505');
+        this.bg = this.add.rectangle(300, 350, 600, 600, 0x050505);
         this.canvas = this.add.rexCanvas(300, 350, 600, 600)
             .generateTexture('canvas');
         this.canvas.touchState = this.plugins.get('rexTouchState').add(this.canvas);
@@ -35,7 +35,7 @@ class Demo extends Phaser.Scene {
             },
             setRotation: {
                 value: 0,
-                step: Phaser.Math.PI2 / imageNum
+                step: Math.PI * 2 / imageNum
             }
         });
 
@@ -49,7 +49,7 @@ class Demo extends Phaser.Scene {
 
     update() {
         var touchState = this.canvas.touchState;
-        if (touchState.isInTouched) {
+        if (touchState.isInTouching) {
             this.drawCanvas(touchState.localX, touchState.localY);
         }
     }
@@ -69,7 +69,7 @@ class Demo extends Phaser.Scene {
 
         var canvas = this.canvas;
         var ctx = canvas.getCanvas().getContext('2d');
-        var color = "hsl( " + this.hue + " , 50%, 50%)";
+        var color = `hsl(${this.hue},50%,50%)`;
         drawCircle(ctx, localX, localY, 3, color);
         this.hue = (this.hue + 3) % 360;
     }
@@ -90,7 +90,7 @@ class Demo extends Phaser.Scene {
 
 var drawCircle = function (ctx, x, y, r, color) {
     ctx.beginPath();
-    ctx.arc(x, y, r, 0, Phaser.Math.PI2, false);
+    ctx.arc(x, y, r, 0, Math.PI * 2, false);
     ctx.strokeStyle = color;
     ctx.stroke();
 }

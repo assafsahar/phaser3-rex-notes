@@ -5,44 +5,70 @@ Drag game object.
 - Author: Rex
 - Behavior of game object
 
-## Source code
+## Live demos
 
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/drag-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexdragplugin.min.js)
+- [Try dragging](https://codepen.io/rexrainbow/pen/rvbwNv)
 
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/drag)
 
-User could import class directly, or install it by global plugin.
+### Install plugin
 
-### Import class
+#### Load minify file
 
-```javascript
-import rexDrag from './plugins/drag.js';
-```
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.plugin('rexdragplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexdragplugin.min.js', true);
+    ```
+- Add drag behavior
+    ```javascript
+    var drag = scene.plugins.get('rexdragplugin').add(gameObject, config);
+    ```
 
-### Install global plugin
+#### Import plugin
 
-Install plugin in [configuration of game](game.md#configuration)
-
-```javascript
-import DragPlugin from './plugins/drag-plugin.js';
-
-var config = {
-    // ...
-    plugins: {
-        global: [{
-            key: 'rexDrag',
-            plugin: DragPlugin,
-            start: true
-        },
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import DragPlugin from 'phaser4-rex-plugins/plugins/drag-plugin.js';
+    var config = {
         // ...
-        ]
-    }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+        plugins: {
+            global: [{
+                key: 'rexDrag',
+                plugin: DragPlugin,
+                start: true
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add drag behavior
+    ```javascript
+    var drag = scene.plugins.get('rexDrag').add(gameObject, config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import Drag from 'phaser4-rex-plugins/plugins/drag.js';
+    ```
+- Add drag behavior
+    ```javascript
+    var drag = new Drag(gameObject, config);
+    ```
 
 ### Create instance
 
@@ -80,6 +106,11 @@ gameObject.on('dragend', function(pointer, dragX, dragY, dropped){ /*...*/ });
 - Set
     ```javascript
     drag.setEnable(enable);  // enable: true, or false
+    // drag.enable = enable;
+    ```
+- Toggle
+    ```javascript
+    drag.toggleEnable();
     ```
 
 ### Get dragging state
@@ -92,6 +123,7 @@ var isDragging = drag.isDragging;
 
 ```javascript
 drag.setAxisRotation(rad);
+// drag.axisRotation = rad;
 ```
 
 ### Set axis mode
@@ -107,8 +139,6 @@ drag.setAxisMode(axis);
 
 ### Try drag
 
-[Sample code](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/examples/drag/try-drag.js)
-
 Game object will be dragged if there is any point above it.
 
 ```javascript
@@ -116,8 +146,6 @@ drag.drag();
 ```
 
 ### Drop
-
-[Sample code](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/examples/drag/dragend.js)
 
 Game object will be dropped(dragend) manually.
 

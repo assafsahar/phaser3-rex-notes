@@ -1,6 +1,5 @@
+import Phaser from 'phaser';
 import SoundFadePlugin from '../../plugins/soundfade-plugin.js';
-
-const Format = Phaser.Utils.String.Format;
 
 class Demo extends Phaser.Scene {
     constructor() {
@@ -12,52 +11,44 @@ class Demo extends Phaser.Scene {
     }
 
     preload() {
-        this.load.audio('fate', [
-            'assets/audio/fate.ogg',
-            'assets/audio/fate.mp3',
+        this.load.audio('theme', [
+            'assets/audio/oedipus_wizball_highscore.ogg',
+            'assets/audio/oedipus_wizball_highscore.mp3'
         ]);
     }
 
     create() {
-        var scene = this;
+        this.print = this.add.text(0, 0, 'Click to start');
 
-        this.txt = this.add.text(0, 0, '');
-
-        this.music = this.sound.add('fate');
         var soundFadeIn = this.plugins.get('rexSoundFade').fadeIn;
-        soundFadeIn(scene, this.music, 3000);
+        var SoundFadeOut = this.plugins.get('rexSoundFade').fadeOut;
 
-        // or
-        //this.music = soundFadeIn(scene, 'fate', 2000);        
+        this.input.on('pointerdown', function () {
+            // Music is playing
+            if (this.music) {
+                return;
+            }
 
-        this.music.on('destroy', function () {
-            scene.music = undefined;
-        });
+            this.music = this.sound.add('theme')
+                .on('destroy', function () {
+                    this.music = undefined;
+                    this.print.text = '--'
+                }, this)
+                .on('volume', function (music, volume) {
+                    this.print.text = `${music.volume}, ${volume}`;
+                }, this)
+            
+            soundFadeIn(this.music, 3000);
 
-        // fade-out volume then destroy sound instance
-        var soundFadeOut = this.plugins.get('rexSoundFade').fadeOut;
-        this.time.delayedCall(4000, soundFadeOut, [scene, this.music, 3000]);
+            // or
+            //this.music = soundFadeIn(this, 'theme', 3000);        
+
+            // fade-out volume then destroy sound instance
+            this.time.delayedCall(4000, SoundFadeOut, [this.music, 3000]);
+        }, this);
     }
 
-    update() {
-        var view;
-        if (this.music) {
-            view = [
-                this.music.volume,
-                (this.music.isPlaying) ? 'playing' : 'end',
-                this.music.seek
-            ];
-        } else {
-            view = [
-                '--',
-                '--',
-                '--'
-            ];
-        }
-
-        var s = Format('Volume: %1 (%2, %3)', view);
-        this.txt.setText(s);
-    }
+    update() { }
 }
 
 var config = {

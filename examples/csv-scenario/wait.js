@@ -1,8 +1,9 @@
+import Phaser from 'phaser';
 import CSVScenarioPlugin from '../../plugins/csvscenario-plugin.js';
 
 var csvString =
     `0,print,hello
-1.2,print,world
+2,print,world
 click,print,scenario`;
 
 class ActionKlass extends Phaser.Events.EventEmitter {
@@ -45,9 +46,11 @@ class Demo extends Phaser.Scene {
                 timeUnit: 'sec'
             })
             .start();
+
+        // scenario.setTimeScale(0.5);
     }
 
-    update() {}
+    update() { }
 }
 
 var config = {

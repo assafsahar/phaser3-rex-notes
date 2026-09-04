@@ -1,23 +1,18 @@
-import MoveToTask from '../../behaviors/moveto/MoveTo.js';
-import TickTask from '../../utils/ticktask/TickTask.js';
+import TickTask from '../../utils/componentbase/SceneUpdateTickTask.js';
+import Methods from './methods/Methods.js';
+import MoveToTask from './methods/movetotask/MoveToTask.js';
+import MoveNextLine from './methods/movetotask/MoveNextLine.js';
 import GetChessData from '../chess/GetChessData.js';
-
-import CanMoveToTile from './CanMoveToTile.js';
-import MoveToTile from './MoveToTile.js';
-import MoveToward from './MoveToward.js';
-import MoveToRandomNeighbor from './MoveToRandomNeighbor.js';
-import MoveAway from './MoveAway.js';
-import MoveCloser from './MoveCloser.js';
 import GetValue from '../../utils/object/GetValue.js';
 
 class MoveTo extends TickTask {
     constructor(gameObject, config) {
         super(gameObject, config);
+        // this.parent = gameObject;
 
-        this.gameObject = gameObject;
         this.chessData = GetChessData(gameObject);
         this.scene = gameObject.scene;
-        this.moveToTask = new MoveToTask(gameObject, moveToTaskConfig);
+        this.moveToTask = new MoveToTask(gameObject, { tickingMode: 0 });
 
         this.resetFromJSON(config);
         this.boot();
@@ -61,34 +56,9 @@ class MoveTo extends TickTask {
         };
     }
 
-    boot() {
-        super.boot();
-        if (this.gameObject.on) { // oops, bob object does not have event emitter
-            this.gameObject.on('destroy', this.destroy, this);
-        }
-    }
-
-    shutdown() {
-        this.moveToTask.shutdown();
-        super.shutdown();
-        this.gameObject = undefined;
-        this.scene = undefined;
-    }
-
-    destroy() {
-        this.shutdown();
-    }
-
-    startTicking() {
-        super.startTicking();
-        this.scene.events.on('update', this.update, this);
-    }
-
-    stopTicking() {
-        super.stopTicking();
-        if (this.scene) { // Scene might be destoryed
-            this.scene.events.off('update', this.update, this);
-        }
+    shutdown(fromScene) {
+        this.moveToTask.shutdown(fromScene);
+        super.shutdown(fromScene);
     }
 
     set enable(value) {
@@ -136,8 +106,11 @@ class MoveTo extends TickTask {
         return this.moveToTask.rotateToTarget;
     }
 
-    setRotateToTarget(rotateToTarget) {
-        this.rotateToTarget = rotateToTarget;
+    setRotateToTarget(enable) {
+        if (enable === undefined) {
+            enable = true;
+        }
+        this.rotateToTarget = enable;
         return this;
     }
 
@@ -181,60 +154,6 @@ class MoveTo extends TickTask {
         return this;
     }
 
-    pause() {
-        this.isRunning = false;
-        return this;
-    }
-
-    resume() {
-        this.isRunning = true;
-        return this;
-    }
-
-    stop() {
-        this.isRunning = false;
-        return this;
-    }
-
-    /** @private */
-    moveAlongLine(startX, startY, endX, endY) {
-        if (startX !== undefined) {
-            this.gameObject.x = startX;
-        }
-        if (startY !== undefined) {
-            this.gameObject.y = startY;
-        }
-        this.moveToTask.moveTo(endX, endY);
-        return this;
-    };
-
-    /** @private */
-    addMoveLine(startX, startY, endX, endY) {
-        if (!this.moveToTask.hasOwnProperty('nextlines')) {
-            this.moveToTask.nextlines = [];
-        }
-        this.moveToTask.nextlines.push(
-            [startX, startY, endX, endY]
-        );
-        return this;
-    };
-
-    /** @private */
-    moveNextLine() {
-        var nextlines = this.moveToTask.nextlines;
-        if (!nextlines) {
-            return false;
-        }
-        if (nextlines.length === 0) {
-            return false;
-        }
-        // has next line
-        this.moveAlongLine.apply(this, nextlines[0]);
-        nextlines.length = 0;
-        return true;
-    }
-
-    /** @private */
     update(time, delta) {
         if ((!this.isRunning) || (!this.enable)) {
             return this;
@@ -243,7 +162,7 @@ class MoveTo extends TickTask {
         var moveToTask = this.moveToTask;
         moveToTask.update(time, delta);
         if (!moveToTask.isRunning) {
-            if (!this.moveNextLine()) {
+            if (!MoveNextLine.call(this)) {
                 this.complete();
             }
             return this;
@@ -252,21 +171,9 @@ class MoveTo extends TickTask {
     }
 }
 
-const moveToTaskConfig = {
-    tickingMode: 0
-};
-
-var methods = {
-    canMoveTo: CanMoveToTile,
-    moveTo: MoveToTile,
-    moveToward: MoveToward,
-    moveToRandomNeighbor: MoveToRandomNeighbor,
-    moveAway: MoveAway,
-    moveCloser: MoveCloser,
-};
 Object.assign(
     MoveTo.prototype,
-    methods
+    Methods
 );
 
 

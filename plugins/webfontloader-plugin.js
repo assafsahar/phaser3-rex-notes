@@ -1,14 +1,15 @@
-import loaderCallback from './loader/webfontloader/webFontLoaderCallback.js';
+import LoaderCallback from './loader/webfontloader/WebFontLoaderCallback.js';
 
-class WebFontLoaderPlugin extends Phaser.Plugins.BasePlugin {
+import { Plugins as PhaserPlugins } from 'phaser';
+class WebFontLoaderPlugin extends PhaserPlugins.BasePlugin {
     constructor(pluginManager) {
         super(pluginManager);
 
-        pluginManager.registerFileType('rexWebFont', loaderCallback);
+        pluginManager.registerFileType('rexWebFont', LoaderCallback);
     }
 
     addToScene(scene) {
-        scene.sys.load['rexWebFont'] = loaderCallback;
+        scene.sys.load.rexWebFont = LoaderCallback;
     }
 }
 

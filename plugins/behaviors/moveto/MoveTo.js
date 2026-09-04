@@ -1,36 +1,41 @@
-import TickTask from '../../utils/ticktask/TickTask.js';
-import GetSceneObject from '../../utils/system/GetSceneObject.js';
+import { Utils as PhaserUtils } from 'phaser';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
-const DistanceBetween = Phaser.Math.Distance.Between;
-const Lerp = Phaser.Math.Linear;
-const AngleBetween = Phaser.Math.Angle.Between;
+import TickTask from '../../utils/componentbase/SceneUpdateTickTask.js';
+import RemainderDistanceBudgetMethods from './RemainderDistanceBudgetMethods.js';
+import MoveMethods from './MoveMethods.js';
 
+
+const GetValue = PhaserUtils.Objects.GetValue;
 
 class MoveTo extends TickTask {
     constructor(gameObject, config) {
         super(gameObject, config);
-
-        this.gameObject = gameObject;
-        this.scene = GetSceneObject(gameObject);
+        // this.parent = gameObject;
 
         this.resetFromJSON(config);
         this.boot();
     }
 
     resetFromJSON(o) {
+        this.isCompleted = GetValue(o, 'isCompleted', true);
         this.isRunning = GetValue(o, 'isRunning', false);
         this.setEnable(GetValue(o, 'enable', true));
         this.timeScale = GetValue(o, 'timeScale', 1);
         this.setSpeed(GetValue(o, 'speed', 400));
         this.setRotateToTarget(GetValue(o, 'rotateToTarget', false));
-        this.targetX = GetValue(o, 'targetX', 0);
-        this.targetY = GetValue(o, 'targetY', 0);
+        this.targetX = GetValue(o, 'targetX', null); // Invalid
+        this.targetY = GetValue(o, 'targetY', null);
+        this.appendMode = GetValue(o, 'appendMode', false);
+        this.targets = GetValue(o, 'targets', []); // {x,y}[]
+        this.continueAfterComplete = GetValue(o, 'continueAfterComplete', this.appendMode);
+        this.clearRemainderDistanceBudget();
+
         return this;
     }
 
     toJSON() {
         return {
+            isCompleted: this.isCompleted,
             isRunning: this.isRunning,
             enable: this.enable,
             timeScale: this.timeScale,
@@ -38,44 +43,28 @@ class MoveTo extends TickTask {
             rotateToTarget: this.rotateToTarget,
             targetX: this.targetX,
             targetY: this.targetY,
-            tickingMode: this.tickingMode
+            tickingMode: this.tickingMode,
+            appendMode: this.appendMode,
+            targets: this.targets,
+            continueAfterComplete: this.continueAfterComplete
         };
     }
 
-    boot() {
-        super.boot();
-        if (this.gameObject.on) { // oops, bob object does not have event emitter
-            this.gameObject.on('destroy', this.destroy, this);
+    get lastTargetPosition() {
+        var queuedLength = this.targets.length;
+        if (queuedLength === 0) {
+            return { x: this.targetX, y: this.targetY };
+        } else {
+            var lastTarget = this.targets[queuedLength - 1];
+            return { x: lastTarget.x, y: lastTarget.y };
         }
     }
 
-    shutdown() {
-        super.shutdown();
-        this.gameObject = undefined;
-        this.scene = undefined;
-    }
-
-    destroy() {
-        this.shutdown();
-    }
-
-    startTicking() {
-        super.startTicking();
-        this.scene.events.on('update', this.update, this);
-    }
-
-    stopTicking() {
-        super.stopTicking();
-        if (this.scene) { // Scene might be destoryed
-            this.scene.events.off('update', this.update, this);
+    setEnable(enable) {
+        if (enable == undefined) {
+            enable = true;
         }
-    }
-
-    setEnable(e) {
-        if (e == undefined) {
-            e = true;
-        }
-        this.enable = e;
+        this.enable = enable;
         return this;
     }
 
@@ -89,62 +78,130 @@ class MoveTo extends TickTask {
         return this;
     }
 
-    moveTo(x, y) {
-        if (typeof (x) !== 'number') {
-            var config = x;
-            x = GetValue(config, 'x', undefined);
-            y = GetValue(config, 'y', undefined);
-        }
+    setAppendMode(appendMode) {
+        this.appendMode = !!appendMode;
 
-        // invalid position
-        if ((x == null) || (y == null)) {
+        if (!this.appendMode) {
+            this.clearTargets();
+        }
+        return this;
+    }
+
+    clearTargets() {
+        this.targets.length = 0;
+        return this;
+    }
+
+    moveTo(x, y) {
+        if (x === undefined) {
+            if (!this.isCompleted) { // Resume
+                super.start();
+            } else {
+                // Does not have target position, do nothing
+            }
             return this;
         }
 
-        this.targetX = x;
-        this.targetY = y;
+        if (typeof (x) !== 'number') {
+            var config = x;
+            x = config.x;
+            y = config.y;
+        }
+
+        var isNewTask = false;
+        if (this.appendMode) {
+            if (this.isCompleted) { // New task
+                this.targetX = x;
+                this.targetY = y;
+                isNewTask = true;
+
+            } else {
+                this.targets.push({ x, y });
+
+            }
+
+        } else {
+
+            this.targetX = x;
+            this.targetY = y;
+            isNewTask = true;
+
+        }
+
+        if (isNewTask) {
+            this.start();
+            this.emit('start', this.parent, this);
+
+            this.consumeRemainderDistanceBudget();
+        }
+
+        return this;
+    }
+
+    moveFrom(x, y) {
+        // This method will clear queue targets
+
+        if (typeof (x) !== 'number') {
+            var config = x;
+            x = config.x;
+            y = config.y;
+        }
+
+        this.stop();
+
+        var gameObject = this.parent;
+        var targetX = gameObject.x;
+        var targetY = gameObject.y;
+
+        gameObject.setPosition(x, y);
+
+        this.moveTo(targetX, targetY);
+
+        return this;
+    }
+
+    moveToward(angle, distance) {
+        var referencePosition;
+
+        if (this.appendMode && !this.isCompleted) {
+            referencePosition = this.lastTargetPosition;
+
+        } else {
+            referencePosition = this.parent;  // gameObject
+        }
+
+        var targetX = referencePosition.x + Math.cos(angle) * distance;
+        var targetY = referencePosition.y + Math.sin(angle) * distance;
+        this.moveTo(targetX, targetY);
+
+        return this;
+    }
+
+    start() {
+        this.isCompleted = false;
         super.start();
         return this;
     }
 
-    update(time, delta) {
-        if ((!this.isRunning) || (!this.enable)) {
-            return this;
-        }
+    stop() {
+        super.stop();
+        this.clearTargets();
+        this.clearRemainderDistanceBudget();
+        this.isCompleted = true;
+        return this;
+    }
 
-        var gameObject = this.gameObject;
-        var curX = gameObject.x,
-            curY = gameObject.y;
-        var targetX = this.targetX,
-            targetY = this.targetY;
-        if ((curX === targetX) && (curY === targetY)) {
-            this.complete();
-            return this;
-        }
-
-        if ((this.speed === 0) || (delta === 0) || (this.timeScale === 0)) {
-            return this;
-        }
-
-        var dt = (delta * this.timeScale) / 1000;
-        var movingDist = this.speed * dt;
-        var distToTarget = DistanceBetween(curX, curY, targetX, targetY);
-        var newX, newY;
-        if (movingDist < distToTarget) {
-            var t = movingDist / distToTarget;
-            newX = Lerp(curX, targetX, t);
-            newY = Lerp(curY, targetY, t);
-        } else {
-            newX = targetX;
-            newY = targetY;
-        }
-
-        gameObject.setPosition(newX, newY);
-        if (this.rotateToTarget) {
-            gameObject.rotation = AngleBetween(curX, curY, newX, newY);
-        }
+    complete() {
+        this.isCompleted = true;
+        super.complete();
         return this;
     }
 }
+
+Object.assign(
+    MoveTo.prototype,
+    RemainderDistanceBudgetMethods,
+    MoveMethods,
+)
 
 export default MoveTo;

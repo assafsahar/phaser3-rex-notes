@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import GesturesPlugin from '../../plugins/gestures-plugin.js';
 
 class Demo extends Phaser.Scene {
@@ -25,7 +26,7 @@ class Demo extends Phaser.Scene {
     }
 
     update() {
-        if (this.tapInput.isTapped) {
+        if (this.tapInput.isTapping) {
             this.print.text += 'update(): ' + this.tapInput.tapsCount + ' tap(s)\n';
         }
     }

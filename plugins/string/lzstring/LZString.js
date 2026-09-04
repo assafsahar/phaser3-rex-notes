@@ -1,8 +1,9 @@
-import lzstring from '../../utils/lzstring/lz-string.min.js';
+import lzstringBase from '../../utils/lzstring/lz-string.min.js';
 
-const GetFastValue = Phaser.Utils.Objects.GetFastValue;
+import { Utils as PhaserUtils } from 'phaser';
+const GetFastValue = PhaserUtils.Objects.GetFastValue;
 
-class LZStringKlass {
+class LZString {
     constructor(config) {
         this.resetFromJSON(config);
     }
@@ -39,12 +40,12 @@ class LZStringKlass {
 
     compress(s) {
         var fnName = COMPRESSFNNAME[this.encoding];
-        return lzstring[fnName](s);
+        return lzstringBase[fnName](s);
     }
 
     decompress(s) {
         var fnName = DECOMPRESSFNNAME[this.encoding];
-        return lzstring[fnName](s);
+        return lzstringBase[fnName](s);
     }
 }
 
@@ -68,4 +69,4 @@ const DECOMPRESSFNNAME = [
     'decompressFromEncodedURIComponent'
 ];
 
-export default LZStringKlass;
+export default LZString;

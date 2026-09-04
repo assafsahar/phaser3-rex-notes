@@ -1,22 +1,27 @@
 import Sizer from '../sizer/Sizer.js';
-import OnDragThumb from './OnDragThumb.js';
-import OnTouchTrack from './OnTouchTrack.js';
-import GetStartPoint from './GetStartPoint.js';
-import GetEndPoint from './GetEndPoint.js';
-import UpdateThumb from './UpdateThumb.js';
-import UpdateIndicator from './UpdateIndicator.js';
+import CreateBackground from '../utils/build/CreateBackground.js';
+import ProgressBase from '../../../plugins/utils/progressbase/ProgressBase.js';
+import RegisterInputEvents from './methods/input/RegisterInputEvents.js';
+import GetStartPoint from './methods/GetStartPoint.js';
+import GetEndPoint from './methods/GetEndPoint.js';
+import UpdateThumb from './methods/UpdateThumb.js';
+import UpdateIndicator from './methods/UpdateIndicator.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
-const Clamp = Phaser.Math.Clamp;
-const Linear = Phaser.Math.Linear;
-const Percent = Phaser.Math.Percent;
+import { Math as PhaserMath, Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
+const IsPlainObject = PhaserUtils.Objects.IsPlainObject;
+const Clamp = PhaserMath.Clamp;
+const SnapTo = PhaserMath.Snap.To;
 
-class Slider extends Sizer {
+class Slider extends ProgressBase(Sizer) {
     constructor(scene, config) {
         // Create sizer
         super(scene, config);
         this.type = 'rexSlider';
-        this.eventEmitter = GetValue(config, 'eventEmitter', this);
+
+        this.bootProgressBase(config);
+
+        this.reverseAxis = GetValue(config, 'reverseAxis', false);
 
         // Add elements
         var background = GetValue(config, 'background', undefined);
@@ -24,53 +29,43 @@ class Slider extends Sizer {
         var indicator = GetValue(config, 'indicator', undefined);
         var thumb = GetValue(config, 'thumb', undefined);
 
-        // Space
-        var paddingLeft = GetValue(config, 'space.left', 0);
-        var paddingRight = GetValue(config, 'space.right', 0);
-        var paddingTop = GetValue(config, 'space.top', 0);
-        var paddingBottom = GetValue(config, 'space.bottom', 0);
-
         if (background) {
+            if (IsPlainObject(background)) {
+                background = CreateBackground(scene, background);
+            }
             this.addBackground(background);
         }
 
         if (track) {
-            var padding = {
-                left: paddingLeft,
-                right: paddingRight,
-                top: paddingTop,
-                bottom: paddingBottom
+            if (IsPlainObject(track)) {
+                track = CreateBackground(scene, track);
             }
-            this.add(track, 0, undefined, padding, true);
+            this.add(track,
+                {
+                    proportion: 1,
+                    expand: true,
+                    minWidth: ((this.orientation === 0) ? 0 : undefined),
+                    minHeight: ((this.orientation === 1) ? 0 : undefined)
+                }
+            )
         }
 
         if (indicator) {
-            this.add(indicator, null); // Put into container but not layout it
+            if (IsPlainObject(indicator)) {
+                indicator = CreateBackground(scene, indicator);
+            }
+            this.pin(indicator); // Put into container but not layout it
         }
 
         if (thumb) {
-            this.add(thumb, null); // Put into container but not layout it
+            if (IsPlainObject(thumb)) {
+                thumb = CreateBackground(scene, thumb);
+            }
+            this.pin(thumb); // Put into container but not layout it
 
-        }
-
-        // Input
-        var inputMode = GetValue(config, 'input', 0);
-        if (typeof (inputMode) === 'string') {
-            inputMode = INPUTMODE[inputMode];
-        }
-        switch (inputMode) {
-            case 0: // 'drag'
-                if (thumb) {
-                    thumb.setInteractive();
-                    this.scene.input.setDraggable(thumb);
-                    thumb.on('drag', OnDragThumb, this);
-                }
-                break;
-            case 1: // 'click'
-                this.setInteractive()
-                    .on('pointerdown', OnTouchTrack, this)
-                    .on('pointermove', OnTouchTrack, this);
-                break;
+            var thumbOffsetX = GetValue(config, 'thumbOffsetX', 0);
+            var thumbOffsetY = GetValue(config, 'thumbOffsetY', 0);
+            this.setThumbOffset(thumbOffsetX, thumbOffsetY);
         }
 
         this.addChildrenMap('background', background);
@@ -78,13 +73,19 @@ class Slider extends Sizer {
         this.addChildrenMap('indicator', indicator);
         this.addChildrenMap('thumb', thumb);
 
-        var callback = GetValue(config, 'valuechangeCallback', null);
-        if (callback !== null) {
-            var scope = GetValue(config, 'valuechangeCallbackScope', undefined);
-            this.eventEmitter.on('valuechange', callback, scope);
-        }
         this.setEnable(GetValue(config, 'enable', undefined));
-        this.setValue(GetValue(config, 'value', 0));
+
+        var gap = GetValue(config, 'tick', undefined);
+        if (gap === undefined) {
+            gap = GetValue(config, 'gap', undefined)
+        }
+        this.setGap(gap);
+
+        // Input
+        RegisterInputEvents.call(this, config);
+
+        this.setValue(GetValue(config, 'value', 0), GetValue(config, 'min', undefined), GetValue(config, 'max', undefined));
+
     }
 
     setEnable(enable) {
@@ -95,11 +96,44 @@ class Slider extends Sizer {
         return this;
     }
 
+    setGap(gap, min, max) {
+        if (gap && (min !== undefined)) {
+            gap = gap / (max - min);
+        }
+
+        this.gap = gap;
+        return this;
+    }
+
+    setTick(tick, min, max) {
+        this.setGap(tick, min, max);
+        return this;
+    }
+
+    get tick() {
+        return this.gap;
+    }
+
+    set tick(value) {
+        this.gap = value;
+    }
+
+    setThumbOffset(x, y) {
+        this.thumbOffsetX = x;
+        this.thumbOffsetY = y;
+        return this;
+    }
+
+    // Override
     get value() {
         return this._value;
     }
 
+    // Override
     set value(value) {
+        if (this.gap !== undefined) {
+            value = SnapTo(value, this.gap);
+        }
         var oldValue = this._value;
         this._value = Clamp(value, 0, 1);
 
@@ -110,46 +144,12 @@ class Slider extends Sizer {
         }
     }
 
-    setValue(value, min, max) {
-        if ((value === undefined) || (value === null)) {
-            return this;
-        }
-
-        if (min !== undefined) {
-            value = Percent(value, min, max);
-        }
-        this.value = value;
-        return this;
-    }
-
-    addValue(inc, min, max) {
-        if (min !== undefined) {
-            inc = Percent(inc, min, max);
-        }
-        this.value += inc;
-        return this;
-    }
-
-    getValue(min, max) {
-        var value = this.value;
-        if (min !== undefined) {
-            value = Linear(min, max, value);
-        }
-        return value;
-    }
-
-    layout(parent, newWidth, newHeight) {
-        super.layout(parent, newWidth, newHeight);
+    postLayout(parent, newWidth, newHeight) {
         this.updateThumb();
         this.updateIndicator();
+        super.postLayout(parent, newWidth, newHeight);
         return this;
     }
-}
-
-const INPUTMODE = {
-    drag: 0,
-    click: 1,
-    none: -1,
 }
 
 var methods = {
@@ -158,9 +158,10 @@ var methods = {
     updateThumb: UpdateThumb,
     updateIndicator: UpdateIndicator,
 }
+
 Object.assign(
     Slider.prototype,
-    methods
+    methods,
 );
 
 export default Slider;

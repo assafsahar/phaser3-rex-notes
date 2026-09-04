@@ -1,6 +1,7 @@
 import LZString from './lzstring.js';
 
-class LZStringPlugin extends Phaser.Plugins.BasePlugin {
+import { Plugins as PhaserPlugins } from 'phaser';
+class LZStringPlugin extends PhaserPlugins.BasePlugin {
     constructor(pluginManager) {
         super(pluginManager);
 
@@ -9,7 +10,7 @@ class LZStringPlugin extends Phaser.Plugins.BasePlugin {
 
     start() {
         var eventEmitter = this.game.events;
-        eventEmitter.once('destroy', this.destroy, this);
+        eventEmitter.on('destroy', this.destroy, this);
     }
 
     destroy() {

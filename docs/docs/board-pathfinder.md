@@ -3,24 +3,82 @@
 Find moveable area or moving path, chess behavior of Board system.
 
 - Author: Rex
-- Behavior of chess
+- Application of Board system, or behavior of chess
 
-## Source code
+## Live demos
 
-Included in [board plugin](board.md#source-code).
+- [Find area, get path](https://codepen.io/rexrainbow/pen/qvJwjJ)
+- [Draw path](https://codepen.io/rexrainbow/pen/JjjwPgE)
+- [Energy drain](https://codepen.io/rexrainbow/pen/vMjNNm)
+- [Turning cost](https://codepen.io/rexrainbow/pen/xeyvPx)
+- [Move from high to low](https://codepen.io/rexrainbow/pen/NJOmQg)
+- [Chinese checkers](https://codepen.io/rexrainbow/pen/axXrZg)
 
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/board-pathfinder)
 
-### Install scene plugin
+### Install plugin
 
-Included in board plugin.
+#### Load minify file
+
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.scenePlugin('rexboardplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexboardplugin.min.js', 'rexBoard', 'rexBoard');
+    ```
+- Add path-finder
+    ```javascript
+    var pathFinder = scene.rexBoard.add.pathFinder(config);
+    ```
+
+#### Import plugin
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import BoardPlugin from 'phaser4-rex-plugins/plugins/board-plugin.js';
+    var config = {
+        // ...
+        plugins: {
+            scene: [{
+                key: 'rexBoard',
+                plugin: BoardPlugin,
+                mapping: 'rexBoard'
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add path-finder
+    ```javascript
+    var pathFinder = scene.rexBoard.add.pathFinder(config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import { PathFinder } from 'phaser4-rex-plugins/plugins/board-components.js';
+    ```
+- Add path-finder
+    ```javascript
+    var pathFinder = new PathFinder(config);
+    ```
 
 ### Create instance
 
 ```javascript
-var pathFinder = scene.rexBoard.add.pathFinder(chess, {
+var pathFinder = scene.rexBoard.add.pathFinder({
     // occupiedTest: false,
     // blockerTest: false,
 
@@ -62,6 +120,21 @@ var pathFinder = scene.rexBoard.add.pathFinder(chess, {
 - `weight` : Weight parameter for A* searching mode.
 - `cacheCost` : Set `false` to get cost every time. It is useful when cost is a function of (current tile, previous tile).
 - `shuffleNeighbors` : Shuffle neighbors.
+
+#### Create behavior
+
+```javascript
+var pathFinder = scene.rexBoard.add.pathFinder(chess, config);
+```
+
+### Set chess
+
+```javascript
+pathFinder.setChess(chess);
+```
+
+!!! note
+    Don't use this method if pathFinder is a behavior of Chess
 
 ### Cost function
 
@@ -136,11 +209,15 @@ var tileXYArray = pathFinder.getPath(endTileXY);
 
 ```javascript
 var tileXYArray = pathFinder.findPath(endTileXY);
+// var tileXYArray = pathFinder.findPath(endTileXY, movingPoints, isClosest, out);
 ```
 
 - `endTileXY` : Tile position
 - `tileXYArray` : Moving path in an array of tile positions `{x,y,pathCost}`
     - Uses [moveTo behavior](board-moveto.md) to move chess along path.
+- `movingPoints`
+    - `pathFinder.INFINITY` (*undefined*) : Infinity moving points. Default value.
+- `isClosest` : Set `true` to get closest path.
 
 !!! note "Path mode"
     - Set `pathMode` to A* (`'A*'`, `'A*-random'`, or `'A*-line'`) to speed up calculating.

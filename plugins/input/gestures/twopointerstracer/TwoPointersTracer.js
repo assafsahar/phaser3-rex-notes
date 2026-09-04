@@ -1,23 +1,38 @@
 import EventEmitterMethods from '../../../utils/eventemitter/EventEmitterMethods.js';
+import GetSceneObject from '../../../utils/system/GetSceneObject.js';
 import Clear from '../../../utils/object/Clear.js';
+import IsPointerInBounds from '../../../utils/input/IsPointerInBounds.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
-const SpliceOne = Phaser.Utils.Array.SpliceOne;
-const DistanceBetween = Phaser.Math.Distance.Between;
-const AngleBetween = Phaser.Math.Angle.Between;
+import { Math as PhaserMath, Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
+const SpliceOne = PhaserUtils.Array.SpliceOne;
+const DistanceBetween = PhaserMath.Distance.Between;
+const AngleBetween = PhaserMath.Angle.Between;
 
 class TwoPointersTracer {
-    constructor(scene, config) {
+    constructor(gameObject, config) {
+        var scene = GetSceneObject(gameObject);
+        if (scene === gameObject) {
+            gameObject = undefined;
+        }
+
         var amount = scene.input.manager.pointersTotal - 1;
         if (amount < 2) {
             scene.input.addPointer(2 - amount);
         }
 
         this.scene = scene;
+        this.gameObject = gameObject;
+        if (gameObject) {
+            gameObject.setInteractive(GetValue(config, 'inputConfig', undefined));
+        }
+
         // Event emitter
         this.setEventEmitter(GetValue(config, 'eventEmitter', undefined));
+
+        this._enable = undefined;
         this.pointers = [];
-        this.movedState = {};        
+        this.movedState = {};
         this.resetFromJSON(config);
         this.boot();
     }
@@ -33,26 +48,62 @@ class TwoPointersTracer {
     }
 
     boot() {
-        this.scene.input.on('pointerdown', this.onPointerDown, this);
+        if (this.gameObject) {
+            this.gameObject.on('pointerdown', this.onPointerDown, this);
+        } else {
+            this.scene.input.on('pointerdown', this.onPointerDown, this);
+        }
+
         this.scene.input.on('pointerup', this.onPointerUp, this);
+        this.scene.input.on('gameout', this.dragCancel, this);
+
         this.scene.input.on('pointermove', this.onPointerMove, this);
-        this.scene.events.on('destroy', this.destroy, this);
+        this.scene.sys.events.once('shutdown', this.destroy, this);
     }
 
     shutdown() {
+        if (!this.scene) {
+            return
+        }
+
+        this.destroyEventEmitter();
         this.pointers.length = 0;
         Clear(this.movedState);
-        if (this.scene) {
+
+        if (this.gameObject) {
+            // GameObject events will be removed when this gameObject destroyed 
+            // this.gameObject.off('pointerdown', this.onPointerDown, this);
+        } else {
             this.scene.input.off('pointerdown', this.onPointerDown, this);
-            this.scene.input.off('pointerup', this.onPointerUp, this);
-            this.scene.input.off('pointermove', this.onPointerMove, this);
-            this.scene.events.off('destroy', this.destroy, this);
-            this.scene = undefined;
         }
+
+        this.scene.input.off('pointerup', this.onPointerUp, this);
+        this.scene.input.off('gameout', this.dragCancel, this);
+
+        this.scene.input.off('pointermove', this.onPointerMove, this);
+        this.scene.sys.events.off('shutdown', this.destroy, this);
+        this.scene = undefined;
+        this.gameObject = undefined;
     }
 
     destroy() {
         this.shutdown();
+    }
+
+    get enable() {
+        return this._enable;
+    }
+
+    set enable(e) {
+        if (this._enable === e) {
+            return;
+        }
+
+        if (!e) {
+            this.dragCancel();
+        }
+        this._enable = e;
+        return this;
     }
 
     setEnable(e) {
@@ -60,14 +111,12 @@ class TwoPointersTracer {
             e = true;
         }
 
-        if (this.enable === e) {
-            return this;
-        }
-
-        if (!e) {
-            this.dragCancel();
-        }
         this.enable = e;
+        return this;
+    }
+
+    toggleEnable() {
+        this.setEnable(!this.enable);
         return this;
     }
 
@@ -76,8 +125,7 @@ class TwoPointersTracer {
             return;
         }
 
-        var index = this.pointers.indexOf(pointer);
-        if (index !== -1) { // Already in catched pointers
+        if (this.pointers.length === 2) {
             return;
         }
 
@@ -86,12 +134,14 @@ class TwoPointersTracer {
             return;
         }
 
-        if (this.pointers.length === 2) {
+        var index = this.pointers.indexOf(pointer);
+        if (index !== -1) { // Already in catched pointers
             return;
-        } else {
-            this.movedState[pointer.id] = false;
-            this.pointers.push(pointer);
         }
+
+        this.movedState[pointer.id] = false;
+        this.pointers.push(pointer);
+        this.pointerCamera = pointer.camera;
 
         switch (this.tracerState) {
             case TOUCH0:
@@ -200,18 +250,6 @@ class TwoPointersTracer {
         this.emit('drag2', this);
     }
 
-    get isDrag() {
-        return (this.tracerState === TOUCH1) &&
-            (this.pointers[0].justMoved) &&
-            (this.movedState[this.pointers[0].id]);
-    }
-
-    get isDrag2() {
-        return (this.tracerState === TOUCH2) &&
-            (this.pointers[0].justMoved || this.pointers[1].justMoved) &&
-            (this.movedState[this.pointers[0].id] || this.movedState[this.pointers[1].id]);
-    }
-
     get distanceBetween() {
         if (this.tracerState !== TOUCH2) {
             return 0;
@@ -304,6 +342,24 @@ class TwoPointersTracer {
     cancel() {
         this.state = IDLE;
         return this;
+    }
+
+    isPointer0InGameObject(gameObject, preTest, postTest) {
+        var pointer = this.pointers[0];
+        if (!pointer) {
+            return false;
+        }
+
+        return IsPointerInBounds(gameObject, pointer, preTest, postTest);
+    }
+
+    isPointer1InGameObject(gameObject, preTest, postTest) {
+        var pointer = this.pointers[1];
+        if (!pointer) {
+            return false;
+        }
+
+        return IsPointerInBounds(gameObject, pointer, preTest, postTest);
     }
 }
 

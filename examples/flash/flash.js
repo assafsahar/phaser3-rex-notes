@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import FlashPlugin from '../../plugins/flash-plugin.js';
 
 class Demo extends Phaser.Scene {

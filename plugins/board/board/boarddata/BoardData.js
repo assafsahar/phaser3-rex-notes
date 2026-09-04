@@ -5,22 +5,25 @@ class BoardData {
     constructor() {
         this.XYZToUID = {}; // [x][y][z] : uid
         this.UIDToXYZ = {}; // uid : xyz
-        this.reset();
+        this.clear();
     }
 
-    shutdown() {
+    shutdown(fromScene) {
         this.XYZToUID = undefined;
         this.UIDToXYZ = undefined;
         return this;
     }
 
-    destroy() {
-        this.shutdown();
+    destroy(fromScene) {
+        this.shutdown(fromScene);
         return this;
     }
 
-    reset() {
-        this.removeAll();
+    clear() {
+        Clear(this.UIDToXYZ);
+        Clear(this.XYZToUID);
+        this.chessCount = 0;
+        this.clearBounds();
         return this;
     }
 
@@ -32,12 +35,28 @@ class BoardData {
         return this;
     }
 
-    removeAll() {
-        Clear(this.UIDToXYZ);
-        Clear(this.XYZToUID);
-        this.chessCount = 0;
-        this.clearBounds();
-        return this;
+    getBounds() {
+        var xMin = Infinity,
+            xMax = -Infinity,
+            yMin = Infinity,
+            yMax = -Infinity;
+
+        var UIDToXYZ = this.UIDToXYZ,
+            xyz, x, y;
+        for (var uid in UIDToXYZ) {
+            xyz = UIDToXYZ[uid];
+            x = xyz.x;
+            y = xyz.y;
+            if (xMin > x) { xMin = x; }
+            if (xMax < x) { xMax = x; }
+            if (yMin > y) { yMin = y; }
+            if (yMax < y) { yMax = y; }
+        }
+
+        return {
+            left: xMin, right: xMax,
+            top: yMin, bottom: yMax
+        }
     }
 
     addUID(uid, x, y, z) {

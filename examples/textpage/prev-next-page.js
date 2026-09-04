@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import TextPagePlugin from '../../plugins/textpage-plugin.js'
 
 class Demo extends Phaser.Scene {
@@ -29,21 +30,21 @@ class Demo extends Phaser.Scene {
         txt.page.setText(lines);
         txt.page.showPage();
 
-        this.input.keyboard.on('keydown_DOWN', txt.page.showNextPage, txt.page);
-        this.input.keyboard.on('keydown_UP', txt.page.showPreviousPage, txt.page);
+        this.input.keyboard.on('keydown-DOWN', txt.page.showNextPage, txt.page);
+        this.input.keyboard.on('keydown-UP', txt.page.showPreviousPage, txt.page);
 
 
         var printPageIdx = function () {
             var page = txt.page;
-            var s = page.pageIdx + "/" + page.pageCount
+            var s = page.pageIndex + "/" + page.pageCount
             if (page.isLastPage) {
                 s += "-- last page"
             }
             console.log(s);
         }
         printPageIdx();
-        this.input.keyboard.on('keydown_UP', printPageIdx);
-        this.input.keyboard.on('keydown_DOWN', printPageIdx);
+        this.input.keyboard.on('keydown-UP', printPageIdx);
+        this.input.keyboard.on('keydown-DOWN', printPageIdx);
     }
 
     update() {}

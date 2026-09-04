@@ -1,13 +1,19 @@
-import IsObjectBelowPointer from '../../../plugins/utils/input/IsObjectBelowPointer.js';
+import IsPointerInBounds from '../../../plugins/utils/input/IsPointerInBounds.js';
+import IsGameObject from '../../../plugins/utils/system/IsGameObject.js';
 
-var IsInTouching = function (pointer) {
-    if (!this.input) {
-        this.setInteractive();
+var IsInTouching = function (pointer, gameObject) {
+    if (IsGameObject(pointer) || (typeof (pointer) === 'string')) {
+        gameObject = pointer;
+        pointer = undefined;
     }
-    return IsObjectBelowPointer(this, pointer, preTest);
+
+    if (gameObject === undefined) {
+        gameObject = this;
+    } else if (typeof (gameObject) === 'string') {
+        gameObject = this.getElement(gameObject);
+    }
+
+    return IsPointerInBounds(gameObject, pointer);
 }
 
-var preTest = function (gameObject, pointer) {
-    return pointer.isDown;
-}
 export default IsInTouching;

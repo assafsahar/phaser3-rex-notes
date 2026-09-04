@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import UIPlugin from '../../templates/ui/ui-plugin.js';
 
 const Random = Phaser.Math.Between;
@@ -9,7 +10,7 @@ class Demo extends Phaser.Scene {
         })
     }
 
-    preload() {}
+    preload() { }
 
     create() {
         var gridSizer = this.rexUI.add.gridSizer(400, 300, undefined, undefined, 3, 3)
@@ -33,7 +34,7 @@ class Demo extends Phaser.Scene {
             .drawBounds(this.add.graphics(), 0xff0000);
     }
 
-    update() {}
+    update() { }
 }
 
 var config = {

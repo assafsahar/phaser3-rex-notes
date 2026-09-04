@@ -1,14 +1,26 @@
 import TouchCursor from '../../touchcursor.js';
+import EventEmitterMethods from '../../utils/eventemitter/EventEmitterMethods.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
+import { Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
 
 class VirtualJoyStick {
     constructor(scene, config) {
+        if (config === undefined) {
+            config = {};
+        }
+
+        // Event emitter
+        var eventEmitter = GetValue(config, 'eventEmitter', undefined);
+        var EventEmitterClass = GetValue(config, 'EventEmitterClass', undefined);
+        this.setEventEmitter(eventEmitter, EventEmitterClass);
+        config.eventEmitter = this.getEventEmitter();
+
         this.scene = scene;
         this.base = undefined;
         this.thumb = undefined;
         this.touchCursor = undefined;
-        this.radius = GetValue(config, 'radius', 100);
+        this.setRadius(GetValue(config, 'radius', 100));
 
         this.addBase(GetValue(config, 'base', undefined), config);
         this.addThumb(GetValue(config, 'thumb', undefined));
@@ -23,6 +35,17 @@ class VirtualJoyStick {
         }
 
         this.boot();
+    }
+
+    destroy() {
+        this.destroyEventEmitter();
+        this.base.destroy(); // Also destroy touchCursor behavior
+        this.thumb.destroy();
+
+        this.scene = undefined;
+        this.base = undefined;
+        this.thumb = undefined;
+        this.touchCursor = undefined;
     }
 
     createCursorKeys() {
@@ -82,17 +105,31 @@ class VirtualJoyStick {
     }
 
     setPosition(x, y) {
+        if ((this.x === x) && (this.y === y)) {
+            return this;
+        }
+
         this.x = x;
         this.y = y;
+
+        this.forceUpdateThumb();
         return this;
     }
 
-    set x(x) {
-        this.base.x = x;
+    set x(value) {
+        if (this.x === value) {
+            return;
+        }
+        this.base.x = value;
+        this.thumb.x = value;
     }
 
-    set y(y) {
-        this.base.y = y;
+    set y(value) {
+        if (this.y === value) {
+            return;
+        }
+        this.base.y = value;
+        this.thumb.y = value;
     }
 
     get x() {
@@ -105,10 +142,12 @@ class VirtualJoyStick {
 
     setVisible(visible) {
         this.visible = visible;
+        return this;
     }
 
     toggleVisible() {
         this.visible = !this.visible;
+        return this;
     }
 
     get visible() {
@@ -118,15 +157,7 @@ class VirtualJoyStick {
     set visible(visible) {
         this.base.visible = visible;
         this.thumb.visible = visible;
-    }
-
-    setEnable(value) {
-        this.enable = value;
-        return this;
-    }
-
-    toggleEnabl() {
-        this.enable = !this.enable;
+        this.enable = visible;
     }
 
     get enable() {
@@ -137,20 +168,21 @@ class VirtualJoyStick {
         this.touchCursor.setEnable(value);
     }
 
-    on() {
-        var ee = this.touchCursor.events;
-        ee.on.apply(ee, arguments);
+    setEnable(e) {
+        if (e === undefined) {
+            e = true;
+        }
+        this.enable = e;
         return this;
     }
 
-    once() {
-        var ee = this.touchCursor.events;
-        ee.once.apply(ee, arguments);
+    toggleEnable() {
+        this.setEnable(!this.enable);
         return this;
     }
 
-    setVisible(visible) {
-        this.visible = visible;
+    setRadius(radius) {
+        this.radius = radius;
         return this;
     }
 
@@ -164,6 +196,11 @@ class VirtualJoyStick {
             gameObject = this.scene.add.circle(0, 0, this.radius)
                 .setStrokeStyle(3, 0x0000ff);
         }
+
+        if (config === undefined) {
+            config = {};
+        }
+        config.eventEmitter = this.getEventEmitter();
         this.touchCursor = new TouchCursor(gameObject, config)
         this.base = gameObject;
         return this;
@@ -185,40 +222,53 @@ class VirtualJoyStick {
     setScrollFactor(scrollFactor) {
         this.base.setScrollFactor(scrollFactor);
         this.thumb.setScrollFactor(scrollFactor);
-    }
-
-    boot() {
-        this.touchCursor.on('update', this.update, this);
-    }
-
-    destroy() {
-        this.base.destroy(); // Also destroy touchCursor behavior
-        this.thumb.destroy();
-
-        this.base = undefined;
-        this.thumb = undefined;
-        this.touchCursor = undefined;
-    }
-
-    update() {
-        var touchCursor = this.touchCursor;
-        if (touchCursor.anyKeyDown) {
-            if (touchCursor.force > this.radius) {
-                var rad = touchCursor.rotation;
-                this.thumb.x = touchCursor.start.x + (Math.cos(rad) * this.radius);
-                this.thumb.y = touchCursor.start.y + (Math.sin(rad) * this.radius);
-            } else {
-                this.thumb.x = touchCursor.end.x;
-                this.thumb.y = touchCursor.end.y;
-            }
-        } else {
-            this.thumb.x = this.base.x;
-            this.thumb.y = this.base.y;
-        }
         return this;
     }
 
+    boot() {
+        this.on('update', this.update, this);
+    }
 
+    // Internal method
+    update() {
+        var touchCursor = this.touchCursor;
+        // Start from (0,0)
+        var dx, dy;
+        var dirMode = touchCursor.dirMode;
+        if (touchCursor.anyKeyDown) {
+            if (touchCursor.force > this.radius) { // Exceed radius
+                var rad = touchCursor.rotation;
+
+                // NOT 'up&down'
+                dx = (dirMode !== 0) ? Math.cos(rad) * this.radius : 0;
+                // NOT 'left&right'
+                dy = (dirMode !== 1) ? Math.sin(rad) * this.radius : 0;
+            } else {
+                // NOT 'up&down'
+                dx = (dirMode !== 0) ? touchCursor.forceX : 0;
+                // NOT 'left&right'
+                dy = (dirMode !== 1) ? touchCursor.forceY : 0;
+
+            }
+        } else {
+            dx = 0;
+            dy = 0;
+        }
+
+        this.thumb.x = this.base.x + dx;
+        this.thumb.y = this.base.y + dy;
+        return this;
+    }
+
+    forceUpdateThumb() {
+        this.touchCursor.forceUpdate();
+        return this;
+    }
 }
+
+Object.assign(
+    VirtualJoyStick.prototype,
+    EventEmitterMethods
+);
 
 export default VirtualJoyStick;

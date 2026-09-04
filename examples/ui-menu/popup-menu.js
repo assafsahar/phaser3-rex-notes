@@ -1,6 +1,7 @@
+import Phaser from 'phaser';
 import UIPlugin from '../../templates/ui/ui-plugin.js';
 
-const COLOR_PRIMARY = 0x4e342e;
+const COLOR_MAIN = 0x4e342e;
 const COLOR_LIGHT = 0x7b5e57;
 const COLOR_DARK = 0x260e04;
 
@@ -67,11 +68,11 @@ class Demo extends Phaser.Scene {
         this.print = this.add.text(0, 0, '');
         this.input.on('pointerdown', function (pointer) {
             if (menu === undefined) {
-                menu = createMenu(scene, pointer.x, pointer.y, items, function (button) {
+                menu = CreateMenu(scene, pointer.x, pointer.y, items, function (button) {
                     scene.print.text += 'Click ' + button.text + '\n';
                 });
             } else if (!menu.isInTouching(pointer)) {
-                menu.collapse();
+                // menu.collapse(); // Auto collapsing if `pointerDownOutsideCollapsing: true`
                 menu = undefined;
                 scene.print.text = '';
             }
@@ -81,15 +82,25 @@ class Demo extends Phaser.Scene {
     update() { }
 }
 
-var createMenu = function (scene, x, y, items, onClick) {
+var CreateMenu = function (scene, x, y, items, onClick) {
+    var exapndOrientation = 'y';
+    var easeOrientation = 'y';
+
     var menu = scene.rexUI.add.menu({
         x: x,
         y: y,
+        orientation: exapndOrientation,
+        // subMenuSide: 'right',
 
         items: items,
-        createButtonCallback: function (item, i) {
+        createBackgroundCallback: function (items) {
+            var scene = items.scene;
+            return scene.rexUI.add.roundRectangle(0, 0, 2, 2, 0, COLOR_MAIN);
+        },
+
+        createButtonCallback: function (item, i, items) {
             return scene.rexUI.add.label({
-                background: scene.rexUI.add.roundRectangle(0, 0, 2, 2, 0, COLOR_PRIMARY),
+                background: scene.rexUI.add.roundRectangle(0, 0, 2, 2, 0),
                 text: scene.add.text(0, 0, item.name, {
                     fontSize: '20px'
                 }),
@@ -104,17 +115,23 @@ var createMenu = function (scene, x, y, items, onClick) {
             })
         },
 
+        // easeIn: 500,
         easeIn: {
             duration: 500,
-            orientation: 'y'
+            orientation: easeOrientation
         },
 
+        // easeOut: 100,
         easeOut: {
             duration: 100,
-            orientation: 'y'
+            orientation: easeOrientation
         },
 
-        // expandEvent: 'button.over'
+        // expandEvent: 'button.over',
+
+        // pointerDownOutsideCollapsing: false,
+
+        // space: { item: 10 }
     });
 
     menu
@@ -126,6 +143,12 @@ var createMenu = function (scene, x, y, items, onClick) {
         })
         .on('button.click', function (button) {
             onClick(button);
+        })
+        .on('popup.complete', function (subMenu) {
+            console.log('popup.complete')
+        })
+        .on('scaledown.complete', function () {
+            console.log('scaledown.complete')
         })
 
     return menu;

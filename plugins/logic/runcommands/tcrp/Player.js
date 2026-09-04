@@ -1,78 +1,63 @@
-import TickTask from '../../../utils/ticktask/TickTask.js';
-import GetSceneObject from '../../../utils/system/GetSceneObject.js';
+import ComponentBase from '../../../utils/componentbase/ComponentBase.js';
+import Clock from '../../../clock.js';
 import ArrayCopy from '../../../utils/array/Copy.js';
 import RunCommands from '../../../runcommands.js';
+import IsArray from '../../../utils/object/IsArray.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
+import { Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
 
-class Player extends TickTask {
+class Player extends ComponentBase {
     constructor(parent, config) {
         super(parent, config);
 
-        this.parent = parent;
-        this.scene = GetSceneObject(parent);
+        var clock = GetValue(config, 'clock', undefined);
+        if (!clock) {
+            clock = new Clock(parent);
+        }
+        this.clock = clock;
+        this.clock.on('update', this.update, this);
+
+        this.commands = [];
+
         this.resetFromJSON(config); // this function had been called in super(config)
-        this.boot();
     }
 
     resetFromJSON(o) {
-        this.isRunning = GetValue(o, 'isRunning', false);
+        this.clock.resetFromJSON(GetValue(o, 'clock', undefined));
         this.state = GetValue(o, 'state', 0); // 0=idle, 1=run, 2=completed
-        this.commands = GetValue(o, 'commands', []); // [[dt, cmds], [dt, cmds], ...]
+        this.commands = GetValue(o, 'commands', []); // [[time, cmds], [time, cmds], ...]
         this.scope = GetValue(o, 'scope', undefined);
         this.setTimeUnit(GetValue(o, 'timeUnit', 0));
         this.setDtMode(GetValue(o, 'dtMode', 0));
-        this.setTimeScale(GetValue(o, 'timeScale', 1));
         this.index = GetValue(o, 'index', 0);
-        this.nextDt = GetValue(o, 'nextDt', 0);
-        this.seek(GetValue(o, 'now', 0));
-        this.timeScale = GetValue(o, 'timeScale', 1);
+        this.nextTime = GetValue(o, 'nextTime', 0);
         return this;
     }
 
     toJSON() {
         return {
-            isRunning: this.isRunning,
+            clock: this.clock.toJSON(),
             state: this.state,
             commands: this.commands,
             scope: this.scope,
             timeUnit: this.timeUnit,
             dtMode: this.dtMode,
             index: this.index,
-            nextDt: this.nextDt,
-            now: this.now,
-            timeScale: this.timeScale,
-            tickingMode: this.tickingMode
+            nextTime: this.nextTime
         };
     }
 
-    boot() {
-        super.boot();
-        this.scene.events.on('destroy', this.destroy, this);
-    }
-
-    shutdown() {
-        super.shutdown();
-
-        this.parent = undefined;
-        this.scene = undefined;
-        this.commands = undefined;
-    }
-
-    destroy() {
-        this.shutdown();
-    }
-
-    startTicking() {
-        super.startTicking();
-        this.scene.events.on('update', this.update, this);
-    }
-
-    stopTicking() {
-        super.stopTicking();
-        if (this.scene) { // Scene might be destoryed
-            this.scene.events.off('update', this.update, this);
+    shutdown(fromScene) {
+        // Already shutdown
+        if (this.isShutdown) {
+            return;
         }
+
+        this.clock.shutdown(fromScene);
+        this.commands = undefined;
+
+        super.shutdown(fromScene);
     }
 
     load(commands, scope, config) {
@@ -107,8 +92,24 @@ class Player extends TickTask {
             });
         }
 
-        this.commands = commands;
+        ArrayCopy(this.commands, commands);
         this.scope = scope;
+        return this;
+    }
+
+    clear() {
+        this.commands.length = 0;
+        return this;
+    }
+
+    append(time, fn, ...params) {
+        var command;
+        if (Array.isArray(fn)) {
+            command = fn;
+        } else {
+            command = [fn, ...params];
+        }
+        this.commands.push([time, command]);
         return this;
     }
 
@@ -118,104 +119,123 @@ class Player extends TickTask {
         }
 
         this.stop();
+
         this.index = 0;
-        this.isRunning = true;
         this.state = 1;
-        this.nextDt = this.getNextDt(0);
-        this.seek(startAt);
+        this.nextTime = this.getNextDt(0);
+
+        this.clock.start(startAt);
+        this.update(startAt);
+        this.emit('start', this.parent, this);
         return this;
     }
 
     pause() {
-        this.isRunning = false;
+        this.clock.pause();
+        this.emit('pause', this.parent, this);
         return this;
     }
 
     resume() {
-        this.isRunning = true;
+        this.clock.resume();
+        this.emit('resume', this.parent, this);
         return this;
     }
 
     stop() {
-        this.isRunning = false;
+        this.clock.stop();
         this.state = 0;
+        this.emit('stop', this.parent, this);
         return this;
     }
 
     seek(time) {
-        this.now = time;
+        this.clock.seek(time);
+        return this;
+    }
+
+    seekToNext() {
+        this.seek(this.nextTime);
         return this;
     }
 
     get isPlaying() {
-        return this.isRunning;
+        return this.clock.isRunning;
     }
 
     get completed() {
         return (this.state === 2);
     }
 
-    setTimeScale(value) {
-        this.timeScale = value;
+    get timeScale() {
+        return this.clock.timeScale;
     }
 
-    update(time, delta) {
-        if (!this.isRunning) {
+    set timeScale(timeScale) {
+        this.clock.timeScale = timeScale;
+    }
+
+    setTimeScale(timeScale) {
+        this.timeScale = timeScale;
+        return this;
+    }
+
+    get now() {
+        return this.clock.now;
+    }
+
+    update(now) {
+        if (this.nextTime > now) {
             return this;
         }
 
-        if ((this.timeScale === 0) || (delta === 0)) {
-            return this;
-        }
-
-        this.now += (delta * this.timeScale);
-        if (this.nextDt > this.now) {
-            return this;
-        }
+        var commands = this.commands;
 
         while (1) {
-            // run a row
-            var item = this.commands[this.index];
+            // Execute a command
+            var item = commands[this.index];
             var command = item[1];
-            if (typeof (command) === 'string') { // [dt, fnName, param0, param1, ...]
+            if (!IsArray(command)) { // [dt, fnName, param0, param1, ...]
                 command = ArrayCopy(CMD, item, 1);
             }
             RunCommands(command, this.scope);
             this.emit('runcommand', command, this.scope);
-            // run a row
+            // Execute a command
 
-            if (this.index === (this.commands.length - 1)) {
+            if (this.index >= (commands.length - 1)) {
+                this.nextTime = 0;
                 this.complete();
                 return this;
             } else {
-                // next dt
-                this.index++; // point to next item
-                this.nextDt = this.getNextDt(this.nextDt);
-                if (this.nextDt > this.now) {
+                // Get next time
+                this.index++; // Point to next command
+                this.nextTime = this.getNextDt(this.nextTime);
+                if (this.nextTime > now) {
                     return this;
                 }
-                // next dt
+                // Get next time
             }
 
         }
     }
 
     complete() {
-        super.complete();
+        this.clock.stop();
         this.state = 2;
+        this.emit('complete', this.parent, this);
     }
 
     getNextDt(currentDt) {
-        var dt = this.commands[this.index][0];
-        if (this.timeUnit === 1) { // sec mode
-            dt = dt * 1000;
+        var time = this.commands[this.index][0];
+        if (this.timeUnit === 1) { // Second mode
+            time = time * 1000;
         }
 
         if (this.dtMode === 1) {
-            dt += currentDt;
+            time += currentDt;
         }
 
-        return dt;
+        return time;
     }
 
     setDtMode(dtMode) {
@@ -240,7 +260,7 @@ var CMD = []; // reuse this array
 const TIMEUNITMODE = {
     ms: 0,
     s: 1,
-    sec: 1
+    sec: 1,
 };
 
 const DTMODE = {

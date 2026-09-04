@@ -1,6 +1,7 @@
 import TouchState from './touchstate.js';
 
-class TouchStatePlugin extends Phaser.Plugins.BasePlugin {
+import { Plugins as PhaserPlugins } from 'phaser';
+class TouchStatePlugin extends PhaserPlugins.BasePlugin {
 
     constructor(pluginManager) {
         super(pluginManager);
@@ -8,7 +9,7 @@ class TouchStatePlugin extends Phaser.Plugins.BasePlugin {
 
     start() {
         var eventEmitter = this.game.events;
-        eventEmitter.once('destroy', this.destroy, this);
+        eventEmitter.on('destroy', this.destroy, this);
     }
 
     add(gameObject, config) {

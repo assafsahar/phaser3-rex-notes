@@ -1,16 +1,17 @@
-var GetSceneObject = function (object) {
-    if (isSceneObject(object)) { // object = scene
-        return object;
-    } else if (object.scene && isSceneObject(object.scene)) { // object = game object
-        return object.scene;
-    } else if (object.parent && object.parent.scene && isSceneObject(object.parent.scene)) { // parent = bob object
-        return object.parent.scene;
-    }
-}
+import IsSceneObject from './IsSceneObject.js';
 
-const SceneKlass = Phaser.Scene;
-var isSceneObject = function(object) {
-    return (object instanceof SceneKlass);
+var GetSceneObject = function (object) {
+    if ((object == null) || (typeof (object) !== 'object')) {
+        return null;
+    } else if (IsSceneObject(object)) { // object = scene
+        return object;
+    } else if (object.scene && IsSceneObject(object.scene)) { // object = game object
+        return object.scene;
+    } else if (object.parent && object.parent.scene && IsSceneObject(object.parent.scene)) { // parent = bob object
+        return object.parent.scene;
+    } else {
+        return null;
+    }
 }
 
 export default GetSceneObject;

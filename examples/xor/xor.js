@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import XORPlugin from '../../plugins/xor-plugin.js';
 
 class Demo extends Phaser.Scene {

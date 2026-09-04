@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import GashaponPlugin from '../../plugins/gashapon-plugin.js';
 
 class Demo extends Phaser.Scene {

@@ -1,14 +1,14 @@
-import GetSceneObject from '../../utils/system/GetSceneObject.js';
+import ComponentBase from '../../utils/componentbase/ComponentBase.js';
 
-const EE = Phaser.Events.EventEmitter;
-const GetValue = Phaser.Utils.Objects.GetValue;
+import { Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
 
-class Button extends EE {
+class Button extends ComponentBase {
     constructor(gameObject, config) {
-        super();
-        this.gameObject = gameObject;
-        this.scene = GetSceneObject(gameObject);
+        super(gameObject, config);
+        // this.parent = gameObject;
 
+        this._enable = undefined;
         gameObject.setInteractive(GetValue(config, "inputConfig", undefined));
         this.resetFromJSON(config);
         this.boot();
@@ -17,29 +17,58 @@ class Button extends EE {
     resetFromJSON(o) {
         this.pointer = undefined;
         this.lastClickTime = undefined;
+        this.isDown = false;
+        this.isOver = false;
         this.setEnable(GetValue(o, "enable", true));
         this.setMode(GetValue(o, "mode", 1));
         this.setClickInterval(GetValue(o, "clickInterval", 100));
+        this.setDragThreshold(GetValue(o, 'threshold', undefined));
         return this;
     }
 
     boot() {
-        this.gameObject.on('pointerdown', this.onPress, this);
-        this.gameObject.on('pointerup', this.onRelease, this);
-        this.gameObject.on('pointerout', this.onPointOut, this);
-        this.gameObject.on('destroy', this.destroy, this);
+        var gameObject = this.parent;
+        gameObject.on('pointerdown', this.onPress, this);
+        gameObject.on('pointerup', this.onRelease, this);
+        gameObject.on('pointerout', this.onPointOut, this);
+        gameObject.on('pointermove', this.onMove, this);
+
+        gameObject.on('pointerover', this.onOver, this);
+        gameObject.on('pointerout', this.onOut, this);
     }
 
-    shutdown() {
-        super.shutdown();
-        this.pointer = undefined;
-        this.gameObject = undefined;
-        this.scene = undefined;
-        // gameObject events will be removed when this gameObject destroyed 
+    shutdown(fromScene) {
+        // Already shutdown
+        if (this.isShutdown) {
+            return;
+        }
+
+        // GameObject events will be removed when this gameObject destroyed 
+        // this.parent.on('pointerdown', this.onPress, this);
+        // this.parent.on('pointerup', this.onRelease, this);
+        // this.parent.on('pointerout', this.onPointOut, this);
+        // this.parent.on('pointermove', this.onMove, this);
+        this.pointer = null;
+
+        super.shutdown(fromScene);
     }
 
-    destroy() {
-        this.shutdown();
+    get enable() {
+        return this._enable;
+    }
+
+    set enable(e) {
+        if (this._enable === e) {
+            return;
+        }
+
+        if (!e) {
+            this.cancel();
+        }
+        this._enable = e;
+
+        var eventName = (e) ? 'enable' : 'disable';
+        this.emit(eventName, this, this.parent);
     }
 
     setEnable(e) {
@@ -47,15 +76,12 @@ class Button extends EE {
             e = true;
         }
 
-        if (this.enable === e) {
-            return this;
-        }
-
-        if (!e) {
-            this.pointer = undefined;
-        }
         this.enable = e;
-        this.gameObject.input.enabled = e;
+        return this;
+    }
+
+    toggleEnable() {
+        this.setEnable(!this.enable);
         return this;
     }
 
@@ -72,38 +98,97 @@ class Button extends EE {
         return this;
     }
 
+    setDragThreshold(distance) {
+        this.dragThreshold = distance;
+        return this;
+    }
+
     // internal
-    onPress(pointer) {
+    onPress(pointer, localX, localY, event) {
         if (this.pointer !== undefined) {
             return;
         }
+
         this.pointer = pointer;
+
+        this.isDown = true;
+        this.emit('down', this, this.parent, pointer, event);
+
         if (this.mode === 0) {
-            this.click(pointer.downTime, pointer);
+            this.click(pointer.downTime, pointer, event);
         }
+
     }
 
-    onRelease(pointer) {
+    onRelease(pointer, localX, localY, event) {
         if (this.pointer !== pointer) {
             return;
         }
+
+        this.isDown = false;
+        this.emit('up', this, this.parent, pointer, event);
+
         if (this.mode === 1) {
-            this.click(pointer.upTime, pointer);
+            this.click(pointer.upTime, pointer, event);
         }
+
         this.pointer = undefined;
     }
 
-    onPointOut(pointer) {
+    onPointOut(pointer, event) {
         if (this.pointer !== pointer) {
             return;
         }
-        this.pointer = undefined;
+
+        this.cancel();
     }
 
-    click(nowTime, pointer) {
+    onMove(pointer, localX, localY, event) {
+        if (this.pointer !== pointer) {
+            return;
+        }
+
+        if (this.dragThreshold === undefined) {
+            return;
+        }
+
+        if (this.mode === 1) {
+            if (pointer.getDistance() >= this.dragThreshold) {
+                this.cancel();
+            }
+        }
+    }
+
+    onOver(pointer, localX, localY, event) {
+        if (!this.enable) {
+            return this;
+        }
+
+        this.isOver = true;
+        this.emit('over', this, this.parent, pointer, event);
+
+        return this;
+    }
+
+    onOut(pointer, event) {
+        if (!this.enable) {
+            return this;
+        }
+
+        this.isOver = false;
+        this.emit('out', this, this.parent, pointer, event);
+
+        return this;
+    }
+
+    click(nowTime, pointer, event) {
+        if (!this.enable) {
+            return this;
+        }
+
         if (nowTime === undefined) {
             // fires 'click' event manually
-            this.emit('click', this, this.gameObject, pointer);
+            this.emit('click', this, this.parent, pointer, event);
             return this;
         }
 
@@ -114,16 +199,22 @@ class Button extends EE {
             return this;
         }
         this.lastClickTime = nowTime;
-        this.emit('click', this, this.gameObject, pointer);
+        this.emit('click', this, this.parent, pointer, event);
         return this;
     }
+
+    cancel() {
+        this.pointer = undefined;
+        return this;
+    }
+
 }
 
 const CLICKMODE = {
-    'press': 0,
-    'pointerdown': 0,
-    'release': 1,
-    'pointerup': 1,
+    press: 0,
+    pointerdown: 0,
+    release: 1,
+    pointerup: 1,
 };
 
 export default Button;

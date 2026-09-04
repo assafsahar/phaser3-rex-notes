@@ -5,11 +5,9 @@ Displays text with multi-color, font face, or font size with tags.
 - Author: Rex
 - Game object
 
-## Source code
+## Live demos
 
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/tagtext-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rextagtextplugin.min.js)
-
-[Class](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/tagtext.js)
+- [Tag text](https://codepen.io/rexrainbow/pen/KRaOpb)
 
 ## Usage
 
@@ -17,24 +15,61 @@ Displays text with multi-color, font face, or font size with tags.
 
 ### Install plugin
 
-Install plugin in [configuration of game](game.md#configuration)
+#### Load minify file
 
-```javascript
-var config = {
-    // ...
-    plugins: {
-        global: [{
-            key: 'rexTagTextPlugin',
-            plugin: TagTextPlugin,
-            start: true
-        },
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.plugin('rextagtextplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rextagtextplugin.min.js', true);
+    ```
+- Add text object
+    ```javascript
+    var txt = scene.add.rexTagText(x, y, content, config);
+    ```
+
+#### Import plugin
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import TagTextPlugin from 'phaser4-rex-plugins/plugins/tagtext-plugin.js';
+    var config = {
         // ...
-        ]
-    }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+        plugins: {
+            global: [{
+                key: 'rexTagTextPlugin',
+                plugin: TagTextPlugin,
+                start: true
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add text object
+    ```javascript
+    var txt = scene.add.rexTagText(x, y, content, config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import TagText from 'phaser4-rex-plugins/plugins/tagtext.js';
+    ```
+- Add text object
+    ```javascript    
+    var txt = new TagText(scene, x, y, content, config);
+    scene.add.existing(txt);
+    ```
 
 ### Add text object
 
@@ -47,35 +82,12 @@ var tags = {
       color: 'blue'
     }
 };
-var txt = scene.add.rexTagText(x, y, '<style="tag0">h</style>ello', {tags:tags});
-// var txt = scene.add.rexTagText(x, y, '<style="tag0">h</style>ello', { fontFamily: 'Arial', fontSize: 64, color: '#00ff00', tags:tags });
+var txt = scene.add.rexTagText(x, y, '<class="tag0">h</class>ello', {tags:tags});
+// var txt = scene.add.rexTagText(x, y, '<class="tag0">h</class>ello', { fontFamily: 'Arial', fontSize: 64, color: '#00ff00', tags:tags });
 ```
 
-Properties of a tag
+- `tags` : `{tagName:tag}`, see [Properties of tag](tagtext.md#properties-of-tag).
 
-```javascript
-{
-    fontFamily: 'Courier',   // or 'family', 'font-family'
-    fontSize: '16px',        // or 'size', 'font-size'
-    fontStyle: 'bold italic',// or 'style', 'font-style'
-    color: 'red',            // or 'font-color'
-    stroke: {
-        color: 'blue',
-        thinkness: 1
-    },
-    shadow: {
-        color: 'black',
-        offsetX: 2,
-        offsetY: 2,
-        blur: 2
-    },
-    underline: {            // or 'u'
-        color: 'blue',
-        thinkness: 3,
-        offset: -1
-    }
-}
-```
 
 Default style
 
@@ -85,6 +97,17 @@ Default style
     fontSize: '16px',
     fontStyle: '',
     backgroundColor: null,
+    backgroundColor2: null,
+    backgroundHorizontalGradient: true,
+    backgroundStrokeColor: null,
+    backgroundStrokeLineWidth: 2,
+    
+    backgroundCornerRadius: 0,
+    // 0   : no round corner, 
+    // > 0 : convex round corner
+    // < 0 : concave round corner
+
+    backgroundCornerIteration: null, 
     color: '#fff',
     stroke: '#fff',
     strokeThickness: 0,
@@ -98,20 +121,48 @@ Default style
     },
     underline: {
         color: '#000',
-        thinkness: 0,
+        thickness: 0,
         offset: 0
     },
-    align: 'left',  // 0|'left'|1|'center'|2|'right'
+    strikethrough: {
+        color: '#000',
+        thickness: 0,
+        offset: 0
+    },    
+    // align: 'left',  // Equal to halign
+    halign: 'left', // 'left'|'center'|'right'
+    valign: 'top',  // 'top'|'center'|'bottom'
+    padding: {
+        left: 0,
+        right: 0,
+        top: 0,
+        bottom: 0,
+    },
     maxLines: 0,
     lineSpacing: 0,
+    letterSpacing: 0,
     fixedWidth: 0,
     fixedHeight: 0,
-    lineSpacing: 0,
+    fixedLineHeightMode: true,
     testString: '|MÉqgy',
+    
     wrap: {
         mode: 'none'     // 0|'none'|1|'word'|2|'char'|'character'
         width: null
-    }
+    },
+    // wordWrap: { width: 0 },   // Compatible with Text game object
+
+    // rtl: false,
+    metrics: false,
+    // metrics: {
+    //     ascent: 0,
+    //     descent: 0,
+    //     fontSize: 0
+    // },
+
+    // images: {
+    //    key: { y:-8 }
+    // }
 
     tags: {
         //tag0: {
@@ -120,12 +171,27 @@ Default style
         //tag1: {
         //  color: 'blue'
         //}
-    },
-    // resolution: 1
+    }
 }
 ```
 
-Add text from JSON
+```javascript
+var txt = scene.add.rexTagText({
+    x: 0,
+    y: 0,
+    text: '',
+    style: {
+        fontSize: '64px',
+        fontFamily: 'Arial',
+        color: '#ffffff',
+        align: 'center',
+        backgroundColor: '#ff00ff',
+        tags: {}
+    }
+})
+```
+
+or
 
 ```javascript
 var txt = scene.make.rexTagText({
@@ -148,9 +214,51 @@ var txt = scene.make.rexTagText({
         backgroundColor: '#ff00ff',
         tags: {}
     },
-
+    // origin: {x: 0.5, y: 0.5},
     add: true
 });
+```
+
+- Alignment
+    - `halign`, or `align` : Horizontal alignment.
+        - `left`, `center`, `right`
+    - `valign` : Vertical alignment.
+        - `top`, `center`, `bottom`
+- `images` : See [Image](tagtext.md#image)
+
+
+#### Properties of tag
+
+```javascript
+{
+    fontFamily: 'Courier',   // or 'family', 'font-family'
+    fontSize: '16px',        // or 'size', 'font-size'
+    fontStyle: 'bold italic',// or 'style', 'font-style'
+    color: 'red',            // or 'font-color'
+    stroke: {
+        color: 'blue',
+        thickness: 1
+    },
+    shadow: {
+        color: 'black',
+        offsetX: 2,
+        offsetY: 2,
+        blur: 2
+    },
+    underline: {            // or 'u'
+        color: 'blue',
+        thickness: 3,
+        offset: -1
+    },
+    strikethrough: {        // or 's'
+        color: 'red',
+        thickness: 3,
+        offset: -1
+    },    
+    y: 0,
+    img: textureKey,
+    area: areaKey,
+}
 ```
 
 ### Custom class
@@ -173,7 +281,22 @@ var txt = scene.make.rexTagText({
         - If it has a `preUpdate` method, it will be added to the Update List.
 - Create instance
     ```javascript
-    var txt = new MyText(scene, x, y, '<style="tag0">h</style>ello', {tags:tags});
+    var txt = new MyText(scene, x, y, '<class="tag0">h</class>ello', {tags:tags});
+    ```
+
+### Add tag
+
+- Add a tag
+    ```javascript
+    txt.addTag(name, prop);
+    ```
+    - `name` : Tag name.
+    - `prop` : See [Properties of tag](tagtext.md#properties-of-tag)
+- Add tags
+    ```javascript
+    txt.addTags({
+        name: prop
+    });
     ```
 
 ### Wrap
@@ -215,6 +338,7 @@ var txt = scene.make.rexTagText({
     - Set
         ```javascript
         txt.setWrapWidth(width);
+        // txt.setWordWrapWidth(width);
         ```
 
 ### Content
@@ -227,10 +351,24 @@ var txt = scene.make.rexTagText({
     ```javascript
     var plainText = txt.getPlainText();
     ```
+- Get sub-string
+    ```javascript
+    var text = txt.getText(start, end);
+    ```
 - Set
     ```javascript
-    txt.setText('<style="name1">wor</style>ld');
-    // txt.text = '<style="name1">wor</style>ld';
+    txt.setText('<class="name1">wor</class>ld');
+    // txt.text = '<class="name1">wor</class>ld';
+    ```
+- Append
+    ```javascript
+    txt.appendText(text);
+    // txt.text += '\n' + text;
+    ```
+    or
+    ```javascript
+    txt.appendText(text, false);
+    // txt.text += text;
     ```
 
 ### Set style
@@ -281,20 +419,66 @@ txt.setFontStyle(style);
         ```
     - Set
         ```javascript
-        txt.setUnderline(color, thinkness, ofset);
+        txt.setUnderline(color, thickness, ofset);
         txt.setUnderlineColor(color);
-        txt.setUnderlineThinkness(thinkness);
+        txt.setUnderlineThinkness(thickness);
         txt.setUnderlineOffset(ofset);
         ```
-- Background color
+- Strikethrough color, thickness
     - Get
         ```javascript
-        var color = txt.style.backgroundColor;
+        var color = txt.style.strikethroughColor;
+        var thickness = txt.style.strikethroughThickness;
+        var offset = txt.style.strikethroughOffset;
         ```
     - Set
         ```javascript
-        txt.setBackgroundColor(color);
+        txt.setStrikethrough(color, thickness, ofset);
+        txt.setStrikethroughColor(color);
+        txt.setStrikethroughThinkness(thickness);
+        txt.setStrikethroughOffset(ofset);
         ```
+- Background
+    - Color, or gradient color
+        - Get
+            ```javascript
+            var color = txt.style.backgroundColor;
+            var color2 = txt.style.backgroundColor2;
+            var isHorizontalGradient = txt.style.backgroundHorizontalGradient;
+            ```
+        - Set
+            ```javascript
+            txt.setBackgroundColor(color);
+            // txt.setBackgroundColor(color, color2, isHorizontalGradient);
+            ```
+    - Stroke color
+        - Get
+           ```javascript
+           var color = txt.style.backgroundStrokeColor;
+           var lineWidth = txt.style.backgroundStrokeLineWidth;
+           ```
+        - Set
+            ```javascript
+            txt.setBackgroundStrokeColor(color, lineWidth);
+            ```
+    - Round rectangle
+        - Get
+            ```javascript
+            var radius = txt.style.backgroundCornerRadius;
+            var iteration = txt.style.backgroundCornerIteration;
+            ```
+        - Set
+            ```javascript
+            txt.setBackgroundCornerRadius(radius);
+            // txt.setBackgroundCornerRadius(radius, iteration);
+            ```
+            - `radius` :
+                - `0`  : No round corner
+                - `> 0` : Convex round corner
+                - `< 0` : Concave round corner
+            - `iteration` : 
+                - `undefined` : Round rectangle
+                - `0` : Octagon
 - Shadow
     - Get
         ```javascript
@@ -314,6 +498,73 @@ txt.setFontStyle(style);
         txt.setShadowStroke(enabled);
         txt.setShadowFill(enabled);
         ```
+
+### Image
+
+- Uses texture key as image key by default.
+- Add image render information
+    ```javascript
+    txt.addImage(imgKey, {
+        key: textureKey,
+        frame: frameName,
+        width: undefined,
+        height: undefined,
+        y: 0,
+        left: 0,
+        right: 0
+    });
+    ```
+    - `imgKey` : Image key used in text content, i.e. `[img=imgKey]`.
+    - `key` : Texture key.
+    - `frame` : Frame name.
+    - `width` : Render width, set `undefined` to use the cut width of frame.
+    - `height` : Render height, set `undefined` to use the cut height of frame.
+    - `y` : Extra offset y.
+    - `left` : Left padding space.
+    - `Right` : Right padding space.
+- Add some image render informations
+    ```javascript
+    txt.addImage(data);
+    ```
+    - `data` : `{imgKey, config}`
+
+### Hit area of words
+
+#### Hitting events
+
+- Pointer down
+    ```javascript
+    txt.on('areadown', function(key, pointer, localX, localY, event){
+
+    }, scope)
+    ```
+    or
+    ```javascript
+    txt.on('areadown-' + key, function(pointer, localX, localY, event){
+
+    }, scope)
+    ```
+- Pointer up
+    ```javascript
+    txt.on('areaup', function(key, pointer, localX, localY, event){
+
+    }, scope)
+    ```
+    or
+    ```javascript
+    txt.on('areaup-' + key, function(pointer, localX, localY, event){
+
+    }, scope)
+    ```
+
+#### Draw hit-areas
+
+```javascript
+txt.drawAreaBounds(graphics, color);
+```
+
+- `graphics` : [Graphics game object](graphics.md)
+- `color` : Default value is `0xffffff`
 
 ### Line spacing
 
@@ -366,16 +617,100 @@ This value is *added* to the height of the font when calculating the overall lin
     txt.setFixedSize(width, height);
     ```
 
+### Scroll
+
+- Get
+    ```javascript
+    var t = txt.t;
+    var scrollY = txt.scrollY;
+    var top = txt.topScrollY;
+    var bottom = txt.bottomScrollY;
+    ```
+- Set
+    ```javascript
+    txt.setT(0.5);        // normalized
+    txt.addT(0.1);
+    txt.setScrollY(-100); // pixels
+    txt.addScrollY(-20);
+    ```
+    ```javascript
+    txt.scrollToTop();
+    txt.scrollToBottom();
+    ```
+
+### Left margin of text
+
+```javascript
+var leftMargin = txt.measureTextMargins(testString).left;
+```
+
+- `testString` : Measure left margin of this text.
+
+### Shift start position of text
+
+```javascript
+txt.setXOffset(value);
+```
+
+### Resolution
+
+- Get
+    ```javascript
+    var resolution = txt.style.resolution;
+    ```
+- Set
+    ```javascript
+    txt.setResolution(resolution);
+    ```
+
 ### Inline style
 
 Define style inline text.
 
 - `<style='color:red'>Some text</style>`
 - `<style='size:30px'>Some text</style>`
-- `<style='stroke:blue 1px'>Some text</style>` (color thinkness)
+- `<style='y:-12;size:20px'>Some text</style>`
+- `<style='stroke:blue 1px'>Some text</style>` (color thickness)
 - `<style='shadow:blue 2px 2px 2px'>Some text</style>` (color offsetX offsetY blur)
-- `<style='underline:blue 3px -1px'>Some text</style>` (color thinkness offset)
+- `<style='underline:blue 3px -1px'>Some text</style>` (color thickness offset)
+- `<style='strikethrough:blue 3px -1px'>Some text</style>` (color thickness offset)
 
 Or mix them
 
 - `<style='color:red;size:30px'>Some text</style>`
+
+### Test string
+
+Set the test string to use when measuring the font.
+
+```javascript
+txt.setTestString(text);
+```
+
+### Save texture
+
+```javascript
+txt.generateTexture(key);
+// txt.generateTexture(key, x, y, width, height);
+```
+
+### RTL
+
+- Set `rtl` in style config when creating this text game object
+- Change `rtl` during runtime
+    ```javascript
+    txt.setRTL(rtl).setText(newContent);
+    ```
+    - Invoke `setRTL` method before setting new content.
+
+### Other properties
+
+See [game object](gameobject.md)
+
+### Create mask
+
+See [mask](mask.md)
+
+### Shader effects
+
+Support [internal and external filters](shader-builtin.md)

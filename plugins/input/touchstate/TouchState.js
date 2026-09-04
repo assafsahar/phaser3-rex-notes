@@ -1,54 +1,76 @@
-import GetSceneObject from '../../utils/system/GetSceneObject.js';
+import ComponentBase from '../../utils/componentbase/ComponentBase.js';
+import GetTickDelta from '../../utils/system/GetTickDelta.js';
 
-const EE = Phaser.Events.EventEmitter;
-const GetValue = Phaser.Utils.Objects.GetValue;
-const DistanceBetween = Phaser.Math.Distance.Between;
+import { Math as PhaserMath, Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
+const DistanceBetween = PhaserMath.Distance.Between;
 
-class TouchState extends EE {
+class TouchState extends ComponentBase {
     constructor(gameObject, config) {
-        super();
-        this.gameObject = gameObject;
-        this.scene = GetSceneObject(gameObject);
+        super(gameObject, config);
+        // this.parent = gameObject;
 
-        this.gameObject.setInteractive(GetValue(config, "inputConfig", undefined));
+        this._enable = undefined;
+        this.parent.setInteractive(GetValue(config, "inputConfig", undefined));
         this.resetFromJSON(config);
         this.boot();
     }
 
     resetFromJSON(o) {
         this.pointer = undefined;
-        this.isInTouched = false;
+        this.isInTouching = false;
         this.x = undefined;
         this.y = undefined;
         this.preX = undefined;
         this.preY = undefined;
-        this.localX = undefined;
-        this.localY = undefined;
+        this.justMoved = false;
         this.setEnable(GetValue(o, "enable", true));
         return this;
     }
 
     boot() {
-        this.gameObject.on('pointerdown', this.onPointIn, this);
-        this.gameObject.on('pointerover', this.onPointIn, this);
-        this.gameObject.on('pointerup', this.onPointOut, this);
-        this.gameObject.on('pointerout', this.onPointOut, this);
-        this.gameObject.on('pointermove', this.onPointerMove, this);
-
-        this.gameObject.on('destroy', this.destroy, this);
+        var gameObject = this.parent;
+        gameObject.on('pointerdown', this.onPointIn, this);
+        gameObject.on('pointerover', this.onPointIn, this);
+        gameObject.on('pointerup', this.onPointOut, this);
+        gameObject.on('pointerout', this.onPointOut, this);
+        gameObject.on('pointermove', this.onPointerMove, this);
+        this.scene.sys.events.on('postupdate', this.postupdate, this);
     }
 
-    shutdown() {
-        super.shutdown();
+    shutdown(fromScene) {
+        // Already shutdown
+        if (this.isShutdown) {
+            return;
+        }
+
+        // GameObject events will be removed when this gameObject destroyed 
+        // this.parent.off('pointerdown', this.onPointIn, this);
+        // this.parent.off('pointerover', this.onPointIn, this);
+        // this.parent.off('pointerup', this.onPointOut, this);
+        // this.parent.off('pointerout', this.onPointOut, this);
+        // this.parent.off('pointermove', this.onPointerMove, this);
+        this.scene.sys.events.off('postupdate', this.postupdate, this);
 
         this.pointer = undefined;
-        this.gameObject = undefined;
-        this.scene = undefined;
-        // gameObject events will be removed when this gameObject destroyed 
+        super.shutdown(fromScene);
     }
 
-    destroy() {
-        this.shutdown();
+    get enable() {
+        return this._enable;
+    }
+
+    set enable(e) {
+        if (this._enable === e) {
+            return;
+        }
+
+        if (!e) {
+            this.isInTouching = false;
+            this.pointer = undefined;
+        }
+        this._enable = e;
+        return this;
     }
 
     setEnable(e) {
@@ -56,16 +78,12 @@ class TouchState extends EE {
             e = true;
         }
 
-        if (this.enable === e) {
-            return this;
-        }
-
-        if (!e) {
-            this.isInTouched = false;
-            this.pointer = undefined;
-        }
         this.enable = e;
-        this.gameObject.input.enabled = e;
+        return this;
+    }
+
+    toggleEnable() {
+        this.setEnable(!this.enable);
         return this;
     }
 
@@ -77,10 +95,6 @@ class TouchState extends EE {
         return this.pointer === undefined;
     }
 
-    get justMoved() {
-        return this.pointer && this.pointer.justMoved;
-    }
-
     get dx() {
         return this.x - this.preX;
     }
@@ -90,8 +104,7 @@ class TouchState extends EE {
     }
 
     get dt() {
-        var game = this.scene.sys.game;
-        var delta = game.loop.delta;
+        var delta = GetTickDelta(this.scene);
         return delta;
     }
 
@@ -103,7 +116,7 @@ class TouchState extends EE {
         var speed = d / (this.dt * 0.001);
         return speed;
     }
-    
+
     get speedX() {
         return this.dx / (this.dt * 0.001);
     }
@@ -113,33 +126,36 @@ class TouchState extends EE {
     }
 
     // internal
-    onPointIn(pointer, localX, localY) {
-        if (!pointer.isDown ||
+    onPointIn(pointer, localX, localY, event) {
+        if ((!this.enable) ||
+            (!pointer.isDown) ||
             (this.pointer !== undefined)) {
             return;
         }
         this.pointer = pointer;
-        this.isInTouched = true;        
+        this.isInTouching = true;
         this.preX = pointer.x;
         this.preY = pointer.y;
         this.x = pointer.x;
         this.y = pointer.y;
         this.localX = localX;
         this.localY = localY;
-        this.emit('touchstart', pointer, localX, localY);
+        this.emit('touchstart', this, this.parent, pointer, localX, localY, event);
     }
 
     onPointOut(pointer) {
-        if (this.pointer !== pointer) {
+        if ((!this.enable) ||
+            (this.pointer !== pointer)) {
             return;
         }
         this.pointer = undefined;
-        this.isInTouched = false;
-        this.emit('touchend', pointer);
+        this.isInTouching = false;
+        this.emit('touchend', this, this.parent, pointer);
     }
 
-    onPointerMove(pointer, localX, localY) {
-        if (!pointer.isDown ||
+    onPointerMove(pointer, localX, localY, event) {
+        if ((!this.enable) ||
+            (!pointer.isDown) ||
             (this.pointer !== pointer)) {
             return;
         }
@@ -148,8 +164,13 @@ class TouchState extends EE {
         this.x = pointer.x;
         this.y = pointer.y;
         this.localX = localX;
-        this.localY = localY;        
-        this.emit('touchmove', pointer, localX, localY);
+        this.localY = localY;
+        this.justMoved = true;
+        this.emit('touchmove', this, this.parent, pointer, localX, localY, event);
+    }
+
+    postupdate(time, delta) {
+        this.justMoved = false;
     }
 
 }

@@ -1,9 +1,11 @@
-import EventEmitter from './EventEmitter.js';
-
+import { Events as PhaserEvents } from 'phaser';
 export default {
-    setEventEmitter(eventEmitter) {
-        this._privateEE = (eventEmitter === undefined);
-        this._eventEmitter = (this._privateEE) ? (new EventEmitter()) : eventEmitter;
+    setEventEmitter(eventEmitter, EventEmitterClass) {
+        if (EventEmitterClass === undefined) {
+            EventEmitterClass = PhaserEvents.EventEmitter; // Use built-in EventEmitter class by default
+        }
+        this._privateEE = (eventEmitter === true) || (eventEmitter === undefined);
+        this._eventEmitter = (this._privateEE) ? (new EventEmitterClass()) : eventEmitter;
         return this;
     },
 
@@ -11,72 +13,80 @@ export default {
         if (this._eventEmitter && this._privateEE) {
             this._eventEmitter.shutdown();
         }
+        return this;
     },
 
     getEventEmitter() {
         return this._eventEmitter;
     },
 
-    on: function () {
+    on() {
         if (this._eventEmitter) {
             this._eventEmitter.on.apply(this._eventEmitter, arguments);
         }
         return this;
     },
 
-    once: function () {
+    once() {
         if (this._eventEmitter) {
             this._eventEmitter.once.apply(this._eventEmitter, arguments);
         }
         return this;
     },
 
-    off: function () {
+    off() {
         if (this._eventEmitter) {
             this._eventEmitter.off.apply(this._eventEmitter, arguments);
         }
         return this;
     },
 
-    emit: function () {
-        if (this._eventEmitter) {
+    emit(event) {
+        if (this._eventEmitter && event) {
             this._eventEmitter.emit.apply(this._eventEmitter, arguments);
         }
         return this;
     },
 
-    addListener: function () {
+    addListener() {
         if (this._eventEmitter) {
             this._eventEmitter.addListener.apply(this._eventEmitter, arguments);
         }
         return this;
     },
 
-    removeListener: function () {
+    removeListener() {
         if (this._eventEmitter) {
             this._eventEmitter.removeListener.apply(this._eventEmitter, arguments);
         }
         return this;
     },
 
-    removeAllListeners: function () {
+    removeAllListeners() {
         if (this._eventEmitter) {
             this._eventEmitter.removeAllListeners.apply(this._eventEmitter, arguments);
         }
         return this;
     },
 
-    listenerCount: function () {
+    listenerCount() {
         if (this._eventEmitter) {
             return this._eventEmitter.listenerCount.apply(this._eventEmitter, arguments);
         }
         return 0;
     },
 
-    listeners: function () {
+    listeners() {
         if (this._eventEmitter) {
             return this._eventEmitter.listeners.apply(this._eventEmitter, arguments);
         }
         return [];
-    }
+    },
+
+    eventNames() {
+        if (this._eventEmitter) {
+            return this._eventEmitter.eventNames.apply(this._eventEmitter, arguments);
+        }
+        return [];
+    },
 };

@@ -1,6 +1,7 @@
+import Phaser from 'phaser';
 import UIPlugin from '../../templates/ui/ui-plugin.js';
 
-const COLOR_PRIMARY = 0x4e342e;
+const COLOR_MAIN = 0x4e342e;
 const COLOR_LIGHT = 0x7b5e57;
 const COLOR_DARK = 0x260e04;
 
@@ -12,28 +13,57 @@ class Demo extends Phaser.Scene {
 
     }
 
-    preload() {}
+    preload() { }
 
     create() {
         var buttons = this.rexUI.add.buttons({
-                x: 'left+10',
-                y: 'center',
+            x: 400, y: 300,
+            orientation: 'x',
 
-                orientation: 'y',
+            buttons: [
+                createButton(this, 'A'),
+                createButton(this, 'B'),
+            ],
 
-                buttons: [
-                    createButton(this, 'A'),
-                    createButton(this, 'B'),
-                ],
+            space: { item: 8 }
 
-            })
-            .setOrigin(0, 0.5)
+        })
+            // Add a titile child, which is not part of buttons
+            .add(createButton(this, 'Title'),
+                {
+                    index: 0
+                }
+            )
+            // Add a footer child, which is not part of buttons
+            .add(createButton(this, 'Footer'))
             .layout()
             .drawBounds(this.add.graphics(), 0xff0000)
 
+        var print = this.add.text(0, 0, '');
+        buttons
+            .on('button.click', function (button, index, pointer, event) {
+                print.text += `Click button-${button.text}\n`;
+                buttons.setButtonEnable(false)
+                setTimeout(() => {
+                    buttons.setButtonEnable(true)
+                }, 1000);
+            })
+            .on('button.out', function () {
+                print.text += 'Pointer-out\n';
+            })
+            .on('button.over', function () {
+                print.text += 'Pointer-over\n';
+            })
+            .on('button.down', function () {
+                print.text += 'Pointer-down\n';
+            })
+            .on('button.up', function () {
+                print.text += 'Pointer-up\n';
+            })
+
     }
 
-    update() {}
+    update() { }
 }
 
 var createButton = function (scene, text) {

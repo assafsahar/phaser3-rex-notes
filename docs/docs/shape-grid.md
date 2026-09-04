@@ -2,13 +2,11 @@
 
 Grid shape, built-in game object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
-### Create shape
-
-### Add shape object
+### Create shape object
 
 ```javascript
 var grid = scene.add.grid(x, y, width, height, cellWidth, cellHeight, fillColor, fillAlpha, outlineFillColor, outlineFillAlpha);
@@ -43,10 +41,15 @@ var grid = scene.add.grid(x, y, width, height, cellWidth, cellHeight, fillColor,
     - Get
         ```javascript
         var color = grid.fillColor;
+        var alpha = grid.fillAlpha;
         ```
     - Set
         ```javascript
         grid.setFillStyle(color, alpha);
+        ```
+    - Clear
+        ```javascript
+        grid.setFillStyle();
         ```
 - Stroke color
     - Get
@@ -57,6 +60,10 @@ var grid = scene.add.grid(x, y, width, height, cellWidth, cellHeight, fillColor,
         ```javascript
         grid.setStrokeStyle(lineWidth, color, alpha);
         ```
+    - Clear
+        ```javascript
+        grid.setStrokeStyle();
+        ```
 - Alternating color
     - Get
         ```javascript
@@ -65,6 +72,10 @@ var grid = scene.add.grid(x, y, width, height, cellWidth, cellHeight, fillColor,
     - Set
         ```javascript
         grid.setAltFillStyle(color, alpha);
+        ```
+    - Clear
+        ```javascript
+        grid.setAltFillStyle();
         ```
 - Outline color
     - Get
@@ -75,10 +86,51 @@ var grid = scene.add.grid(x, y, width, height, cellWidth, cellHeight, fillColor,
         ```javascript
         grid.setOutlineStyle(color, alpha;
         ```
+    - Clear
+        ```javascript
+        grid.setOutlineStyle();
+        ```
 
 !!! warning "No tint methods"
     Uses `grid.setFillStyle(color, alpha)` to change color.
 
+### Alpha
+
+- Get
+    ```javascript
+    var alpha = grid.alpha;
+    ```
+- Set
+    ```javascript
+    grid.setAlpha(alpha);
+    // grid.alpha = alpha;
+    ```
+
+### Display size
+
+- Get
+    ```javascript
+    var width = grid.displayWidth;
+    var height = grid.displayHeight;
+    ```
+- Set
+    ```javascript
+    grid.setDisplaySize(width, height);
+    ```
+    or
+    ```javascript
+    grid.displayWidth = width;
+    grid.displayHeight = height;
+    ```
+
 ### Other properties
 
 See [game object](gameobject.md)
+
+### Create mask
+
+See [mask](mask.md)
+
+### Shader effects
+
+Support [internal and external filters](shader-builtin.md)

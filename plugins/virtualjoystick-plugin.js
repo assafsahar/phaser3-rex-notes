@@ -1,6 +1,8 @@
 import VirtualJoyStick from './virtualjoystick.js';
+import VectorToCursorKeys from './vectortocursorkeys.js';
 
-class VirtualJoyStickPlugin extends Phaser.Plugins.BasePlugin {
+import { Plugins as PhaserPlugins } from 'phaser';
+class VirtualJoyStickPlugin extends PhaserPlugins.BasePlugin {
 
     constructor(pluginManager) {
         super(pluginManager);
@@ -8,11 +10,15 @@ class VirtualJoyStickPlugin extends Phaser.Plugins.BasePlugin {
 
     start() {
         var eventEmitter = this.game.events;
-        eventEmitter.once('destroy', this.destroy, this);
+        eventEmitter.on('destroy', this.destroy, this);
     }
 
     add(scene, config) {
         return new VirtualJoyStick(scene, config);
+    }
+
+    addVectorToCursorKeys(config) {
+        return new VectorToCursorKeys(undefined, config);
     }
 
 }

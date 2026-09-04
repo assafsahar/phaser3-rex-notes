@@ -5,74 +5,127 @@ Move game object towards target position with a steady speed.
 - Author: Rex
 - Behavior of game object
 
-## Source code
+## Live demos
 
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/moveto-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexmovetoplugin.min.js)
+- [Move-to](https://codepen.io/rexrainbow/pen/YOPONx)
 
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/moveto)
 
-User could import class directly, or install it by global plugin.
+### Install plugin
 
-### Import class
+#### Load minify file
 
-```javascript
-import rexMoveTo from './plugins/moveto.js';
-```
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.plugin('rexmovetoplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexmovetoplugin.min.js', true);
+    ```
+- Add move-to behavior
+    ```javascript
+    var moveTo = scene.plugins.get('rexmovetoplugin').add(gameObject, config);
+    ```
 
-### Install global plugin
+#### Import plugin
 
-Install plugin in [configuration of game](game.md#configuration)
-
-```javascript
-import MoveToPlugin from './plugins/moveto-plugin.js';
-
-var config = {
-    // ...
-    plugins: {
-        global: [{
-            key: 'rexMoveTo',
-            plugin: MoveToPlugin,
-            start: true
-        },
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import MoveToPlugin from 'phaser4-rex-plugins/plugins/moveto-plugin.js';
+    var config = {
         // ...
-        ]
-    }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+        plugins: {
+            global: [{
+                key: 'rexMoveTo',
+                plugin: MoveToPlugin,
+                start: true
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add move-to behavior
+    ```javascript
+    var moveTo = scene.plugins.get('rexMoveTo').add(gameObject, config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import MoveTo from 'phaser4-rex-plugins/plugins/moveto.js';
+    ```
+- Add move-to behavior
+    ```javascript
+    var moveTo = new MoveTo(gameObject, config);
+    ```
 
 ### Create instance
 
 ```javascript
 var moveTo = scene.plugins.get('rexMoveTo').add(gameObject, {
     // speed: 400,
-    // rotateToTarget: false
+    // rotateToTarget: false,
+    // appendMode: false,
+    // continueAfterComplete: false
 });
 ```
 
 - `speed` : Moving speed, pixels in second.
-- `rotateToTarget` : Set true to change angle towards path.
+- `rotateToTarget` : Set `true` to change angle towards path.
+- `appendMode` : Set `true` to queue new targets when already moving, for smoother motion.
+- `continueAfterComplete` : Set `true` to continue moving in the same tick when calling `moveTo()` in the `complete` event callback.
 
 ### Start moving
 
+- Move to target position
+    ```javascript
+    moveTo.moveTo(x, y);
+    ```
+    or
+    ```javascript
+    moveTo.moveTo({
+        x: 0,
+        y: 0,
+        // speed: 0
+    });
+    ```
+    - `x` , `y` : Target position    
+    - Behavior by `appendMode` : When true, add target to queue if already moving. When false, replace current target.
+- Move from start position to current position
+    ```javascript
+    moveTo.moveFrom(x, y);
+    ```
+    or
+    ```javascript
+    moveTo.moveFrom({
+        x: 0,
+        y: 0,
+        // speed: 0
+    });
+    ```
+    - `x` , `y` : Start position
+- Move toward angle
+    ```javascript
+    moveTo.moveToward(angle, distance);
+    ```
+    - `angle` : Angle in radian.
+
+#### Target position
+
 ```javascript
-moveTo.moveTo(x, y);
-```
-
-- `x` , `y` : Target position
-
-or
-
-```javascript
-var config = {
-    x: 0,
-    y: 0,
-    // speed: 0
-}
-moveTo.moveTo(config);
+var targetX = moveTo.targetX;
+var targetY = moveTo.targetY;
 ```
 
 ### Enable
@@ -94,6 +147,14 @@ moveTo.moveTo(config);
     moveTo.enable = false;
     ```
 
+### Clear targets
+
+Clear queued targets for `appendMode`.
+
+```javascript
+moveTo.clearTargets();
+```
+
 ### Pause, Resume, stop moving
 
 ```javascript
@@ -101,6 +162,8 @@ moveTo.pause();
 moveTo.resume();
 moveTo.stop();
 ```
+
+- `moveTo.stop()` : Stop moving, call `moveTo.clearTargets()` to clear targets.
 
 ### Set speed
 
@@ -119,11 +182,26 @@ moveTo.setRotateToTarget(rotateToTarget);
 
 ### Events
 
+- On start moving
+    ```javascript
+    moveTo.on('start', function(gameObject, moveTo){});
+    ```
 - On reached target
     ```javascript
     moveTo.on('complete', function(gameObject, moveTo){});
     // moveTo.once('complete', function(gameObject, moveTo){});
     ```
+    - Set `continueAfterComplete` to `true` to consume the remaining movement distance 
+      in the same tick when calling `moveTo()` in this callback.
+        ```javascript
+        // var moveTo = scene.plugins.get('rexMoveTo').add(gameObject, {
+        //     continueAfterComplete: true
+        // });
+
+        moveTo.on('complete', function(gameObject, moveTo) {
+            moveTo.moveTo(nextX, nextY);
+        });
+        ```
 
 ### Status
 

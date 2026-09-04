@@ -1,6 +1,7 @@
+import Phaser from 'phaser';
 import UIPlugin from '../../templates/ui/ui-plugin.js';
 
-const COLOR_PRIMARY = 0x4e342e;
+const COLOR_MAIN = 0x4e342e;
 const COLOR_LIGHT = 0x7b5e57;
 const COLOR_DARK = 0x260e04;
 
@@ -11,50 +12,99 @@ class Demo extends Phaser.Scene {
         })
     }
 
-    preload() {}
+    preload() { }
 
     create() {
         var print0 = this.add.text(0, 0, '');
-
         this.rexUI.add.slider({
-                x: 200,
-                y: 300,
-                width: 20,
-                height: 200,
-                orientation: 'x',
+            x: 200,
+            y: 200,
+            width: 200,
+            height: 20,
+            orientation: 'x',
 
-                track: this.rexUI.add.roundRectangle(0, 0, 0, 0, 8, COLOR_DARK),
-                thumb: this.rexUI.add.roundRectangle(0, 0, 0, 0, 10, COLOR_LIGHT),
+            track: this.rexUI.add.roundRectangle(0, 0, 0, 0, 6, COLOR_DARK),
+            thumb: this.rexUI.add.roundRectangle(0, 0, 0, 0, 10, COLOR_LIGHT),
+            // thumbOffsetY: -10,
 
-                valuechangeCallback: function (value) {
-                    print0.text = value;
-                },
-                input: 'drag', // 'drag'|'click'
-            })
+            valuechangeCallback: function (value) {
+                print0.text = value;
+            },
+            space: {
+                top: 4,
+                bottom: 4
+            },
+            input: 'drag', // 'drag'|'click'
+        })
             .layout();
+
 
         var print1 = this.add.text(400, 0, '');
         this.rexUI.add.slider({
-                x: 600,
-                y: 300,
-                width: 200,
-                height: 20,
-                orientation: 'y',
+            x: 550,
+            y: 300,
+            width: 20,
+            height: 200,
+            orientation: 'y',
 
-                track: this.rexUI.add.roundRectangle(0, 0, 0, 0, 10, COLOR_DARK),
-                indicator: this.rexUI.add.roundRectangle(0, 0, 0, 0, 10, COLOR_PRIMARY),
-                thumb: this.rexUI.add.roundRectangle(0, 0, 0, 0, 10, COLOR_PRIMARY),
+            track: this.rexUI.add.roundRectangle(0, 0, 0, 0, 10, COLOR_DARK),
+            indicator: this.rexUI.add.roundRectangle(0, 0, 0, 0, 10, COLOR_MAIN),
+            thumb: this.rexUI.add.roundRectangle(0, 0, 0, 0, 10, COLOR_MAIN),
 
-                input: 'click', // 'drag'|'click'
-                valuechangeCallback: function (value) {
-                    print1.text = value;
-                },
+            input: 'click', // 'drag'|'click'
+            valuechangeCallback: function (value) {
+                print1.text = value;
+            },
 
-            })
+        })
+            .layout();
+
+        var print2 = this.add.text(600, 0, '');
+        this.rexUI.add.slider({
+            x: 650,
+            y: 300,
+            width: 20,
+            height: 200,
+            orientation: 'y',
+            reverseAxis: true,
+
+            track: this.rexUI.add.roundRectangle(0, 0, 0, 0, 10, COLOR_DARK),
+            indicator: this.rexUI.add.roundRectangle(0, 0, 0, 0, 10, COLOR_MAIN),
+            thumb: this.rexUI.add.roundRectangle(0, 0, 0, 0, 10, COLOR_MAIN),
+
+            input: 'click', // 'drag'|'click'
+            valuechangeCallback: function (value) {
+                print2.text = value;
+            },
+
+        })
+            .layout();
+
+
+        var print3 = this.add.text(0, 400, '');
+        this.rexUI.add.slider({
+            x: 200,
+            y: 500,
+            width: 300,
+            height: 30,
+            orientation: 'x',
+
+            track: this.rexUI.add.roundRectangle(0, 0, 0, 0, 10, COLOR_DARK),
+            indicator: this.rexUI.add.roundRectangle(0, 0, 0, 0, 10, COLOR_MAIN),
+            thumb: this.rexUI.add.roundRectangle(0, 0, 0, 0, 10, COLOR_MAIN),
+
+            input: 'click', // 'drag'|'click'
+            easeValue: { duration: 250 },
+
+            valuechangeCallback: function (value) {
+                print3.text = value;
+            },
+
+        })
             .layout();
     }
 
-    update() {}
+    update() { }
 }
 
 var config = {

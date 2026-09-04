@@ -1,63 +1,81 @@
 import BaseSizer from '../basesizer/BaseSizer.js';
-import ParsePaddingConfig from '../utils/ParsePaddingConfig.js';
-import GetChildrenWidth from './GetChildrenWidth.js';
-import GetChildrenHeight from './GetChildrenHeight.js';
-import GetChildrenSizers from './GetChildrenSizers.js';
-import Layout from './Layout.js';
-import _layoutInit from './_layoutInit.js';
-import ALIGNMODE from '../utils/AlignConst.js';
+import Methods from './Methods.js';
+import GetTotalColumnProportions from './GetTotalColumnProportions.js';
+import GetTotalRowProportions from './GetTotalRowProportions.js';
 
-const IsPlainObject = Phaser.Utils.Objects.IsPlainObject;
-const GetValue = Phaser.Utils.Objects.GetValue;
-const RemoveItem = Phaser.Utils.Array.Remove;
-const ALIGN_CENTER = Phaser.Display.Align.CENTER;
+import { Utils as PhaserUtils } from 'phaser';
+const IsPlainObject = PhaserUtils.Objects.IsPlainObject;
+const GetValue = PhaserUtils.Objects.GetValue;
 
 class GridSizer extends BaseSizer {
-    constructor(scene, x, y, minWidth, minHeight, columnCount, rowCount, columnProportions, rowProportions) {
-        var config;
+    constructor(scene, x, y, minWidth, minHeight, columnCount, rowCount, columnProportions, rowProportions, config) {
         if (IsPlainObject(x)) {
             config = x;
             x = GetValue(config, 'x', 0);
             y = GetValue(config, 'y', 0);
             minWidth = GetValue(config, 'width', undefined);
             minHeight = GetValue(config, 'height', undefined);
-            columnCount = GetValue(config, 'column', 0);
+            columnCount = GetValue(config, 'column', (config.col || 0));
             rowCount = GetValue(config, 'row', 0);
-            columnProportions = GetValue(config, 'columnProportions', undefined);
-            rowProportions = GetValue(config, 'rowProportions', undefined);
+            columnProportions = GetValue(config, 'columnProportions', 0);
+            rowProportions = GetValue(config, 'rowProportions', 0);
         } else if (IsPlainObject(minWidth)) {
             config = minWidth;
             minWidth = GetValue(config, 'width', undefined);
             minHeight = GetValue(config, 'height', undefined);
-            columnCount = GetValue(config, 'column', 0);
+            columnCount = GetValue(config, 'column', (config.col || 0));
             rowCount = GetValue(config, 'row', 0);
-            columnProportions = GetValue(config, 'columnProportions', undefined);
-            rowProportions = GetValue(config, 'rowProportions', undefined);
+            columnProportions = GetValue(config, 'columnProportions', 0);
+            rowProportions = GetValue(config, 'rowProportions', 0);
         } else if (IsPlainObject(columnCount)) {
             config = columnCount;
-            columnCount = GetValue(config, 'column', 0);
+            columnCount = GetValue(config, 'column', (config.col || 0));
             rowCount = GetValue(config, 'row', 0);
-            columnProportions = GetValue(config, 'columnProportions', undefined);
-            rowProportions = GetValue(config, 'rowProportions', undefined);
+            columnProportions = GetValue(config, 'columnProportions', 0);
+            rowProportions = GetValue(config, 'rowProportions', 0);
         } else if (IsPlainObject(columnProportions)) {
             config = columnProportions;
-            columnProportions = GetValue(config, 'columnProportions', undefined);
-            rowProportions = GetValue(config, 'rowProportions', undefined);
+            columnProportions = GetValue(config, 'columnProportions', 0);
+            rowProportions = GetValue(config, 'rowProportions', 0);
         }
         super(scene, x, y, minWidth, minHeight, config);
 
         this.type = 'rexGridSizer';
-        this.initialGrid(columnCount, rowCount, columnProportions, rowProportions);
+        this.sizerChildren = [];
+        this.addChildrenMap('items', this.sizerChildren);
+        this.setCreateCellContainerCallback(GetValue(config, 'createCellContainerCallback'));
+
+        this.setIndentLeft(
+            GetValue(config, 'space.indentLeftOdd', 0),
+            GetValue(config, 'space.indentLeftEven', 0)
+        );
+        this.setIndentTop(
+            GetValue(config, 'space.indentTopOdd', 0),
+            GetValue(config, 'space.indentTopEven', 0)
+        );
+
+        this.resetGrid(
+            columnCount, rowCount,
+            columnProportions, rowProportions,
+            GetValue(config, 'space', undefined)
+        );
 
     }
 
     destroy(fromScene) {
         //  This Game Object has already been destroyed
-        if (!this.scene) {
+        if (!this.scene || this.ignoreDestroy) {
             return;
         }
-        this.gridChildren.length = 0;
+
         super.destroy(fromScene);
+
+        // More free resources
+        this.columnProportions = undefined;
+        this.rowProportions = undefined;
+        this.columnWidth = undefined;
+        this.rowHeight = undefined;
+        this.createCellContainerCallback = undefined;
     }
 
     setColumnProportion(columnIndex, proportion) {
@@ -76,132 +94,63 @@ class GridSizer extends BaseSizer {
         return this;
     }
 
-    add(gameObject, columnIndex, rowIndex, align, paddingConfig, expand) {
-        super.add(gameObject);
-        if (IsPlainObject(columnIndex)) {
-            var config = columnIndex;
-            columnIndex = GetValue(config, 'column', 0);
-            rowIndex = GetValue(config, 'row', 0);
-            align = GetValue(config, 'align', ALIGN_CENTER);
-            paddingConfig = GetValue(config, 'padding', 0);
-            expand = GetValue(config, 'expand', false);
-        }
-        if (typeof (align) === 'string') {
-            align = ALIGNMODE[align];
-        }
-        if (align === undefined) {
-            align = ALIGN_CENTER;
-        }
-        if (paddingConfig === undefined) {
-            paddingConfig = 0;
-        }
-        if (expand === undefined) {
-            expand = true;
-        }
-
-        var config = this.getSizerConfig(gameObject);
-        config.parent = this;
-        config.align = align;
-        config.padding = ParsePaddingConfig(paddingConfig);
-        config.expand = expand;
-        this.gridChildren[(rowIndex * this.columnCount) + columnIndex] = gameObject;
-        return this;
-    }
-
-    remove(gameObject) {
-        var config = this.getSizerConfig(gameObject);
-        if (config.parent !== this) {
-            return this;
-        }
-        config.parent = undefined;
-        RemoveItem(this.gridChildren, gameObject);
-
-        if (this.backgroundChildren !== undefined) {
-            RemoveItem(this.backgroundChildren, gameObject);
-        }
-        super.remove(gameObject);
-        return this;
-    }
-
     get totalColumnProportions() {
-        var result = 0,
-            proportion;
-        for (var i = 0; i < this.columnCount; i++) {
-            proportion = this.columnProportions[i];
-            if (proportion > 0) {
-                result += proportion;
-            }
+        if (this._totalColumnProportions === undefined) {
+            this._totalColumnProportions = GetTotalColumnProportions.call(this);
         }
-        return result;
+        return this._totalColumnProportions;
     }
 
     get totalRowProportions() {
-        var result = 0,
-            proportion;
-        for (var i = 0; i < this.rowCount; i++) {
-            proportion = this.rowProportions[i];
-            if (proportion > 0) {
-                result += proportion;
-            }
+        if (this._totalRowProportions === undefined) {
+            this._totalRowProportions = GetTotalRowProportions.call(this);
         }
-        return result;
+        return this._totalRowProportions;
     }
 
-    initialGrid(columnCount, rowCount, columnProportions, rowProportions) {
-        this.columnCount = columnCount;
-        this.rowCount = rowCount;
-        this.gridChildren = [];
-        this.gridChildren.length = columnCount * rowCount;
-        this.columnProportions = [];
-        this.columnProportions.length = columnCount;
-        this.columnWidth = [];
-        this.columnWidth.length = columnCount;
-        this.rowProportions = [];
-        this.rowProportions.length = rowCount;
-        this.rowHeight = [];
-        this.rowHeight.length = rowCount;
+    getChildAt(columnIndex, rowIndex) {
+        return this.sizerChildren[(rowIndex * this.columnCount) + columnIndex];
+    }
 
-        if (columnProportions) {
-            var columnProportionsIsNumber = (typeof (columnProportions) === 'number');
-            for (var i = 0; i < columnCount; i++) {
-                if (columnProportionsIsNumber) {
-                    this.setColumnProportion(i, columnProportions);
-                } else {
-                    var columnProportion = columnProportions[i];
-                    if (columnProportion > 0) {
-                        this.setColumnProportion(i, columnProportion);
-                    }
-                }
-            }
-        }
-        if (rowProportions) {
-            var rowProportionsIsNumber = (typeof (rowProportions) === 'number');
-            for (var i = 0; i < rowCount; i++) {
-                if (rowProportionsIsNumber) {
-                    this.setRowProportion(i, rowProportions);
-                } else {
-                    var rowProportion = rowProportions[i];
-                    if (rowProportion > 0) {
-                        this.setRowProportion(i, rowProportion);
-                    }
-                }
-            }
+    childToGridIndex(child, out) {
+        if (!child) {
+            return null;
         }
 
+        var index = this.sizerChildren.indexOf(child);
+        if (index === -1) {
+            return null;
+        }
+
+        if (out === undefined) {
+            out = {};
+        }
+        out.x = index % this.columnCount;
+        out.y = Math.floor(index / this.columnCount);
+        return out;
+    }
+
+    getColumnWidth(columnIndex) {
+        var colProportion = this.columnProportions[columnIndex];
+        var colWidth = (colProportion === 0) ? this.columnWidth[columnIndex] : (colProportion * this.proportionWidthLength);
+        return colWidth;
+    }
+
+    getRowHeight(rowIndex) {
+        var rowProportion = this.rowProportions[rowIndex];
+        var rowHeight = (rowProportion === 0) ? this.rowHeight[rowIndex] : (rowProportion * this.proportionHeightLength);
+        return rowHeight;
+    }
+
+    setCreateCellContainerCallback(callback) {
+        this.createCellContainerCallback = callback;
         return this;
     }
 }
 
-var methods = {
-    getChildrenWidth: GetChildrenWidth,
-    getChildrenHeight: GetChildrenHeight,
-    getChildrenSizers: GetChildrenSizers,
-    layout: Layout,
-    _layoutInit: _layoutInit,
-}
 Object.assign(
     GridSizer.prototype,
-    methods
+    Methods
 );
 
 export default GridSizer;

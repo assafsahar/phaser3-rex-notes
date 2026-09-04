@@ -5,44 +5,71 @@ Shake position of game object.
 - Author: Rex
 - Behavior of game object
 
-## Source code
+## Live demos
 
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/shakeposition-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexshakepositionplugin.min.js)
+- [Shake position](https://codepen.io/rexrainbow/pen/JwMbxR)
+- [Shake position on mutliple game objects](https://codepen.io/rexrainbow/pen/WNvGNBW)
 
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/shake)
 
-User could import class directly, or install it by global plugin.
+### Install plugin
 
-### Import class
+#### Load minify file
 
-```javascript
-import rexShake from './plugins/shakeposition.js';
-```
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.plugin('rexshakepositionplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexshakepositionplugin.min.js', true);
+    ```
+- Add shake-position behavior
+    ```javascript
+    var shakePosition = scene.plugins.get('rexshakepositionplugin').add(gameObject, config);
+    ```
 
-### Install global plugin
+#### Import plugin
 
-Install plugin in [configuration of game](game.md#configuration)
-
-```javascript
-import ShakePlugin from './plugins/shakeposition-plugin.js';
-
-var config = {
-    // ...
-    plugins: {
-        global: [{
-            key: 'rexShake',
-            plugin: ShakePlugin,
-            start: true
-        },
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import ShakePositionPlugin from 'phaser4-rex-plugins/plugins/shakeposition-plugin.js';
+    var config = {
         // ...
-        ]
-    }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+        plugins: {
+            global: [{
+                key: 'rexShakePosition',
+                plugin: ShakePositionPlugin,
+                start: true
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add shake-position behavior
+    ```javascript
+    var shakePosition = scene.plugins.get('rexShakePosition').add(gameObject, config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import ShakePosition from 'phaser4-rex-plugins/plugins/shakeposition.js';
+    ```
+- Add shake-position behavior
+    ```javascript
+    var shakePosition = new ShakePosition(gameObject, config);
+    ```
 
 ### Create instance
 
@@ -52,17 +79,22 @@ var shake = scene.plugins.get('rexShake').add(gameObject, {
     // duration: 500,
     // magnitude: 10,
     // magnitudeMode: 1, // 0|'constant'|1|'decay'
+    // axis: 0,      //0|'both'|'h&v'|1|'horizontal'|'h'|2|'vertical'|'v'
 });
 ```
 
 - `mode` :
-    - `'effect'`, or `0` : Shake position in `'poststep'` game event, and restore in `'step'` game event.
+    - `'effect'`, or `0` : Shake position in `'poststep'` game event, and restore in `'prestep'` game event.
     - `'behavior'`, or `1` : Shake position in `'preupdate'` scene event.
 - `duration` : Duration of shaking, in millisecond.
 - `magnitude` : The strength of the shake, in pixels.
 - `magnitudeMode` :
     - `'constant'`, or `0` : Constant strength of the shake.
     - `'decay'`, or `1` : Decay the strength of the shake.
+- `axis` :
+    - `'both'`,`'h&v'`, `'x&y'`, or `0` : Changing position on all directions.
+    - `'horizontal'`,`'h'`, `'x'`, or `1` : Changing position on horizontal/x axis.
+    - `'vertical'`,`'v'`, `'y'`, or `2` : Changing position on vertical/y axis.
 
 ### Start shaking
 
@@ -142,11 +174,22 @@ shake.setMagnitudeMode(magnitudeMode);
     - `'constant'`, or `0` : Constant strength of the shake.
     - `'decay'`, or `1` : Decay the strength of the shake.
 
+### Set axis mode
+
+```javascript
+shake.setAxisMode(axis);
+```
+
+- `axis` : 
+    - `'both'`,`'h&v'`, `'x&y'`, or `0` : Dragging on all directions.
+    - `'horizontal'`,`'h'`, `'x'`, or `1` : Dragging on horizontal/x axis.
+    - `'vertical'`,`'v'`, `'y'`, or `2` : Dragging on vertical/y axis.
+
 ### Events
 
 - On reached target
     ```javascript
-    shake.on('complete', function(shake, gameObject){});
+    shake.on('complete', function(gameObject, shake){});
     ```
 
 ### Status

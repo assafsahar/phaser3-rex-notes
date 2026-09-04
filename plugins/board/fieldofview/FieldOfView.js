@@ -1,58 +1,89 @@
+import ComponentBase from '../../utils/componentbase/ComponentBase.js';
+import Methods from './Methods.js';
 import GetChessData from '../chess/GetChessData.js';
-import GetCost from './GetCost.js';
-import IsInCone from './IsInCone.js';
-import IsPathVisible from './IsPathVisible.js';
-import IsInLOS from './IsInLOS.js';
-import LOS from './LOS.js';
-import FindFOV from './FindFOV.js';
 import CONST from './const.js';
 import DegToRad from '../../utils/math/DegToRad.js';
 import AngleNormalize from '../../utils/math/angle/Normalize.js';
+import IsPlainObject from '../../utils/object/IsPlainObject.js';
 import GetValue from '../../utils/object/GetValue.js';
 
 const BLOCKER = CONST.BLOCKER;
 const INFINITY = CONST.INFINITY;
 
-class FieldOfView {
+class FieldOfView extends ComponentBase {
     constructor(gameObject, config) {
-        this.gameObject = gameObject;
-        this.chessData = GetChessData(gameObject);
+        if (IsPlainObject(gameObject)) {
+            config = gameObject;
+            gameObject = undefined;
+        }
+
+        super(gameObject, { eventEmitter: false });
+        // No event emitter
+        // this.parent = gameObject;
+
+        this.setChess(gameObject);
         this.resetFromJSON(config);
     }
 
     resetFromJSON(o) {
+        // Pre-test
+        var occupiedTest = GetValue(o, 'occupiedTest', false);
+        var blockerTest = GetValue(o, 'blockerTest', false);
+        var edgeBlockerTest = GetValue(o, 'edgeBlockerTest', false); // Unsupport now
+        var preTestCallback = GetValue(o, 'preTestCallback', undefined);
+        var preTestCallbackScope = GetValue(o, 'preTestCallbackScope', undefined);
+        // Cost of each tile
         var costCallback = GetValue(o, 'costCallback', undefined);
         var costCallbackScope = GetValue(o, 'costCallbackScope', undefined);
         if (costCallback === undefined) {
-            costCallback = GetValue(o, 'cost', 0);
+            costCallback = GetValue(o, 'cost', undefined);
         }
+
         this.setFace(GetValue(o, 'face', 0));
         this.setConeMode(GetValue(o, 'coneMode', 0));
         this.setCone(GetValue(o, 'cone', undefined));
-        this.setOccupiedTest(GetValue(o, 'occupiedTest', false));
-        this.setBlockerTest(GetValue(o, 'blockerTest', false));
-        this.setEdgeBlockerTest(GetValue(o, 'edgeBlockerTest', false));
+        this.setOccupiedTest(occupiedTest);
+        this.setBlockerTest(blockerTest);
+        this.setEdgeBlockerTest(edgeBlockerTest);
+        this.setPreTestFunction(preTestCallback, preTestCallbackScope);
         this.setCostFunction(costCallback, costCallbackScope);
+        this.setPerspectiveEnable(GetValue(o, 'perspective', false));
         this.setDebugGraphics(GetValue(o, 'debug.graphics', undefined));
         this.setDebugLineColor(GetValue(o, 'debug.visibleLineColor', 0x00ff00), GetValue(o, 'debug.invisibleLineColor', 0xff0000));
         this.setDebugLog(GetValue(o, 'debug.log', false));
         return this;
     }
 
-    boot() {
-        if (this.gameObject.on) { // oops, bob object does not have event emitter
-            this.gameObject.on('destroy', this.destroy, this);
+    shutdown(fromScene) {
+        // Already shutdown
+        if (this.isShutdown) {
+            return;
         }
-    }
 
-    shutdown() {
-        this.gameObject = undefined;
+        this.debugGraphics = undefined;
         this.chessData = undefined;
-        return this;
+
+        super.shutdown(fromScene);
     }
 
-    destroy() {
-        this.shutdown();
+    setChess(gameObject) {
+        if (gameObject) {
+            this.chessData = GetChessData(gameObject);
+            if (this.parent !== gameObject) {
+                // Remove attatched event from previous gameObject
+                if (this.parent && this.parent.once) {
+                    this.parent.off('destroy', this.onParentDestroy, this);
+                }
+                // Attach event
+                this.setParent(gameObject);
+                if (this.parent && this.parent.once) {
+                    this.parent.once('destroy', this.onParentDestroy, this);
+                }
+            }
+        } else {
+            this.setParent();
+            this.chessData = undefined;
+        }
         return this;
     }
 
@@ -61,6 +92,13 @@ class FieldOfView {
     }
 
     set face(direction) {
+        if (!this.chessData) {
+            if (this._face === undefined) {
+                this._face = 0;
+            }
+            return;
+        }
+
         direction = this.board.grid.directionNormalize(direction);
         this._face = direction;
         if (this.coneMode === 0) { // Direction
@@ -85,9 +123,8 @@ class FieldOfView {
 
         if (value !== undefined) {
             if (this.coneMode === 0) { // Direction
-                this.halfConeRad = value / 2;
             } else { // Angle
-                this.halfConeRad = DegToRad(value / 2);
+                this.coneRad = DegToRad(value);
             }
         }
     }
@@ -135,6 +172,21 @@ class FieldOfView {
         return this;
     }
 
+    setPreTestFunction(callback, scope) {
+        this.preTestCallback = callback;
+        this.preTestCallbackScope = scope;
+        return this;
+    }
+
+    setPerspectiveEnable(enable) {
+        if (enable === undefined) {
+            enable = true;
+        }
+
+        this.perspectiveEnable = enable;
+        return this;
+    }
+
     setDebugGraphics(graphics) {
         this.debugGraphics = graphics;
         return this;
@@ -179,17 +231,9 @@ const CONEMODE = {
     angle: 1,
 };
 
-var methods = {
-    getCost: GetCost,
-    isInCone: IsInCone,
-    isPathVisible: IsPathVisible,
-    isInLOS: IsInLOS,
-    LOS: LOS,
-    findFOV: FindFOV,
-};
 Object.assign(
     FieldOfView.prototype,
-    methods
+    Methods
 );
 
 export default FieldOfView;

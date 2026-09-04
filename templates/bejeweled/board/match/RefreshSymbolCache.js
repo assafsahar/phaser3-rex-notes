@@ -1,15 +1,27 @@
 var RefreshSymbolCache = function () {
+    var self = this;
+    var chessTileZ = this.chessTileZ;
     this.match.refreshSymbols(function (tileXY, board) {
-        // TODO: Return null if not in valid area
-        if (tileXY.y < (board.height / 2)) {
+        // Return null in prepare rows
+        if (!self.isAtActivateArea(tileXY.x, tileXY.y)) {
             return null;
         }
-        var chess = board.tileXYZToChess(tileXY.x, tileXY.y, this.chessTileZ);
+
+        var chess = board.tileXYZToChess(tileXY.x, tileXY.y, chessTileZ);
         if (chess == null) {
             return null;
         }
-        return chess.getData('symbol');
-    }, this);
+
+        var symbol = chess.getData('symbol');
+
+        if (self.matchAcceptList && !(symbol in self.matchAcceptList)) {
+            symbol = null;
+        } else if (self.matchIgnoreList && (symbol in self.matchIgnoreList)) {
+            symbol = null;
+        }
+
+        return symbol;
+    });
 };
 
 export default RefreshSymbolCache;

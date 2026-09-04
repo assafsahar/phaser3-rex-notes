@@ -5,50 +5,102 @@ Move game object by cursor keys, with a constant speed.
 - Author: Rex
 - Arcade behavior of game object
 
-## Source code
+## Live demos
 
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/eightdirection-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexeightdirectionplugin.min.js)
+- [Virtual-joyStick + Eight-direction](https://codepen.io/rexrainbow/pen/KxWpWa)
 
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/eightdirection)
 
-User could import class directly, or install it by global plugin.
+### Install plugin
 
-### Import class
+#### Load minify file
 
-```javascript
-import rexEightDirection from './plugins/eightdirection.js';
-```
-
-### Install global plugin
-
-Enable [arcade physics engine](arcade-world.md) and install plugin in [configuration of game](game.md#configuration)
-
-```javascript
-import EightDirectionPlugin from './plugins/eightdirection-plugin.js';
-
-var config = {
-    // ...
-    physics: {
-        default: 'arcade',
-        arcade: {
-            // debug: true
+- Enable [arcade physics engine](arcade-world.md) in [configuration of game](game.md#configuration)
+    ```javascript
+    var config = {
+        // ...
+        physics: {
+            default: 'arcade',
+            arcade: {
+                // debug: true
+            }
         }
-    },
-    plugins: {
-        global: [{
-            key: 'rexEightDirection',
-            plugin: EightDirectionPlugin,
-            start: true
+    }
+    var game = new Phaser.Game(config);
+    ```
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.plugin('rexeightdirectionplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexeightdirectionplugin.min.js', true);
+    ```
+- Add eight-direction behavior
+    ```javascript
+    var eightDirection = scene.plugins.get('rexeightdirectionplugin').add(gameObject, config);
+    ```
+
+#### Import plugin
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Enable [arcade physics engine](arcade-world.md) and install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import EightDirectionPlugin from 'phaser4-rex-plugins/plugins/eightdirection-plugin.js';
+    var config = {
+        physics: {
+            default: 'arcade',
+            arcade: {
+                // debug: true
+            }
         },
         // ...
-        ]
+        plugins: {
+            global: [{
+                key: 'rexEightDirection',
+                plugin: EightDirectionPlugin,
+                start: true
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add eight-direction behavior
+    ```javascript
+    var eightDirection = scene.plugins.get('rexEightDirection').add(gameObject, config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Enable [arcade physics engine](arcade-world.md) in [configuration of game](game.md#configuration)
+    ```javascript
+    var config = {
+        // ...
+        physics: {
+            default: 'arcade',
+            arcade: {
+                // debug: true
+            }
+        }
     }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+    var game = new Phaser.Game(config);
+    ```
+- Import class
+    ```javascript
+    import EightDirection from 'phaser4-rex-plugins/plugins/eightdirection.js';
+    ```
+- Add eight-direction behavior
+    ```javascript
+    var eightDirection = new EightDirection(gameObject, config);
+    ```
 
 ### Create instance
 
@@ -57,6 +109,8 @@ var eightDirection = scene.plugins.get('rexEightDirection').add(gameObject, {
     speed: 200,
     // dir: '8dir',     // 0|'up&down'|1|'left&right'|2|'4dir'|3|'8dir'
     // rotateToDirection: false,
+    // wrap: false,
+    // padding: 0,
     // enable: true,
     // cursorKeys: scene.input.keyboard.createCursorKeys()
 });
@@ -69,8 +123,11 @@ var eightDirection = scene.plugins.get('rexEightDirection').add(gameObject, {
     - `'4dir'`, or `2` : Aaccept up, down, left or right cursor keys.
     - `'8dir'`, or `3` : Aaccept up, up-left, up-right, down, down-left, down-right, left, or right cursor keys.
 - `rotateToDirection` : Set true to change angle towards moving direction.
+- [Wrap](arcade-world.md#wrap)
+    - `wrap` : Set `true` to enable wrap mode. Default value is `false`.
+    - `padding`
 - `enable` : set `false` to disable moving.
-- `cursorKeys` : CursorKey object, using [keyboard's cursorKeys](keyboardevents.md#get-state-of-cursorkeys) by default.
+- `cursorKeys` : CursorKey object, using [keyboard's cursorKeys](keyboardevents.md#key-object-of-cursorkeys) by default.
 
 ### Set speed
 
@@ -98,3 +155,11 @@ eightDirection.setDirMode(dir);
     - `'left&right'`, or `1` : Aaccept left or right cursor keys only.
     - `'4dir'`, or `2` : Aaccept up, down, left or right cursor keys.
     - `'8dir'`, or `3` : Aaccept up, up-left, up-right, down, down-left, down-right, left, or right cursor keys.
+
+### Set wrap mode
+
+```javascript
+ship.setWrapMode(wrap, padding);
+```
+
+- `wrap` : Set `true` to enable wrap mode.

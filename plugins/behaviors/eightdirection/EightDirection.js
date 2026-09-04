@@ -1,64 +1,32 @@
-import TickTask from '../../utils/ticktask/TickTask.js';
-import Helpers from '../../utils/arcade/Helpers.js';
+import { Utils as PhaserUtils } from 'phaser';
+import TickTask from '../../utils/componentbase/SceneUpdateTickTask.js';
+import {
+    SetVelocity
+} from '../../utils/arcade/Helpers.js';
 import DegToRad from '../../utils/math/DegToRad.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
+const GetValue = PhaserUtils.Objects.GetValue;
 
 class EightDirection extends TickTask {
     constructor(gameObject, config) {
         super(gameObject, config);
+        // this.parent = gameObject;
 
-        this.setParent(gameObject);
         this.resetFromJSON(config);
         this.boot();
     }
 
     resetFromJSON(o) {
-        if (this.body === undefined) {
-            this.scene.physics.add.existing(this.gameObject, false);
+        if (!this.parent.body) {
+            this.scene.physics.add.existing(this.parent, false);
         }
-        this.setCascadeMode(GetValue(o, 'cascade', false));
         this.setEnable(GetValue(o, 'enable', true));
         this.setDirMode(GetValue(o, 'dir', '8dir'));
         this.setSpeed(GetValue(o, 'speed', 200));
         this.setRotateToDirection(GetValue(o, 'rotateToDirection', false));
+        this.setWrapMode(GetValue(o, 'wrap', false), GetValue(o, 'padding', 0));
         this.setCursorKeys(GetValue(o, 'cursorKeys', undefined));
         return this;
-    }
-
-    toJSON() {
-        return {
-            tickingMode: this.tickingMode
-        };
-    }
-
-    boot() {
-        super.boot();
-        if (this.gameObject.on) { // oops, bob object does not have event emitter
-            this.gameObject.on('destroy', this.destroy, this);
-        }
-    }
-
-    shutdown() {
-        super.shutdown();
-        this.gameObject = undefined;
-        this.scene = undefined;
-    }
-
-    destroy() {
-        this.shutdown();
-    }
-
-    startTicking() {
-        super.startTicking();
-        this.scene.events.on('preupdate', this.preupdate, this);
-    }
-
-    stopTicking() {
-        super.stopTicking();
-        if (this.scene) { // Scene might be destoryed
-            this.scene.events.off('preupdate', this.preupdate, this);
-        }
     }
 
     get enable() {
@@ -68,7 +36,7 @@ class EightDirection extends TickTask {
     set enable(value) {
         this.isRunning = value;
         if (!value) {
-            this.bodySetVelocity(0, 0);
+            SetVelocity(this, 0, 0);
         }
     }
 
@@ -78,7 +46,7 @@ class EightDirection extends TickTask {
         }
         this.enable = e;
         if (e && (this.body === undefined)) {
-            this.scene.physics.add.existing(this.gameObject, false);
+            this.scene.physics.add.existing(this.parent, false);
         }
         return this;
     }
@@ -101,6 +69,15 @@ class EightDirection extends TickTask {
         return this;
     }
 
+    setWrapMode(wrap, padding) {
+        if (wrap === undefined) {
+            wrap = true;
+        }
+        this.wrap = wrap;
+        this.padding = padding;
+        return this;
+    }
+
     setCursorKeys(cursorKeys) {
         if (cursorKeys === undefined) {
             cursorKeys = this.scene.input.keyboard.createCursorKeys();
@@ -109,30 +86,51 @@ class EightDirection extends TickTask {
         return this;
     }
 
-    preupdate(time, delta) {
+    get isLeft() {
+        var leftKey = this.cursorKeys.left;
+        return (this.enable && leftKey) ? leftKey.isDown : false;
+    }
+
+    get isRight() {
+        var rightKey = this.cursorKeys.right;
+        return (this.enable && rightKey) ? rightKey.isDown : false;
+    }
+
+    get isUp() {
+        var upKey = this.cursorKeys.up;
+        return (this.enable && upKey) ? upKey.isDown : false;
+    }
+
+    get isDown() {
+        var downKey = this.cursorKeys.down;
+        return (this.enable && downKey) ? downKey.isDown : false;
+    }
+
+    update(time, delta) {
+        var gameObject = this.parent;
         if (!this.enable) {
-            this.bodySetVelocity(0, 0);
+            SetVelocity(gameObject, 0, 0);
             return this;
         }
-        var cursorKeys = this.cursorKeys;
-        var isUpDown = cursorKeys.up.isDown;
-        var isDownDown = cursorKeys.down.isDown;
-        var isLeftDown = cursorKeys.left.isDown;
-        var isRightDown = cursorKeys.right.isDown;
-        var dy = ((isUpDown) ? -1 : 0) + ((isDownDown) ? 1 : 0),
-            dx = ((isLeftDown) ? -1 : 0) + ((isRightDown) ? 1 : 0);
+
+        if (!gameObject.active) {
+            return this;
+        }
+
+        var dy = ((this.isUp) ? -1 : 0) + ((this.isDown) ? 1 : 0),
+            dx = ((this.isLeft) ? -1 : 0) + ((this.isRight) ? 1 : 0);
         if ((dx === 0) && (dy === 0)) {
-            this.bodySetVelocity(0, 0);
+            SetVelocity(gameObject, 0, 0);
             return this;
         }
         switch (this.dirMode) {
-            case 0:
+            case 0: // up&down
                 dx = 0;
                 break;
-            case 1:
+            case 1: // left&right
                 dy = 0;
                 break;
-            case 2:
+            case 2: // 4dir
                 if (dy !== 0) {
                     dx = 0;
                 }
@@ -153,21 +151,18 @@ class EightDirection extends TickTask {
             vx = this.speed * Math.cos(rotation);
             vy = this.speed * Math.sin(rotation);
         }
-        this.bodySetVelocity(vx, vy);
+        SetVelocity(gameObject, vx, vy);
         if (this.rotateToDirection && (rotation !== undefined)) {
-            this.gameObject.rotation = rotation;
+            gameObject.rotation = rotation;
+        }
+
+        if (this.wrap) {
+            gameObject.body.world.wrap(gameObject, this.padding);
         }
         return this;
     }
 }
 
-// mixin
-Object.assign(
-    EightDirection.prototype,
-    Helpers
-);
-
-/** @private */
 const DIRMODE = {
     'up&down': 0,
     'left&right': 1,

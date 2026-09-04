@@ -2,7 +2,7 @@
 
 *World* of Arcade physics engine in phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
@@ -16,8 +16,8 @@ var config = {
         arcade: {
         //    x: 0,
         //    y: 0,
-        //    width: scene.sys.game.config.width,
-        //    height: scene.sys.game.config.height,
+        //    width: scene.sys.scale.width,
+        //    height: scene.sys.scale.height,
         //    gravity: {
         //        x: 0,
         //        y: 0
@@ -28,8 +28,11 @@ var config = {
         //        left: true,
         //        right: true
         //    },
+        //    customUpdate: false,
+        //    fixedStep: true,
         //    fps: 60,
         //    timeScale: 1,     // 2.0 = half speed, 0.5 = double speed
+        //    customUpdate: false,
         //    overlapBias: 4,
         //    tileBias: 16,
         //    forceX: false,
@@ -50,6 +53,40 @@ var config = {
 var game = new Phaser.Game(config);
 ```
 
+### Update
+
+- Default updating : World updating every tick
+- Custom updating : 
+    1. Set `customUpdate` of arcade config to `false`.
+        - Enable world updating : `scene.physics.enableUpdate()`
+        - Disable world updating : `scene.physics.disableUpdate()`
+    1. Run world updating manually
+        ```javascript
+        scene.physics.world.update(time, delta);
+        ```
+    1. Enable/disable world updating
+        - Enable : `scene.physics.enableUpdate()`
+        - Disable : `scene.physics.disableUpdate()`
+
+#### Step
+
+- Advances the simulation by a single step.
+    ```javascript
+    scene.physics.world.singleStep();
+    ```
+- Advances the simulation by a time increment.
+    ```javascript
+    scene.physics.world.step(delta);
+    ```
+
+##### Events
+
+- World step
+    ```javascript
+    scene.physics.world.on('worldstep', function(delta) { /* ... */ });
+    ```
+    - `delta` : The delta time amount of this step, in seconds.
+
 ### Control
 
 #### Pause
@@ -63,6 +100,17 @@ scene.physics.pause();
 ```javascript
 scene.physics.resume();
 ```
+
+#### Events
+
+- Pause world
+    ```javascript
+    scene.physics.world.on('pause', function() { /* ... */ });
+    ```
+- Resume world
+    ```javascript
+    scene.physics.world.on('resume', function() { /* ... */ });
+    ```
 
 #### Duration per frame
 
@@ -78,13 +126,61 @@ scene.physics.resume();
     scene.physics.world.setFPS(framerate);
     ```
 
-#### Step
-
-Advances the simulation by one step.
+#### Tile filter options
 
 ```javascript
-scene.physics.world.step(delta);
+var option = scene.physics.world.tileFilterOptions;
 ```
+
+- `option`
+    ```javascript
+    {
+        isColliding: true,
+        isNotEmpty: true,
+        hasInterestingFace: true
+    }
+    ```
+
+### Body
+
+#### Enable
+
+```javascript
+scene.physics.world.enable(gameObject);
+// scene.physics.world.enable(gameObject, bodyType);
+```
+
+- `gameObject` : A game object, or array of game objects, or game objects in a [Group](group.md)
+- `bodyType` :
+    - `0` : Dynamic body. Default value.
+    - `1` : Static body.
+
+Or
+
+```javascript
+scene.physics.add.existing(gameObject, bodyType);
+```
+
+See [arcade-body](arcade-body.md#get-physics-body)
+
+#### Disable
+
+```javascript
+scene.physics.world.disable(gameObject);
+```
+
+- `gameObject` : A game object, or array of game objects, or game objects in a [Group](group.md)
+
+#### Add/remove body
+
+- Add body to the local search trees.
+    ```javascript
+    scene.physics.world.add(body);
+    ```
+- Remove body from the local search trees.
+    ```javascript
+    scene.physics.world.disableBody(body);
+    ```
 
 ### Collision
 
@@ -121,7 +217,7 @@ See bound in [body object](arcade-body.md#collision-bound), or [game object](arc
                 // ...
             }
             ```
-        - `processCallback` : Fired when gameObject1 intersects gameObject2
+        - `processCallback` : Fired when gameObject1 intersects gameObject2, optional.
             ```javascript
             var processCallback = function(gameObject1, gameObject2) {
                 return true;  // return false will discard remaining collision checking
@@ -130,6 +226,14 @@ See bound in [body object](arcade-body.md#collision-bound), or [game object](arc
 - Remove collider
     ```javascript
     scene.physics.world.removeCollider(collider);
+    ```
+- Deactivate collider
+    ```javascript
+    collider.active = false;  // Set true to activate again
+    ```
+- Name of collider (unused by engine)
+    ```javascript
+    collider.name = name;
     ```
 
 #### Testing wo collider
@@ -151,6 +255,25 @@ See bound in [body object](arcade-body.md#collision-bound), or [game object](arc
     ```javascript
     var isCollided = scene.physics.world.collide(object1, object2, collideCallback);
     // var isCollided = scene.physics.world.collide(object1, object2, collideCallback, processCallback, callbackContext);
+    ```
+
+#### Events
+
+- Two bodies overlap and at least one of them has their `onOverlap` property set to `true`.
+    ```javascript
+    scene.physics.world.on('overlap', function(gameObject1, gameObject2, body1, body2) { /* ... */ });
+    ```
+- Two bodies overlap and at least one of them has their `onCollide` property set to `true`.
+    ```javascript
+    scene.physics.world.on('collide', function(gameObject1, gameObject2, body1, body2) { /* ... */ });
+    ```
+- A body overlaps with a Tile and has its `onOverlap` property set to `true`.
+    ```javascript
+    scene.physics.world.on('tileoverlap', function(gameObject, tile, body) { /* ... */ });
+    ```
+- A body overlaps with a Tile and has its `onCollide` property set to `true`.
+    ```javascript
+    scene.physics.world.on('tilecollide', function(gameObject, tile, body) { /* ... */ });
     ```
 
 ### World bounds
@@ -187,13 +310,34 @@ See bound in [body object](arcade-body.md#collision-bound), or [game object](arc
         scene.physics.world.checkCollision.up = up;
         scene.physics.world.checkCollision.down = down;
         ```
+    - Get bounds [rectangle](geom-rectangle.md)
+        ```javascript
+        var top = scene.physics.world.bounds.top;
+        var bottom = scene.physics.world.bounds.bottom;
+        var left = scene.physics.world.bounds.left;
+        var right = scene.physics.world.bounds.right;
+        ```
+
+### Bodies inside an area
+
+- Overlap a rectangle area
+    ```javascript
+    var bodies = scene.physics.overlapRect(x, y, width, height, includeDynamic, includeStatic);
+    ```
+    - `includeDynamic` : Set `true` to search Dynamic Bodies
+    - `includeStatic` : Set `true` to search Static Bodies
+- Overlap a circle area
+    ```javascript
+    var bodies = scene.physics.overlapCirc(x, y, radius, includeDynamic, includeStatic);
+    ```
+    - `includeDynamic` : Set `true` to search Dynamic Bodies
+    - `includeStatic` : Set `true` to search Static Bodies
 
 #### Events
 
 - World bounds
     ```javascript
-    var callback = function(body, blockedUp, blockedDown, blockedLeft, blockedRight) { /* ... */ };
-    scene.physics.world.on('worldbounds', callback);
+    scene.physics.world.on('worldbounds', function(body, blockedUp, blockedDown, blockedLeft, blockedRight) { /* ... */ });
     ```
 
 ### Wrap
@@ -251,11 +395,15 @@ Total Gravity = world.gravity + body.gravity
 - Closest
     ```javascript
     var body = scene.physics.closest(point);  // point: {x,y}
+    // var body = scene.physics.closest(point, targets);
     ```
+    - `targets` : Array of Arcade Physics Game Object, Body or Static Body.
 - Furthest
     ```javascript
     var body = scene.physics.furthest(point);  // point: {x,y}
+    // var body = scene.physics.furthest(point, targets);
     ```
+    - `targets` : Array of Arcade Physics Game Object, Body or Static Body.
 
 ### Debug
 
@@ -312,6 +460,7 @@ var graphics = scene.physics.world.debugGraphic;
     1. Update position & angle of each body
     1. Process each collider
     1. Update final position of each body
+    1. Emit `worldstep` event
 1. scene.sys.events: postupdate
     1. Draw debug graphics
 

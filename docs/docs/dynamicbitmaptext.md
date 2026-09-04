@@ -2,19 +2,19 @@
 
 Drawing text by texture with a callback for each character triggered at every tick, built-in game object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
 ### Load bitmap font
 
-Reference: [load bitmap font](bitmaptext.md##load-bitmap-font)
+Reference: [load bitmap font](bitmaptext.md#load-bitmap-font)
 
 ### Add bitmap text object
 
 ```javascript
-var txt = scene.dynamicBitmapText(x, y, key, text);
-// var txt = scene.dynamicBitmapText(x, y, key, text, size, align);
+var txt = scene.add.dynamicBitmapText(x, y, key, text);
+// var txt = scene.add.dynamicBitmapText(x, y, key, text, size, align);
 ```
 
 - `size` : The size of the font
@@ -33,6 +33,7 @@ var txt = scene.make.dynamicBitmapText({
     font: '',
     size: false,
     align: 0,
+    // origin: {x: 0.5, y: 0.5},
     add: true
 });
 ```
@@ -91,6 +92,36 @@ or
 txt.text = '...';
 ```
 
+### Crop
+
+- Set size
+    ```javascript
+    txt.setSize(width, height);
+    ```
+    or
+    ```javascript
+    txt.cropWidth = width;
+    txt.cropHeight = height;
+    ```
+- Set offset
+    ```javascript
+    txt.setScrollX(scrollX);
+    txt.setScrollY(scrollY);
+    ```
+    or
+    ```javascript
+    this.scrollX = scrollX;
+    this.scrollY = scrollY;
+    ```
+
 ### Other properties
 
-This dynamic bitmap text class is extended from [bitmap text](bitmaptext.md)
+See  [bitmap text](bitmaptext.md), [game object](gameobject.md)
+
+### Create mask
+
+See [mask](mask.md)
+
+### Shader effects
+
+Support [internal and external filters](shader-builtin.md)

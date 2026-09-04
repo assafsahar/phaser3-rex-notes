@@ -2,7 +2,7 @@
 
 Drawing text by texture, built-in game object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
@@ -12,7 +12,11 @@ Drawing text by texture, built-in game object of phaser.
     ```javascript
     scene.load.bitmapFont(key, textureURL, xmlURL);
     ```
-    Reference: [load bitmap font](loader.md#bitmap-font)
+    - Reference: [load bitmap font](loader.md#bitmap-font)
+    - Loaded texture also can be used for [Image](image.md), [Sprite](sprite.md), or [Arcade Image](arcade-gameobject.md#image-object), [Arcade Sprite](arcade-gameobject.md#sprite-object)
+        ```javascript
+        scene.add.image(x, y, key, char);
+        ```
 - Load retro bitmap font from texture and JSON configuration
     1. Load texture in *preload* stage
         ```javascript
@@ -58,8 +62,8 @@ Drawing text by texture, built-in game object of phaser.
 ### Add bitmap text object
 
 ```javascript
-var txt = scene.bitmapText(x, y, key, text);
-// var txt = scene.bitmapText(x, y, key, text, size, align);
+var txt = scene.add.bitmapText(x, y, key, text);
+// var txt = scene.add.bitmapText(x, y, key, text, size, align);
 ```
 
 - `size` : The size of the font
@@ -78,6 +82,7 @@ var txt = scene.make.bitmapText({
     font: '',
     size: false,
     align: 0,
+    // origin: {x: 0.5, y: 0.5},
     add: true
 });
 ```
@@ -157,6 +162,20 @@ txt.letterSpacing = spacing;
 
 Can be a positive value to increase the space, or negative to reduce it.
 
+### Set line spacing
+
+```javascript
+txt.setLineSpacing(spacing);
+```
+
+or
+
+```javascript
+txt.lineSpacing = spacing;
+```
+
+Can be a positive value to increase the space, or negative to reduce it.
+
 ### Set font size
 
 ```javascript
@@ -176,7 +195,77 @@ txt.setFont(key);
 // txt.setFont(key, size, align);
 ```
 
-### Get bound
+### Tint
+
+See [Tint](gameobject.md#tint).
+
+### Color of characters
+
+- By character
+    ```javascript
+    txt.setCharacterTint(start, length, tintMode, color);
+    // txt.setCharacterTint(start, length, tintMode, topLeft, topRight, bottomLeft, bottomRight);
+    ```
+    - `start` : Index starting character. 
+        - `< 0` : Counts back from the end of the text.
+    - `length` : Number of characters to tint.
+        - `-1` : All characters from `start`
+    - `tintMode` : 
+        - `true` : Fill-based tint
+        - `false` : Additive tint
+    - `color`, or `topLeft, topRight, bottomLeft, bottomRight` : Color integer.
+- By word
+    ```javascript
+    txt.setWordTint(word, count, tintMode, color);
+    // txt.setWordTint(word, count, tintMode, topLeft, topRight, bottomLeft, bottomRight);
+    ```
+    - `word` : The word to search for. 
+        - A string
+        - An index of the word in the words array.
+    - `count` : Number of matching words to tint.
+        - `-1` : All matching words
+    - `tintMode` : 
+        - `true` : Fill-based tint
+        - `false` : Additive tint
+    - `color`, or `topLeft, topRight, bottomLeft, bottomRight` : Color integer.
+
+### Drop shadow effect
+
+```javascript
+txt.setDropShadow(x, y, color, alpha);
+```
+
+or
+
+```javascript
+txt.dropShadowX = x;
+txt.dropShadowY = y;
+txt.dropShadowColor = color;
+txt.dropShadowAlpha = alpha;
+```
+
+- `x`, `y` : The horizontal/vertical offset of the drop shadow.
+- `color` : The color of the drop shadow.
+- `alpha` : The alpha of the drop shadow.
+
+!!! note
+    WebGL only
+
+### Wrap
+
+- Wrap
+    ```javascript
+    txt.setMaxWidth(width);
+    // txt.setMaxWidth(width, wordWrapCharCode);
+    ```
+    - `width` : Line width in pixels.
+    - `wordWrapCharCode` : The character code to check for when word wrapping. Defaults to 32 (the *space* character)
+- Disable wrapping
+    ```javascript
+    txt.setMaxWidth(0);
+    ```
+
+### Get bounds
 
 ```javascript
 var width = txt.width;
@@ -203,8 +292,14 @@ var bounds = txt.getTextBounds(round);
 //     lines: {
 //         shortest: 0,
 //         longest: 0,
-//         lengths: null
-//     }
+//         lengths: null,
+//         height: 0
+//     },
+//     wrappedText: '',
+//     words: [],
+//     characters: [],
+//     scaleX: 0,
+//     scaleY: 0
 // };
 ```
 
@@ -212,10 +307,71 @@ var bounds = txt.getTextBounds(round);
 - `local` : The BitmapText based on fontSize and 0x0 coords.
 - `global` : The BitmapText, taking into account scale and world position.
 - `lines` : The BitmapText line data.
+- `wrappedText` : Wrapped content joined with `'\n'`.
+- `characters` : Information of each character.
+    ```javascript
+    {
+        char, code, i, idx, x, y, w, h, t, b, r, line
+    }
+    ```
+    - `char` : Character (string).
+    - `code`: Character code (number)
+    - `i` : Index of character
+    - `x` , `y` : World position of this character
+    - `w`, `h` : Width/height of this character
+    - `t`, `b` : The top/bottom of the line this character is on.
+    - `r` : The right-most point of this character, including xAdvance.
+    - `line` : The line number the character appears on.
+- `words` : Information of each word.
+    ```javascript
+    {
+        word, i, x, y, w, h, cr
+
+    }
+    ```
+    - `word` : Word string.
+    - `i` : Index of start character
+    - `x`, `y` : World position of start character
+    - `w` , `h` : Width/height of word
+    - `cr` : Is last word of current line
+- `scaleX`, `scaleY` : Scale of width and height.
+
+#### Get information of character
+
+```javascript
+var data = txt.getCharacterAt(x, y);
+// var data = txt.getCharacterAt(x, y, camera);
+```
+
+- `x`, `y` : World position.
+- `camera` : The Camera which is being tested against.
+- `data` : Information of character at world position.
+    ```javascript
+    {
+        char, code, i, x, y, w, h, t, b, r, line
+    }
+    ```
+    - `char` : Character (string).
+    - `code`: Character code (number)
+    - `i` : Index of character
+    - `x` , `y` : World position of this character
+    - `w`, `h` : Width/height of this character
+    - `t`, `b` : The top/bottom of the line this character is on.
+    - `r` : The right-most point of this character, including xAdvance.
+    - `line` : The line number the character appears on.
+
 
 ### Other properties
 
 See [game object](gameobject.md)
+
+### Create mask
+
+See [mask](mask.md)
+
+### Shader effects
+
+Support [internal and external filters](shader-builtin.md)
 
 ## Appendix
 

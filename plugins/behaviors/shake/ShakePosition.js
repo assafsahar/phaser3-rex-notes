@@ -1,28 +1,28 @@
-import TickTask from '../../utils/ticktask/TickTask.js';
-import GetSceneObject from '../../utils/system/GetSceneObject.js';
+import TickTask from '../../utils/componentbase/TickTask.js';
+import Timer from '../../utils/componentbase/timerticktask/Timer.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
+import { Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
 
 class ShakePosition extends TickTask {
     constructor(gameObject, config) {
         super(gameObject, config);
+        // this.parent = gameObject;
 
-        this.gameObject = gameObject;
-        this.scene = GetSceneObject(gameObject);
-
+        this.timer = new Timer();
         this.resetFromJSON(config);
         this.boot();
     }
 
     resetFromJSON(o) {
+        this.timer.resetFromJSON(GetValue(o, 'timer'));
+        this.setEnable(GetValue(o, 'enable', true));
         this.setMode(GetValue(o, 'mode', 1));
         this.isRunning = GetValue(o, 'isRunning', false);
-        this.setEnable(GetValue(o, 'enable', true));
-        this.timeScale = GetValue(o, 'timeScale', 1);
         this.setMagnitudeMode(GetValue(o, 'magnitudeMode', 1));
+        this.setAxisMode(GetValue(o, "axis", 0));
         this.setDuration(GetValue(o, 'duration', 500));
         this.setMagnitude(GetValue(o, 'magnitude', 10));
-        this.nowTime = GetValue(o, 'nowTime', 0);
         this.ox = GetValue(o, 'ox', undefined);
         this.oy = GetValue(o, 'oy', undefined);
         return this;
@@ -30,34 +30,28 @@ class ShakePosition extends TickTask {
 
     toJSON() {
         return {
+            timer: this.timer.toJSON(),
+            enable: this.enable,
             mode: this.mode,
             isRunning: this.isRunning,
-            enable: this.enable,
-            timeScale: this.timeScale,
             magnitudeMode: magnitudeMode,
             duration: this.duration,
             magnitude: this.magnitude,
-            nowTime: this.nowTime,
             ox: this.ox,
             oy: this.oy,
         };
     }
 
-    boot() {
-        super.boot();
-        if (this.gameObject.on) { // oops, bob object does not have event emitter
-            this.gameObject.on('destroy', this.destroy, this);
+    // override
+    shutdown(fromScene) {
+        // Already shutdown
+        if (this.isShutdown) {
+            return;
         }
-    }
 
-    shutdown() {
-        super.shutdown();
-        this.gameObject = undefined;
-        this.scene = undefined;
-    }
-
-    destroy() {
-        this.shutdown();
+        super.shutdown(fromScene);
+        this.timer.destroy();
+        this.timer = undefined;
     }
 
     startTicking() {
@@ -65,20 +59,21 @@ class ShakePosition extends TickTask {
 
         if (this.mode === 0) { // Effect mode
             this.scene.game.events.on('poststep', this.update, this);
-            this.scene.game.events.on('step', this.backToOrigin, this);
+            this.scene.game.events.on('prestep', this.backToOrigin, this);
         } else { // Behavior Mode
-            this.scene.events.on('preupdate', this.update, this);
+            this.scene.sys.events.on('preupdate', this.update, this);
         }
     }
 
     stopTicking() {
         super.stopTicking();
+
         if (this.scene) { // Scene might be destoryed
             if (this.mode === 0) { // Effect mode
                 this.scene.game.events.off('poststep', this.update, this);
-                this.scene.game.events.off('step', this.backToOrigin, this);
+                this.scene.game.events.off('prestep', this.backToOrigin, this);
             } else { // Behavior Mode
-                this.scene.events.off('preupdate', this.update, this);
+                this.scene.sys.events.off('preupdate', this.update, this);
             }
 
         }
@@ -109,6 +104,14 @@ class ShakePosition extends TickTask {
         return this;
     }
 
+    setAxisMode(m) {
+        if (typeof (m) === 'string') {
+            m = DIRECTIONNODE[m];
+        }
+        this.axisMode = m;
+        return this;
+    }
+
     setDuration(duration) {
         this.duration = duration;
         return this;
@@ -132,7 +135,10 @@ class ShakePosition extends TickTask {
             this.setDuration(duration);
         }
 
-        this.nowTime = 0;
+        this.timer
+            .setDuration(this.duration)
+            .start()
+
         super.start();
         return this;
     }
@@ -147,9 +153,13 @@ class ShakePosition extends TickTask {
             return this;
         }
 
-        var gameObject = this.gameObject;
-        this.nowTime += (delta * this.timeScale);
-        if (this.nowTime >= this.duration) {
+        var gameObject = this.parent;
+        if (!gameObject.active) {
+            return this;
+        }
+
+        this.timer.update(time, delta);
+        if (this.timer.isDone) {
             this.backToOrigin();
             this.complete();
         } else {
@@ -161,12 +171,26 @@ class ShakePosition extends TickTask {
             var magnitude = this.magnitude;
             if (this.magnitudeMode === 1) // decay
             {
-                magnitude *= (this.duration - this.nowTime) / this.duration;
+                magnitude *= (1 - this.timer.t);
             }
             var a = Math.random() * Math.PI * 2;
-            var offsetX = Math.cos(a) * magnitude;
-            var offsetY = Math.sin(a) * magnitude;
-            gameObject.setPosition(this.ox + offsetX, this.oy + offsetY);
+            var x = this.ox + (Math.cos(a) * magnitude);
+            var y = this.oy + (Math.sin(a) * magnitude);
+
+            switch (this.axisMode) {
+                case 1:
+                    gameObject.x = x;
+                    break;
+
+                case 2:
+                    gameObject.y = y;
+                    break;
+
+                default:
+                    gameObject.x = x;
+                    gameObject.y = y;
+                    break;
+            }
         }
 
         return this;
@@ -181,12 +205,23 @@ class ShakePosition extends TickTask {
             return this;
         }
 
-        var gameObject = this.gameObject;
-        if ((this.ox === gameObject.x) && (this.oy === gameObject.y)) {
-            return this;
+        var gameObject = this.parent;
+
+        switch (this.axisMode) {
+            case 1:
+                gameObject.x = this.ox;
+                break;
+
+            case 2:
+                gameObject.y = this.oy;
+                break;
+
+            default:
+                gameObject.x = this.ox;
+                gameObject.y = this.oy;
+                break;
         }
 
-        gameObject.setPosition(this.ox, this.oy);
         this.ox = undefined;
         this.oy = undefined;
         return this;
@@ -197,6 +232,18 @@ const MODE = {
     effect: 0,
     behavior: 1,
 }
+
+const DIRECTIONNODE = {
+    'both': 0,
+    'h&v': 0,
+    'x&y': 0,
+    'horizontal': 1,
+    'h': 1,
+    'x': 1,
+    'vertical': 2,
+    'v': 2,
+    'y': 2
+};
 
 const MANITUDEMODE = {
     constant: 0,

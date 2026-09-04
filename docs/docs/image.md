@@ -2,7 +2,8 @@
 
 Display of static images, built-in game object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
+- Game object
 
 ## Usage
 
@@ -18,6 +19,7 @@ Reference: [load image](loader.md#image)
 
 ```javascript
 var image = scene.add.image(x, y, key);
+// var image = scene.add.image(x, y, key, frame);
 ```
 
 Add image from JSON
@@ -27,21 +29,23 @@ var image = scene.make.image({
     x: 0,
     y: 0,
     key: '',
+    // frame: '',
 
     // angle: 0,
-    // alpha: 1
+    // alpha: 1,
     // flipX: true,
     // flipY: true,
     // scale : {
     //    x: 1,
     //    y: 1
     //},
+    // origin: {x: 0.5, y: 0.5},
 
     add: true
 });
 ```
 
-- `key` : 
+- `key`, `frame` : 
     - A string
     - An array of string to pick one element at random
 - `x`, `y`, `scale.x`, `scale.y` :
@@ -82,14 +86,18 @@ var image = scene.make.image({
     var image = new MyImage(scene, x, y, key);
     ```
 
+### Texture
+
+See [game object - texture](gameobject.md#texture)
+
 ### Other properties
 
 See [game object](gameobject.md)
 
 ### Create mask
 
-```javascript
-var mask = image.createBitmapMask();
-```
-
 See [mask](mask.md)
+
+### Shader effects
+
+Support [internal and external filters](shader-builtin.md)

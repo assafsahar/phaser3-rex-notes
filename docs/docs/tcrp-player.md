@@ -5,57 +5,84 @@ Player of **T** ime-**C** ommand-**R** ecorder-**P** layer, to run commands on t
 - Author: Rex
 - Member of scene
 
-## Source code
+## Live demos
 
-[Link](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/tcrp/PlayerPlugin.js)
+- [Replay drawing](https://codepen.io/rexrainbow/pen/oNjeXvo)
 
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/tcrp)
 
-User could import class directly, or install it by global plugin.
+### Install plugin
 
-### Import class
+#### Load minify file
 
-```javascript
-import rexTCRP from './plugins/tcrp.js';
-```
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.plugin('rextcrpplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rextcrpplugin.min.js', true);
+    ```
+- Create instance
+    ```javascript
+    var player = scene.plugins.get('rextcrpplugin').addPlayer(scene, config);
+    ```
 
-### Install global plugin
+#### Import plugin
 
-Install plugin in [configuration of game](game.md#configuration)
-
-```javascript
-import TCRPPlugin from './plugins/tcrp-plugin.js';
-
-var config = {
-    // ...
-    plugins: {
-        global: [{
-            key: 'rexTCRP',
-            plugin: TCRPPlugin,
-            start: true
-        },
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import TCRPPlugin from 'phaser4-rex-plugins/plugins/tcrp-plugin.js';
+    var config = {
         // ...
-        ]
-    }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+        plugins: {
+            global: [{
+                key: 'rexTCRP',
+                plugin: TCRPPlugin,
+                start: true
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Create instance
+    ```javascript
+    var player = scene.plugins.get('rexTCRP').addPlayer(scene, config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import TCRP from 'phaser4-rex-plugins/plugins/tcrp.js';
+    ```
+- Create instance
+    ```javascript
+    var player = new TCRP.Player(scene, config);
+    ```
 
 ### Create instance
 
 ```javascript
-var player = scene.plugins.get('rexTextTyping').addPlayer(scene, {
+var player = scene.plugins.get('rexTCRP').addPlayer(scene, {
     // timeUnit: 0,        // 'ms'|0|'s'|'sec'|1
     // dtMode: 0,          // 'abs'|'absolute'|0|'inc'|'increment'|1
-    // commands: [],       // [[dt, command], [dt, command], ...]
-    // timeScale: 1,       // 0~1
+    // commands: [],       // [[time, command], [time, command], ...]
+    // timeScale: 1,
     // scope: undefined
 });
 ```
 
+- `scene` : A scene object, or a game object.
 - `timeUnit` : see [next section](tcrp-player.md#load-commands)
 - `dtMode` : see [next section](tcrp-player.md#load-commands)
 - `commands` : see [next section](tcrp-player.md#load-commands)
@@ -73,40 +100,77 @@ player.load(commands, scope, {
 - Commands : see also [Run commands](runcommands.md)
     ```javascript
     [
-        [dt, command],
-        [dt, command],
+        [time, command],
+        [time, command],
         ...
     ]
     ```
     - Format of each row :
         ```javascript
-        [dt, fnName, param0, param1, ...]
+        [time, fnName, param0, param1, ...]
+        // [time, callback, param0, param1, ...]
         ```
         ```javascript
-        [dt, [fnName, param0, param1, ...]]
+        [time, [fnName, param0, param1, ...]]
+        // [time, [callback, param0, param1, ...]]
         ```
         ```javascript
-        [dt, [command0, command1, ...]]
+        [time, [command0, command1, ...]]
         ```
-- timeUnit: time-unit of dt
-    - `'ms'`, or `0` : dt in millisecond
-    - `'s'`, `'sec'`, or 1 : dt in second
-- dtMode: mode of counting dt
-    - `'abs'`, `'absolute'`, or `0` : timeout = dt
-    - `'inc'`, `'increment'`, `1` : timeout = dt + previous-timeout
+- timeUnit: time-unit of *time*
+    - `'ms'`, or `0` : *time* in millisecond
+    - `'s'`, `'sec'`, or 1 : *time* in second
+- dtMode: mode of counting time
+    - `'abs'`, `'absolute'`, or `0` : timeout = *time*
+    - `'inc'`, `'increment'`, `1` : timeout = *time* + previous-*time*
+
+
+### Clear all commands
+
+```javascript
+player.clear();
+```
+
+### Append command
+
+```javascript
+player.append(time, fn, param0, param1, ...);
+```
+
+- `time` : Delay time
+- `fn` : 
+    - A function (callback) object.
+    - A string , to get function (callback) object from `scope`.
+- `param0`, `param1` ... : Parameters of callback.
 
 ### Start playing
 
 ```javascript
 player.start();
-// player.start(startAt);  // start-at time in ms
+// player.start(startAt);  // Start-at time in ms
 ```
 
 ### Events
 
+- Start
+    ```javascript
+    player.on('start', function(scene, player){});
+    ```
+- Pause
+    ```javascript
+    player.on('pause', function(scene, player){});
+    ```
+- Resume
+    ```javascript
+    player.on('resume', function(scene, player){});
+    ```
+- Stop
+    ```javascript
+    player.on('stop', function(scene, player){});
+    ```
 - Complete
     ```javascript
-    player.on('complete', function(player){});
+    player.on('complete', function(scene, player){});
     ```
 - Run command
     ```javascript
@@ -124,8 +188,16 @@ player.stop();
 ### Seek elapsed time
 
 ```javascript
-player.seek(time);   // elapsed time in ms
+player.seek(time);   // Elapsed time in ms
 ```
+
+### Seek to next command
+
+```javascript
+player.seekToNext();
+```
+
+Seek to time of next command. i.e. run next command immediately.
 
 ### State of player
 
@@ -139,7 +211,7 @@ var now = player.now;
 
 - Set
     ```javascript
-    player.setTimeScale(value);  // 0~1
+    player.setTimeScale(value);
     // player.timeScale = value;
     ```
 - Get

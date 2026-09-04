@@ -5,62 +5,122 @@ Move game object toward current angle of game object, with a constant speed.
 - Author: Rex
 - Arcade behavior of game object
 
-## Source code
-
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/bullet-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexbulletplugin.min.js)
-
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/bullet)
 
-User could import class directly, or install it by global plugin.
+### Install plugin
 
-### Import class
+#### Load minify file
 
-```javascript
-import rexBullet from './plugins/bullet.js';
-```
-
-### Install global plugin
-
-Enable [arcade physics engine](arcade-world.md) and install plugin in [configuration of game](game.md#configuration)
-
-```javascript
-import BulletPlugin from './plugins/bullet-plugin.js';
-
-var config = {
-    // ...
-    physics: {
-        default: 'arcade',
-        arcade: {
-            // debug: true
+- Enable [arcade physics engine](arcade-world.md) in [configuration of game](game.md#configuration)
+    ```javascript
+    var config = {
+        // ...
+        physics: {
+            default: 'arcade',
+            arcade: {
+                // debug: true
+            }
         }
-    },
-    plugins: {
-        global: [{
-            key: 'rexBullet',
-            plugin: BulletPlugin,
-            start: true
+    }
+    var game = new Phaser.Game(config);
+    ```
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.plugin('rexbulletplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexbulletplugin.min.js', true);
+    ```
+- Add bullet behavior
+    ```javascript
+    var bullet = scene.plugins.get('rexbulletplugin').add(gameObject, config);
+    ```
+
+#### Import plugin
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Enable [arcade physics engine](arcade-world.md) and install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import BulletPlugin from 'phaser4-rex-plugins/plugins/bullet-plugin.js';
+    var config = {
+        physics: {
+            default: 'arcade',
+            arcade: {
+                // debug: true
+            }
         },
         // ...
-        ]
+        plugins: {
+            global: [{
+                key: 'rexBullet',
+                plugin: BulletPlugin,
+                start: true
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add bullet behavior
+    ```javascript
+    var bullet = scene.plugins.get('rexBullet').add(gameObject, config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Enable [arcade physics engine](arcade-world.md) in [configuration of game](game.md#configuration)
+    ```javascript
+    var config = {
+        // ...
+        physics: {
+            default: 'arcade',
+            arcade: {
+                // debug: true
+            }
+        }
     }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+    var game = new Phaser.Game(config);
+    ```
+- Import class
+    ```javascript
+    import Bullet from 'phaser4-rex-plugins/plugins/bullet.js';
+    ```
+- Add bullet behavior
+    ```javascript
+    var bullet = new Bullet(gameObject, config);
+    ```
 
 ### Create instance
 
 ```javascript
 var bullet = scene.plugins.get('rexBullet').add(gameObject, {
     speed: 200,
-    // enable: true
+    // wrap: false,
+    // padding: 0,
+    // enable: true,
+
+    // angle: undefined,
+    // rotation: undefined
 });
 ```
 
 - `speed` : moving speed, pixels in second.
+- [Wrap](arcade-world.md#wrap)
+    - `wrap` : Set `true` to enable wrap mode. Default value is `false`.
+    - `padding`
 - `enable` : set `false` to disable moving.
+- `angle`, `rotation` : 
+    - `undefined` : Use angle of game object as angle of bullet. Default value.
+    - A number : Angle of bullet, in degrees or radians.
+
 
 ### Speed
 
@@ -72,4 +132,30 @@ var bullet = scene.plugins.get('rexBullet').add(gameObject, {
 - Get
     ```javascript
     var speed = bullet.speed;
+    ```
+
+### Set wrap mode
+
+```javascript
+bullet.setWrapMode(wrap, padding);
+```
+
+- `wrap` : Set `true` to enable wrap mode.
+
+### Angle
+
+- Set angle
+    ```javascript
+    bullet.setAngle(degrees);
+    // bullet.angle = degrees;
+    ```
+    or
+    ```javascript
+    bullet.setRotation(radians);
+    // bullet.rotation  = radians;
+    ```
+- Use angle of game object
+    ```javascript
+    bullet.setAngle();
+    // bullet.setRotation();
     ```

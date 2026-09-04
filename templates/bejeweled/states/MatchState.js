@@ -1,27 +1,27 @@
-import FSM from '../../../plugins/fsm.js';
+import BaseState from './BaseState.js';
+// Actions
+import EliminateChess from '../actions/EliminateChess.js';
+import FallingAllChess from '../actions/FallingAllChess.js';
+import IsPromise from '../../../plugins/utils/object/IsPromise.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
-const SetStruct = Phaser.Structs.Set;
+import { Structs as PhaserStructs, Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
+const SetStruct = PhaserStructs.Set;
 
-class State extends FSM {
-    constructor(parent, config) {
-        super(config);
-        this.parent = parent; // Bejeweled
-        this.scene = parent.scene; // Bejeweled.scene
-        this.board = parent.board; // Bejeweled.board
+class State extends BaseState {
+    constructor(bejeweled, config) {
+        super(bejeweled, config);
+        // this.bejeweled = bejeweled;                // Bejeweled
+        // this.boardWrapper = bejeweled.boardWrapper;// Bejeweled.boardWrapper
+
         this.totalMatchedLinesCount = 0;
-        this.eliminatedChessArray;
+        this.eliminatedPieceArray = undefined;
 
-        // callbacks
-        // on matched lines
-        this.onMatchLinesCallback = GetValue(config, 'onMatchLinesCallback', undefined);
-        this.onMatchLinesCallbackScope = GetValue(config, 'onMatchLinesCallbackScope', undefined);
-        // on eliminating chess
-        this.onEliminatingChessCallback = GetValue(config, 'onEliminatingChessCallback', undefined);
-        this.onEliminatingChessCallbackScope = GetValue(config, 'onEliminatingChessCallbackScope', undefined);
+        // Actions
+        // Eliminating action
+        this.eliminatingAction = GetValue(config, 'eliminatingAction', EliminateChess);
         // on falling chess
-        this.onFallingChessCallback = GetValue(config, 'onFallingChessCallback', undefined);
-        this.onFallingChessCallbackScope = GetValue(config, 'onFallingChessCallback', undefined);
+        this.fallingAction = GetValue(config, 'fallingAction', FallingAllChess);
 
         var debug = GetValue(config, 'debug', false);
         if (debug) {
@@ -32,16 +32,10 @@ class State extends FSM {
     shutdown() {
         super.shutdown();
 
-        this.parent = undefined;
-        this.scene = undefined;
-        this.board = undefined;
-        this.eliminatedChessArray = undefined;
-        this.onMatchLinesCallback = undefined;
-        this.onMatchLinesCallbackScope = undefined;
-        this.onEliminatingChessCallback = undefined;
-        this.onEliminatingChessCallbackScope = undefined;
-        this.onFallingChessCallback = undefined;
-        this.onFallingChessCallbackScope = undefined;
+        this.eliminatedPieceArray = undefined;
+        // Actions
+        this.eliminatingAction = undefined;
+        this.fallingAction = undefined;
         return this;
     }
 
@@ -50,55 +44,63 @@ class State extends FSM {
         return this;
     }
 
+    setEliminatedPieces(pieces) {
+        if (Array.isArray(pieces)) {
+            pieces = [...new Set(pieces)];
+        }
+        this.eliminatedPieceArray = pieces;
+        return this;
+    }
+
+    getEliminatedPieces() {
+        return this.eliminatedPieceArray;
+    }
+
     // START
     enter_START() {
         this.totalMatchedLinesCount = 0;
-        this.next()
+
+        this.bejeweled.emit('match-start', this.boardWrapper.board, this.bejeweled);
+
+        this.next();
     }
     next_START() {
-        return 'MATCH3';
+        var pieces = this.getEliminatedPieces();
+        return (!pieces) ? 'MATCH3' : 'ELIMINATING';
     }
     // START
 
     // MATCH3
     enter_MATCH3() {
-        var matchedLines = this.board.getAllMatch();
-        this.totalMatchedLinesCount += matchedLines.length;
-        // callback
-        var callback = this.onMatchLinesCallback,
-            scope = this.onMatchLinesCallbackScope;
-        if (callback) {
-            var board = this.board.board;
-            if (scope) {
-                callback.call(scope, matchedLines, board);
-            } else {
-                callback(matchedLines, board);
-            }
-            // add or remove eliminated chess
-        }
-        switch (matchedLines.length) {
+        var matchedLines = this.boardWrapper.getAllMatch();
+
+        this.bejeweled.emit('match', matchedLines, this.boardWrapper.board, this.bejeweled);
+
+        var matchedLinesCount = matchedLines.length;
+        this.totalMatchedLinesCount += matchedLinesCount;
+        var pieces;
+        switch (matchedLinesCount) {
             case 0:
-                this.eliminatedChessArray = [];
+                pieces = [];
                 break;
             case 1:
-                this.eliminatedChessArray = matchedLines[0].entries;
+                pieces = [...matchedLines[0]];
                 break;
             default:
-                // Put all chess to a set
-                var newSet = new SetStruct();
-                for (var i = 0, cnt = matchedLines.length; i < cnt; i++) {
-                    matchedLines[i].entries.forEach(function (value) {
-                        newSet.set(value);
-                    });
+                pieces = [];
+                for (var i = 0; i < matchedLinesCount; i++) {
+                    pieces.push(...matchedLines[i]);
                 }
-                this.eliminatedChessArray = newSet.entries;
                 break;
         }
+
+        this.setEliminatedPieces(pieces);
         this.next();
     }
     next_MATCH3() {
         var nextState;
-        if (this.eliminatedChessArray.length === 0) {
+        var pieces = this.getEliminatedPieces();
+        if (pieces && (pieces.length === 0)) {
             nextState = 'END'
         } else {
             nextState = 'ELIMINATING';
@@ -109,61 +111,53 @@ class State extends FSM {
 
     // ELIMINATING
     enter_ELIMINATING() {
-        // callback
-        var task;
-        var chessArray = this.eliminatedChessArray,
-            callback = this.onEliminatingChessCallback,
-            scope = this.onEliminatingChessCallbackScope;
-        if (callback) {
-            var board = this.board.board;
-            if (scope) {
-                task = callback.call(scope, chessArray, board);
-            } else {
-                task = callback(chessArray, board);
-            }
+        var board = this.boardWrapper.board,
+            bejeweled = this.bejeweled,
+            pieces = this.getEliminatedPieces();
+
+        this.bejeweled.emit('eliminate', pieces, board, bejeweled);
+
+        var result = this.eliminatingAction(pieces, board, bejeweled);
+        if (IsPromise(result)) {
+            bejeweled.waitEvent(bejeweled, 'eliminate.complete');
+            result
+                .then(function () {
+                    bejeweled.emit('eliminate.complete');
+                })
         }
-        // remove eliminated chess
-        var board = this.board.board;
-        chessArray.forEach(board.removeChess, board);
-        // run eliminating task
-        if (task) {
-            // custom eliminating task, wait for 'complete' event
-            task.once('complete', this.next, this);
-        } else {
-            // default eliminating task
-            this.board.eliminateChess(chessArray, this.next, this);
-        }
+
+        // Remove eliminated chess
+        pieces.forEach(board.removeChess, board);
+
+        // To next state when all completed
+        this.next();
     }
     next_ELIMINATING() {
         return 'FALLING';
     }
     exit_ELIMINATING() {
-        this.eliminatedChessArray = undefined;
+        this.setEliminatedPieces();
     }
     // ELIMINATING
 
     // FALLING
     enter_FALLING() {
-        // callback
-        var task;
-        var callback = this.onFallingChessCallback,
-            scope = this.onFallingChessCallbackScope;
-        if (callback) {
-            var board = this.board.board;
-            if (scope) {
-                task = callback.call(scope, board);
-            } else {
-                task = callback(board);
-            }
+        var board = this.boardWrapper.board,
+            bejeweled = this.bejeweled;
+
+        this.bejeweled.emit('fall', board, bejeweled);
+
+        var result = this.fallingAction(board, bejeweled);
+        if (IsPromise(result)) {
+            bejeweled.waitEvent(bejeweled, 'fall.complete');
+            result
+                .then(function () {
+                    bejeweled.emit('fall.complete');
+                })
         }
-        // run falling task
-        if (task) {
-            // custom falling task, wait for 'complete' event
-            task.once('complete', this.next, this);
-        } else {
-            // default falling task
-            this.board.falling(this.next, this);
-        }
+
+        // To next state when all completed
+        this.next();
     }
     next_FALLING() {
         return 'FILL';
@@ -172,7 +166,10 @@ class State extends FSM {
 
     // FILL
     enter_FILL() {
-        this.board.fill();
+        this.boardWrapper.fillPrepareRows();
+
+        this.bejeweled.emit('fill', this.boardWrapper.board, this.bejeweled);
+
         this.next();
     }
     next_FILL() {
@@ -182,6 +179,8 @@ class State extends FSM {
 
     // END
     enter_END() {
+        this.bejeweled.emit('match-end', this.boardWrapper.board, this.bejeweled);
+
         this.emit('complete');
     }
     // END

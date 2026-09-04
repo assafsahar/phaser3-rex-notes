@@ -1,7 +1,8 @@
 import CreateChessData from '../chess/GetChessData.js';
 import IsMiniBoardObject from './../miniboard/IsMiniBoardObject.js';
 
-const Base = Phaser.GameObjects.Polygon;
+import { GameObjects as PhaserGameObjects } from 'phaser';
+const Base = PhaserGameObjects.Polygon;
 class Shape extends Base {
     constructor(board, tileX, tileY, tileZ, fillColor, fillAlpha, addToBoard) {
         if (addToBoard === undefined) {
@@ -26,8 +27,9 @@ class Shape extends Base {
             worldY = tileY;
         }
         var points = board.getGridPoints(undefined, undefined, true);
-        shiftToO(points);
+        ShiftToO(points);
         super(scene, worldX, worldY, points, fillColor, fillAlpha);
+        this.type = 'rexShapeChess';
 
         if (addToBoard) {
             if (isMiniBoard) { // Chess-Container
@@ -41,7 +43,7 @@ class Shape extends Base {
     }
 }
 
-var shiftToO = function (points) {
+var ShiftToO = function (points) {
     var minX = Infinity;
     var minY = Infinity;
     var point;

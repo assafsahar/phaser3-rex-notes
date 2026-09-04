@@ -2,7 +2,7 @@
 
 Camera to display game objects, built-in object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
@@ -14,14 +14,49 @@ Each scene has one or more cameras.
     ```javascript
     var camera = scene.cameras.main;
     ```
+- Get camera by name
+    ```javascript
+    var camera = scene.cameras.getCamera(name);
+    ```
 - Add new camera
     ```javascript
-    var camera = scene.cameras.add(x, y, width, height);
+    var camera = scene.cameras.add();
+    // var camera = scene.cameras.add(x, y, width, height);
     ```
-
+- Add new camera with name
+    ```javascript
+    var camera = scene.cameras.add(undefined, undefined, undefined, undefined, false, name);
+    // var camera = scene.cameras.add(x, y, width, height, makeMain, name);
+    ```
 - Add existed camera
     ```javascript
     scene.cameras.addExisting(camera);
+    ```
+
+### Create cameras from JSON
+
+```javascript
+scene.cameras.fromJSON(config);
+// scene.cameras.fromJSON(configArray);
+```
+
+- `config` :
+    ```javascript
+    {
+        name: '',
+        x: 0,
+        y: 0,
+        width: scene.sys.scale.width,
+        height: scene.sys.scale.height,
+        zoom: 1,
+        rotation: 0,
+        scrollX: 0,
+        scrollY: 0,
+        roundPixels: false,
+        visible: true,
+        backgroundColor: false,
+        bounds: null, // {x, y, width, height}
+    }
     ```
 
 ### Remove camera
@@ -75,30 +110,6 @@ camera.destroy();
         var displayHeight = camera.displayHeight;
         ```
 
-#### World coordinates
-
-- World view, a [rectangle object](geom-rectangle.md)
-    ```javascript
-    var worldView = camera.worldView;
-    var x = worldView.x;
-    var y = worldView.y;
-    var width = worldView.width;  // displayWidth
-    var height = worldView.height; // displayHeight
-    var left = worldView.left;  // x
-    var right = worldView.right;  // x + width
-    var top = worldView.top;  // y
-    var bottom = worldView.bottom;  // y + height
-    var centerX = worldView.centerX;
-    var centerY = worldView.centerY;
-    var isInside = worldView.contains(x, y);
-    var randPoint = worldView.getRandomPoint(point); // point: {x, y}
-    ```
-- Middle point
-    ```javascript
-    var x = camera.midPoint.x;
-    var y = camera.midPoint.y;
-    ```
-
 ### Zoom
 
 - Set
@@ -122,6 +133,20 @@ camera.destroy();
 - Get
     ```javascript
     var angle = camera.rotation;  // angle in radians
+    ```
+
+#### Origin
+
+- Set
+    ```javascript
+    camera.setOrigin(x, y);
+    // camera.originX = 0.5;
+    // camera.originY = 0.5;
+    ```
+- Get
+    ```javascript
+    var originX = camera.originX
+    var originY = camera.originY
     ```
 
 ### Visible
@@ -184,7 +209,11 @@ camera.centerToSize();
     camera.startFollow(gameObject);
     // camera.startFollow(gameObject, roundPx, lerpX, lerpY, offsetX, offsetY);  // 
     ```
-    roundPx : set true to round the camera position to integers
+    - `roundPx` : set true to round the camera position to integers
+    - `lerpX`, `lerpY` : A value between 0 and 1. 
+        - `1` : Camera will instantly snap to the target coordinates.
+        - `0.1` : Camera will more slowly track the target, giving a smooth transition.
+    - `offsetX`, `offsetY` : The horizontal/vertical offset from the camera follow target.x position.
 - Stop following
     ```javascript
     camera.stopFollow();
@@ -216,6 +245,13 @@ camera.centerToSize();
         camera.setDeadzone();
         ```
 
+##### Events
+
+- Follower Update
+    ```javascript
+    camera.on('followupdate', function(camera, gameObject){ })
+    ```
+
 #### Scroll factor
 
 See [Scroll factor](gameobject.md#scroll-factor) in game object.
@@ -232,6 +268,37 @@ See [Scroll factor](gameobject.md#scroll-factor) in game object.
     // var out = camera.getBounds(out);
     ```
 
+### World coordinates
+
+- World view, a [rectangle object](geom-rectangle.md)
+    ```javascript
+    var worldView = camera.worldView;
+    var x = worldView.x;
+    var y = worldView.y;
+    var width = worldView.width;  // displayWidth
+    var height = worldView.height; // displayHeight
+    var left = worldView.left;  // x
+    var right = worldView.right;  // x + width
+    var top = worldView.top;  // y
+    var bottom = worldView.bottom;  // y + height
+    var centerX = worldView.centerX;
+    var centerY = worldView.centerY;
+    var isInside = worldView.contains(x, y);
+    var randPoint = worldView.getRandomPoint(point); // point: {x, y}
+    ```
+- Middle point
+    ```javascript
+    var x = camera.midPoint.x;
+    var y = camera.midPoint.y;
+    ```
+-  Get world position
+    ```javascript
+    var out = camera.getWorldPoint(x, y);
+    // var out = camera.getWorldPoint(x, y, out);
+    ```
+    - `x` , `y` : Position of camera.
+    - `out` : World position `{x, y}`
+
 ### Set background color
 
 ```javascript
@@ -243,21 +310,13 @@ camera.setBackgroundColor(color);
 Ignored game objects won't show at that camera.
 
 ```javascript
-camera.ignore(gameObject);  // a game object, or an array of game objects
+camera.ignore(gameObject);
 ```
 
-### Get world position
-
-```javascript
-var out = camera.getWorldPoint(x, y);
-// var out = camera.getWorldPoint(x, y, out);
-```
-
-- `x` , `y` : Position of camera.
-- `out` : World position `{x, y}`
-
-!!! warning
-    Works for zoom of 1 with any resolution, but **resolution > 1 and zoom !== 1 breaks**
+- `gameObject` :
+    - A game object
+    - An array of game objects
+    - A [group](group.md)
 
 ### Get cameras below pointer
 
@@ -267,3 +326,43 @@ var cameras = scene.cameras.getCamerasBelowPointer(pointer);
 
 - `cameras` : An array of cameras.
 - `pointer` : `{x, y}`
+
+#### Pause, resume
+
+- Pause
+    ```javascript
+    camera.renderToTexture = false; // Pause
+    ```
+- Resume
+    ```javascript
+    camera.renderToTexture = true; // Resume
+    ```
+
+#### Clear
+
+```javascript
+camera.clearRenderToTexture();
+```
+
+### Children
+
+#### Visible children
+
+- Filter visible children
+    ```javascript
+    var visible = scene.cameras.getVisibleChildren(children, camera);
+    ```
+- Get all visible children
+    ```javascript
+    var visible = scene.cameras.getVisibleChildren(scene.sys.displayList.list, camera);
+    ```
+
+See also: [gameObject.willRender(camera)](gameobject.md/#will-render)
+
+#### Render children
+
+```javascript
+var children = camera.renderList;
+```
+
+Read only.

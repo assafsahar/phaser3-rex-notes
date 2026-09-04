@@ -5,9 +5,9 @@ Await custom task in preload stage.
 - Author: Rex
 - Custom File of loader
 
-## Source code
+## Live demos
 
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/awaitloader-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexawaitloaderplugin.min.js)
+- [Wait 1000ms](https://codepen.io/rexrainbow/pen/jvNGbm)
 
 ## Usage
 
@@ -15,41 +15,104 @@ Await custom task in preload stage.
 
 ### Install plugin
 
-Install plugin in [configuration of game](game.md#configuration)
+#### Load minify file
 
-```javascript
-var config = {
-    // ...
-    plugins: {
-        global: [{
-            key: 'AwaitLoader',
-            plugin: AwaitLoaderPlugin,
-            start: true
-        },
-        // ...
-        ]
+- Load plugin (minify file) in preload stage
+    ```javascript
+    var sceneConfig = {
+        // ....
+        pack: {
+            files: [{
+                type: 'plugin',
+                key: 'rexawaitloaderplugin',
+                url: 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/    rexawaitloaderplugin.min.js',
+                start: true
+            }]
+        }
+    };
+    class MyScene extends Phaser.Scene {
+        constructor() {
+            super(sceneConfig)
+        }
+        // ....
+
+        preload() {
+            // rexawaitloaderplugin will be installed before preload(), but not added to loader yet
+            // Call addToScene(scene) to add this await loader to loader of this scene
+            this.plugins.get('rexawaitloaderplugin').addToScene(this);
+
+            this.load.rexAwait(function(successCallback, failureCallback) { 
+                // successCallback()
+            });
+        }
     }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+    ```
 
-or install it in previous scene (i.e. a preload scene).
+#### Import plugin
 
-!!! warning
-    The best way of installing this plugin is to load it in game config. 
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import AwaitLoaderPlugin from 'phaser4-rex-plugins/plugins/awaitloader-plugin.js';
+    var config = {
+        // ...
+        plugins: {
+            global: [{
+                key: 'rexAwaitLoader',
+                plugin: AwaitLoaderPlugin,
+                start: true
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- In preload stage
+    ```javascript
+    scene.load.rexAwait(function(successCallback, failureCallback) { 
+        // successCallback()
+    });
+    ```
 
-    This custom file loader won't be added into loader of current scene after loader is created (i.e. loading plugin using `this.load.plugin(...)`, or loading in payload of scene)
+#### Import class
 
-### Await task
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import AwaitLoader from 'phaser4-rex-plugins/plugins/awaitloader.js';
+    ```
+- Start loading task
+    ```javascript
+    AwaitLoader.call(scene.load, function(successCallback, failureCallback) {
+        // successCallback();
+    }, scope)
+    ```
+
+### Start loading task
 
 In preload stage:
+
+```javascript
+scene.load.rexAwait(function(successCallback, failureCallback) {
+    // successCallback();
+}, scope);
+```
+
+or
 
 ```javascript
 var callback = function(successCallback, failureCallback) {
     // successCallback();
 };
-this.load.rexAwait(key, {
+scene.load.rexAwait(key, {
     callback: callback,
     // scope: scope
 });

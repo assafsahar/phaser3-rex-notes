@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import ClockPlugin from '../../plugins/clock-plugin.js';
 
 class Demo extends Phaser.Scene {
@@ -5,8 +6,6 @@ class Demo extends Phaser.Scene {
         super({
             key: 'examples'
         })
-        this.clock;
-        this.text;
     }
 
     preload() {}

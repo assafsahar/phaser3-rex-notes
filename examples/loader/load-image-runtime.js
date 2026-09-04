@@ -1,5 +1,4 @@
-const ImageFile = Phaser.Loader.FileTypes.ImageFile;
-const XHRLoader = Phaser.Loader.XHRLoader;
+import Phaser from 'phaser';
 
 class Demo extends Phaser.Scene {
     constructor() {
@@ -9,26 +8,31 @@ class Demo extends Phaser.Scene {
     }
 
     preload() {
-        // load image in preload stage
-        this.load.image('arrow', 'assets/images/arrow.png');
+        this.load.image('classroom', 'assets/images/backgrounds/classroom.png');
     }
 
     create() {
-        this.add.image(700, 500, 'arrow');
+        // Load file in create stage
+        this.load
+            .image('mushroom', 'assets/images/mushroom.png')
+            .once('filecomplete-image-mushroom', function () {
+                this.add.image(350, 300, 'mushroom');
+            }, this)
+            .start();
 
-        // load image in update loop
-        this.input.on('pointerdown', function () {
-            this.load
-                .image('map', 'https://maps.googleapis.com/maps/api/staticmap?center=Brooklyn+Bridge,New+York,NY&zoom=13&size=600x300&maptype=roadmap')
-                .once('complete', function () {
-                    this.add.image(0, 0, 'map').setOrigin(0);
-                }, this)
+        // Load file out of preload/create stage
+        var scene = this;
+        setTimeout(function () {
+            scene.load
+                .image('dude', 'assets/images/phaser-dude.png')
+                .once('filecomplete-image-dude', function () {
+                    scene.add.image(450, 300, 'dude');
+                })
                 .start();
-        }, this);
-
+        }, 500)
     }
 
-    update() {}
+    update() { }
 }
 
 var config = {

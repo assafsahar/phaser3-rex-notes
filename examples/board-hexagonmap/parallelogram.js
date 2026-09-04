@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import BoardPlugin from '../../plugins/board-plugin.js';
 
 class Demo extends Phaser.Scene {
@@ -7,7 +8,7 @@ class Demo extends Phaser.Scene {
         })
     }
 
-    preload() {}
+    preload() { }
 
     create() {
         var staggeraxis = 'y';
@@ -39,32 +40,8 @@ class Demo extends Phaser.Scene {
         }
     }
 
-    update() {}
+    update() { }
 }
-
-var getQuadGrid = function (scene) {
-    var grid = scene.rexBoard.add.quadGrid({
-        x: 400,
-        y: 100,
-        cellWidth: 100,
-        cellHeight: 50,
-        type: 1
-    });
-    return grid;
-}
-
-var getHexagonGrid = function (scene) {
-    var staggeraxis = 'x';
-    var staggerindex = 'odd';
-    var grid = scene.rexBoard.add.hexagonGrid({
-        x: 100,
-        y: 100,
-        size: 30,
-        staggeraxis: staggeraxis,
-        staggerindex: staggerindex
-    })
-    return grid;
-};
 
 var config = {
     type: Phaser.AUTO,

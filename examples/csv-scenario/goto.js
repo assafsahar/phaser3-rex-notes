@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import CSVScenarioPlugin from '../../plugins/csvscenario-plugin.js';
 
 var csvString =

@@ -1,21 +1,15 @@
 import BaseSizer from '../basesizer/BaseSizer.js';
-import ParsePaddingConfig from '../utils/ParsePaddingConfig.js';
-import GetChildrenWidth from './GetChildrenWidth.js';
-import GetChildrenHeight from './GetChildrenHeight.js';
-import GetChildrenSizers from './GetChildrenSizers.js';
-import Layout from './Layout.js';
-import ORIENTATIONMODE from '../utils/OrientationConst.js';
+import Methods from './Methods.js';
+import GetOrientationMode from '../utils/GetOrientationMode.js';
 import GetMaxChildWidth from './GetMaxChildWidth.js';
 import GetMaxChildHeight from './GetMaxChildHeight.js';
 
-const IsPlainObject = Phaser.Utils.Objects.IsPlainObject;
-const GetValue = Phaser.Utils.Objects.GetValue;
-const RemoveItem = Phaser.Utils.Array.Remove;
-const ALIGN_CENTER = Phaser.Display.Align.CENTER;
+import { Utils as PhaserUtils } from 'phaser';
+const IsPlainObject = PhaserUtils.Objects.IsPlainObject;
+const GetValue = PhaserUtils.Objects.GetValue;
 
 class FixWidthSizer extends BaseSizer {
-    constructor(scene, x, y, minWidth, minHeight, orientation, space) {
-        var config;
+    constructor(scene, x, y, minWidth, minHeight, config) {
         if (IsPlainObject(x)) {
             config = x;
             x = GetValue(config, 'x', 0);
@@ -26,93 +20,79 @@ class FixWidthSizer extends BaseSizer {
             config = minWidth;
             minWidth = GetValue(config, 'width', undefined);
             minHeight = GetValue(config, 'height', undefined);
-        } else if (IsPlainObject(orientation)) {
-            config = orientation;
-        } else if (IsPlainObject(space)) {
-            config = space;
         }
 
-        if (config !== undefined) {
-            orientation = GetValue(config, 'orientation', 0);
-            space = GetValue(config, 'space', config);
-        }
-        if (orientation === undefined) {
-            orientation = 0;
-        }
-        if (space === undefined) {
-            space = 0;
-        }
         super(scene, x, y, minWidth, minHeight, config);
-
         this.type = 'rexFixWidthSizer';
         this.sizerChildren = [];
-        this.setOrientation(orientation);
-        this.setPadding(space);
-        this.setItemSpacing(GetValue(space, 'item', 0));
-        this.setLineSpacing(GetValue(space, 'line', 0));
-    }
 
-    destroy(fromScene) {
-        //  This Game Object has already been destroyed
-        if (!this.scene) {
-            return;
-        }
-        this.sizerChildren.length = 0;
-        super.destroy(fromScene);
+        this.runChildrenWrapFlag = true;
+
+        this.setOrientation(GetValue(config, 'orientation', 0));
+        this.setItemSpacing(GetValue(config, 'space.item', 0));
+        this.setLineSpacing(GetValue(config, 'space.line', 0));
+        this.setIntentLeft(
+            GetValue(config, 'space.indentLeftOdd', 0),
+            GetValue(config, 'space.indentLeftEven', 0)
+        );
+        this.setIntentTop(
+            GetValue(config, 'space.indentTopOdd', 0),
+            GetValue(config, 'space.indentTopEven', 0)
+        );
+        this.setAlign(GetValue(config, 'align', 0));
+        this.setJustifyPercentage(GetValue(config, 'justifyPercentage', 0.25));
+        this.setRTL(GetValue(config, 'rtl', false));
+
+        this.wrapResult = undefined;  // {lines, width, height}
+
+        this.addChildrenMap('items', this.sizerChildren);
     }
 
     setOrientation(orientation) {
-        if (typeof (orientation) === 'string') {
-            orientation = ORIENTATIONMODE[orientation];
-        }
-        this.orientation = orientation;
-        return this;
-    }
-
-    setPadding(paddingConfig) {
-        this.padding = ParsePaddingConfig(paddingConfig);
+        this.orientation = GetOrientationMode(orientation);
         return this;
     }
 
     setItemSpacing(space) {
-        this.itemSpacing = space;
+        this.space.item = space;
         return this;
     }
 
     setLineSpacing(space) {
-        this.lineSpacing = space;
+        this.space.line = space;
         return this;
     }
 
-    add(gameObject, paddingConfig) {
-        super.add(gameObject);
+    setIntentLeft(odd, even) {
+        this.space.indentLeftOdd = odd;
+        this.space.indentLeftEven = even;
+        return this;
+    }
 
-        if (paddingConfig === undefined) {
-            paddingConfig = 0;
+    setIntentTop(odd, even) {
+        this.space.indentTopOdd = odd;
+        this.space.indentTopEven = even;
+        return this;
+    }
+
+    setAlign(align) {
+        if (typeof (align) === 'string') {
+            align = ALIGN[align];
         }
-
-        var config = this.getSizerConfig(gameObject);
-        config.parent = this;
-        config.align = ALIGN_CENTER;
-        config.padding = ParsePaddingConfig(paddingConfig);
-        this.sizerChildren.push(gameObject);
+        this.align = align;
         return this;
     }
 
-    insert(index, gameObject, paddingConfig, expand) {
-        this.add(gameObject, paddingConfig, expand);
-        this.moveTo(gameObject, index);
+    setJustifyPercentage(value) {
+        this.justifyPercentage = value;
         return this;
     }
 
-    remove(gameObject) {
-        var config = this.getSizerConfig(gameObject);
-        if (config.parent !== this) {
-            return this;
+    setRTL(enabled) {
+        if (enabled === undefined) {
+            enabled = true;
         }
-        config.parent = undefined;
-        RemoveItem(this.sizerChildren, gameObject);
-        super.remove(gameObject);
+        this.rtl = enabled;
         return this;
     }
 
@@ -131,15 +111,19 @@ class FixWidthSizer extends BaseSizer {
     }
 }
 
-var methods = {
-    getChildrenWidth: GetChildrenWidth,
-    getChildrenHeight: GetChildrenHeight,
-    getChildrenSizers: GetChildrenSizers,
-    layout: Layout,
+const ALIGN = {
+    left: 0, top: 0,
+    right: 1, bottom: 1,
+    center: 2,
+    justify: 3,
+    'justify-left': 3, 'justify-top': 3,
+    'justify-right': 4, 'justify-bottom': 4,
+    'justify-center': 5
 }
+
 Object.assign(
     FixWidthSizer.prototype,
-    methods
+    Methods
 );
 
 export default FixWidthSizer;

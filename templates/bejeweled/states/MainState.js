@@ -1,17 +1,38 @@
-import FSM from '../../../plugins/fsm.js';
+import BaseState from './BaseState.js';
 import MatchState from './MatchState.js';
+// Actions
+import PlaceChess from '../actions/PlaceChess.js';
+import SelectChess from '../actions/SelectChess.js';
+import ClickChess from '../actions/ClickChess.js';
+import SwapChess from '../actions/SwapChess.js'
+import IsPromise from '../../../plugins/utils/object/IsPromise.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
+import { Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
 
-class State extends FSM {
-    constructor(parent, config) {
-        super(config);
-        this.parent = parent; // Bejeweled
-        this.scene = parent.scene; // Bejeweled.scene
-        this.board = parent.board; // Bejeweled.board
+class State extends BaseState {
+    constructor(bejeweled, config) {
+        super(bejeweled, config);
+        // this.bejeweled = bejeweled;      // Bejeweled
+        // this.boardWrapper = bejeweled.board; // Bejeweled.board
+
         this.selectedChess1;
         this.selectedChess2;
-        this.matchState = new MatchState(parent, config); // sub-state        
+        this.clickedChess;
+        this.matchState = new MatchState(bejeweled, config); // sub-state
+
+        // Actions
+        this.placeAction = GetValue(config, 'placeAction', PlaceChess);
+        // select1 action
+        this.select1Action = GetValue(config, 'select1Action', SelectChess);
+        // select2 action
+        this.select2Action = GetValue(config, 'select2Action', this.select1Action);
+        // click action
+        this.clickAction = GetValue(config, 'clickAction', ClickChess);
+        // Swap action
+        this.swapAction = GetValue(config, 'swapAction', SwapChess);
+        // UndoSwap action
+        this.undoSwapAction = GetValue(config, 'undoSwapAction', this.swapAction);
 
         var debug = GetValue(config, 'debug', false);
         if (debug) {
@@ -21,24 +42,19 @@ class State extends FSM {
 
     shutdown() {
         super.shutdown();
+
         this.matchState.shutdown();
 
-        this.parent = undefined;
-        this.scene = undefined;
-        this.board = undefined;
+        this.matchState = undefined;
         this.selectedChess1 = undefined;
         this.selectedChess2 = undefined;
-        return this;
-    }
-
-    destroy() {
-        this.shutdown();
+        this.clickedChess = undefined;
         return this;
     }
 
     // START
     enter_START() {
-        this.board.init(); // Fill background tiles
+        this.boardWrapper.init(); // Fill background tiles
         this.next();
     }
     next_START() {
@@ -48,66 +64,215 @@ class State extends FSM {
 
     // RESET
     enter_RESET() {
-        this.board.reset(); // Refill chess
+        var board = this.boardWrapper;
+
+        var done = false;
+        while (!done) {
+            board.reset(); // Refill chess
+            done = board.inputTest();
+        }
+
         this.next();
     }
     next_RESET() {
-        return 'PRETEST';
+        return 'PLACE';
     }
     // RESET
 
+    // PLACE
+    enter_PLACE() {
+        var board = this.boardWrapper.board,
+            bejeweled = this.bejeweled;
 
-    // PRETEST
-    enter_PRETEST() {
+        bejeweled.emit('place', board, bejeweled);
+
+        var chessArray = this.boardWrapper.getChessArray();
+        var result = this.placeAction(chessArray, board, bejeweled);
+        if (IsPromise(result)) {
+            bejeweled.waitEvent(bejeweled, 'place.complete');
+            result
+                .then(function () {
+                    bejeweled.emit('place.complete');
+                })
+        }
+
         this.next();
     }
-    next_PRETEST() {
+    next_PLACE() {
+        return 'SELECT1START';
+    }
+    // PLACE
+
+    // SELECT1START
+    enter_SELECT1START() {
+        this.clearInput();
+
+        this.bejeweled.emit('select1-start', this.boardWrapper.board, this.bejeweled);
+    }
+    selectChess1(chess) {
+        if (
+            (this.state === 'SELECT1START') &&
+            (chess.getData('swappable') || chess.getData('clickable'))
+        ) {
+
+            this.selectedChess1 = chess;
+            this.next();
+        }
+        return this;
+    }
+    next_SELECT1START() {
         var nextState;
-        if (this.board.preTest()) {
+        if (this.selectedChess1) {
             nextState = 'SELECT1';
-        } else {
-            nextState = 'RESET';
         }
         return nextState;
     }
-    // PRETEST
+    // SELECT1START
 
     // SELECT1
     enter_SELECT1() {
-        this.selectedChess1 = undefined;
-        this.selectedChess2 = undefined;
+        var board = this.boardWrapper.board,
+            bejeweled = this.bejeweled,
+            chess = this.selectedChess1;
+
+        this.bejeweled.emit('select1', chess, board, bejeweled);
+
+        var result = this.select1Action(chess, board, bejeweled);
+        if (IsPromise(result)) {
+            bejeweled.waitEvent(bejeweled, 'select1.complete');
+            result
+                .then(function () {
+                    bejeweled.emit('select1.complete');
+                })
+        }
+
+        // To next state when all completed
+        this.next();
     }
     next_SELECT1() {
-        var nextState;
-        if (this.selectedChess1 !== undefined) {
-            nextState = 'SELECT2';
-        }
-        return nextState;
+        return 'SELECT2START';
     }
     // SELECT1
 
+    // SELECT2START
+    enter_SELECT2START() {
+        this.bejeweled.emit('select2-start', this.boardWrapper.board, this.bejeweled);
+    }
+    selectChess2(chess) {
+        if (
+            (this.state === 'SELECT2START') &&
+            chess.getData('swappable')
+        ) {
 
-    // SELECT2    
-    next_SELECT2() {
-        var nextState;
-        if ((this.selectedChess2 !== undefined) &&
-            this.board.board.areNeighbors(this.selectedChess1, this.selectedChess2)) {
-            nextState = 'SWAP';
-        } else {
-            nextState = 'SELECT1';
+            this.selectedChess2 = chess;
+            this.next();
         }
-        return nextState;
+        return this;
+    }
+    clickChess(chess) {
+        if (
+            (this.state === 'SELECT2START') &&
+            chess.getData('clickable')
+        ) {
+
+            this.clickedChess = chess;
+            this.next();
+        }
+        return this;
+    }
+    next_SELECT2START() {
+        // clickChess()
+        if (this.clickedChess) {
+            return 'CLICK';
+        }
+
+        // selectChess2()
+        // Ensure two chess are neighbors
+        var direction = this.boardWrapper.board.getNeighborChessDirection(this.selectedChess1, this.selectedChess2);
+        var areNeighbors = (direction < 4);
+        return (areNeighbors) ? 'SELECT2' : 'SELECT1START';
+
+    }
+    // SELECT2START
+
+    // SELECT2
+    enter_SELECT2() {
+        var board = this.boardWrapper.board,
+            bejeweled = this.bejeweled,
+            chess = this.selectedChess2;
+
+        this.bejeweled.emit('select2', chess, board, bejeweled);
+
+        var result = this.select2Action(chess, board, bejeweled);
+        if (IsPromise(result)) {
+            bejeweled.waitEvent(bejeweled, 'select2.complete');
+            result
+                .then(function () {
+                    bejeweled.emit('select2.complete');
+                })
+        }
+
+        // To next state when all completed
+        this.next();
+    }
+    next_SELECT2() {
+        return 'SWAP';
     }
     // SELECT2
 
     // SWAP
     enter_SWAP() {
-        this.board.swapChess(this.selectedChess1, this.selectedChess2, this.next, this);
+        var board = this.boardWrapper.board,
+            bejeweled = this.bejeweled,
+            chess1 = this.selectedChess1,
+            chess2 = this.selectedChess2;
+
+        this.bejeweled.emit('swap', chess1, chess2, board, bejeweled);
+
+        var result = this.swapAction(chess1, chess2, board, bejeweled);
+        if (IsPromise(result)) {
+            bejeweled.waitEvent(bejeweled, 'swap.complete');
+            result
+                .then(function () {
+                    bejeweled.emit('swap.complete');
+                })
+        }
+
+        // To next state when all completed
+        this.next();
     }
     next_SWAP() {
         return 'MATCH3';
     }
     // SWAP
+
+    // CLICK
+    enter_CLICK() {
+        var board = this.boardWrapper.board,
+            bejeweled = this.bejeweled,
+            chess = this.clickedChess;
+
+        this.bejeweled.emit('click', chess, board, bejeweled);
+
+        var result = this.clickAction(chess, board, bejeweled);
+        if (IsPromise(result)) {
+            bejeweled.waitEvent(bejeweled, 'click.complete');
+            result
+                .then(function () {
+                    bejeweled.emit('click.complete');
+                })
+        }
+
+        // To next state when all completed
+        this.next();
+    }
+    setEliminatingChess(chessArray) {
+        this.matchState.setEliminatedPieces(chessArray);
+    }
+    next_CLICK() {
+        return 'MATCH3';
+    }
+    // CLICK
 
     // MATCH3
     enter_MATCH3() {
@@ -118,41 +283,76 @@ class State extends FSM {
     next_MATCH3() {
         var nextState;
         if (this.matchState.totalMatchedLinesCount === 0) {
-            nextState = 'UNDOSWAP';
+            // No matched line
+            if (this.selectedChess2) {  // Can undo swap
+                nextState = 'UNDOSWAP';
+            } else {
+                nextState = 'SELECT1START';
+            }
+        } else if (this.boardWrapper.inputTest()) {
+            nextState = 'SELECT1START';
         } else {
-            nextState = 'PRETEST';
+            nextState = 'RESET';
         }
         return nextState;
     }
     // MATCH3
 
-    // UNDO_SWAP
+    // UNDOSWAP
     enter_UNDOSWAP() {
-        this.board.swapChess(this.selectedChess1, this.selectedChess2, this.next, this);
+        var board = this.boardWrapper.board,
+            bejeweled = this.bejeweled,
+            chess1 = this.selectedChess1,
+            chess2 = this.selectedChess2;
+
+        this.bejeweled.emit('undo-swap', chess1, chess2, board, bejeweled);
+
+        var result = this.undoSwapAction(chess1, chess2, board, bejeweled);
+        if (IsPromise(result)) {
+            bejeweled.waitEvent(bejeweled, 'undo-swap.complete');
+            result
+                .then(function () {
+                    bejeweled.emit('undo-swap.complete');
+                })
+        }
+
+        // To next state when all completed
+        this.next();
     }
     next_UNDOSWAP() {
-        return 'SELECT1';
+        return 'SELECT1START';
     }
-    // UNDO_SWAP
+    // UNDOSWAP
 
-    // debug
+
+    // Utils
+    clearInput() {
+        this.selectedChess1 = undefined;
+        this.selectedChess2 = undefined;
+        this.clickedChess = undefined;
+        return this;
+    }
+
+    isAwaitingInput() {
+        var state = this.state
+        return (state === 'SELECT1START') || (state === 'SELECT2START');
+    }
+
+    runMatch3() {
+        if (!this.isAwaitingInput()) {
+            return this;
+        }
+        this.clearInput();
+        this.goto('MATCH3');
+        return this;
+    }
+
     printState() {
+        // debug
         console.log('Main state: ' + this.prevState + ' -> ' + this.state);
     }
+    // Utils
 
-    // Select chess
-    selectChess(chess) {
-        switch (this.state) {
-            case 'SELECT1':
-                this.selectedChess1 = chess;
-                this.next();
-                break;
-            case 'SELECT2':
-                this.selectedChess2 = chess;
-                this.next();
-                break;
-        }
-    }
 }
 
 export default State;

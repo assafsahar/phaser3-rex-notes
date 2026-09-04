@@ -1,88 +1,89 @@
 import Sizer from '../sizer/Sizer.js';
-import Space from '../utils/Space.js';
-import {
-    ButtonSetInteractive,
-    FireEvent
-} from './ButtonSetInteractive.js';
+import AddChildMethods from './AddChildMethods.js';
+import RemoveChildMethods from './RemoveChildMethods.js';
+import ButtonGroup from '../utils/buttongroup/ButtonGroup.js';
+import ButtonMethods from '../utils/buttongroup/ButtonMethods.js';
+import ButtonStateMethods from '../utils/buttongroup/ButtonStateMethods.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
+import { Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
 
 class Buttons extends Sizer {
     constructor(scene, config) {
         if (config === undefined) {
             config = {};
         }
-        // Create 
+
+        var buttonSpace = config.space;
+        if (typeof (buttonSpace) === 'number') {
+            config.space = { item: buttonSpace };
+        }
+
+        // Create
         super(scene, config);
         this.type = 'rexButtons';
-        this.eventEmitter = GetValue(config, 'eventEmitter', this);
-        this.groupName = GetValue(config, 'groupName', undefined);
+        this.buttonGroup = new ButtonGroup({
+            parent: this,
+            eventEmitter: GetValue(config, 'eventEmitter', this),
+            groupName: GetValue(config, 'groupName', undefined),
+            clickConfig: GetValue(config, 'click', undefined)
+        })
+            .setButtonsType(config)
 
         // Add elements
         var background = GetValue(config, 'background', undefined);
         var buttons = GetValue(config, 'buttons', undefined);
-        if (buttons && buttons.length === 0) {
-            buttons = undefined;
-        }
 
-        // Space
-        var buttonSpace = GetValue(config, 'space', 0);
+        // Buttons properties
+        this.buttonsExpand = GetValue(config, 'expand', false);
+        this.buttonsAlign = GetValue(config, 'align', undefined); // undefined/left/top: no space                
 
         if (background) {
             this.addBackground(background);
         }
 
         if (buttons) {
-            var buttonsAlign = GetValue(config, 'align', undefined); // undefined/left/top: no space
-            var clickConfig = GetValue(config, 'click', undefined);
-
-            // Add space
-            if (
-                (buttonsAlign === 'right') ||
-                (buttonsAlign === 'bottom') ||
-                (buttonsAlign === 'center')
-            ) {
-                this.add(Space(scene), 1, 'center', 0, false);
-            }
-
-            var button, padding;
-            for (var i = 0, cnt = buttons.length; i < cnt; i++) {
-                button = buttons[i];
-                // Add to sizer
-                if (this.orientation === 0) {
-                    padding = {
-                        left: (i >= 1) ? buttonSpace : 0,
-                        right: 0,
-                        top: 0,
-                        bottom: 0
-                    }
-                } else {
-                    padding = {
-                        left: 0,
-                        right: 0,
-                        top: (i >= 1) ? buttonSpace : 0,
-                        bottom: 0
-                    }
-                }
-                this.add(button, 0, 'center', padding, true);
-                ButtonSetInteractive.call(this, button, clickConfig);
-            }
-
-            // Add space
-            if (buttonsAlign === 'center') {
-                this.add(Space(scene), 1, 'center', 0, false);
-            }
+            this.addButtons(buttons);
         }
 
         this.addChildrenMap('background', background);
-        this.addChildrenMap('buttons', (buttons) ? buttons : []);
+        this.addChildrenMap('buttons', this.buttonGroup.buttons);
     }
 
-    emitButtonClick(index) {
-        // index or button game object
-        FireEvent.call(this, 'button.click', index);
-        return this;
+    destroy(fromScene) {
+        //  This Game Object has already been destroyed
+        if (!this.scene || this.ignoreDestroy) {
+            return;
+        }
+
+        super.destroy(fromScene);
+        this.buttonGroup.destroy();
+        this.buttonGroup = undefined;
+    }
+
+    get buttons() {
+        return this.buttonGroup.buttons;
+    }
+
+    get groupName() {
+        return this.buttonGroup.groupName;
+    }
+
+    set groupName(value) {
+        this.buttonGroup.groupName = value;
+    }
+
+    get eventEmitter() {
+        return this.buttonGroup.eventEmitter;
     }
 }
+
+Object.assign(
+    Buttons.prototype,
+    AddChildMethods,
+    RemoveChildMethods,
+    ButtonMethods,
+    ButtonStateMethods
+);
 
 export default Buttons;

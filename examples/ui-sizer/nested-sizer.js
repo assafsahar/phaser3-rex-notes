@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import UIPlugin from '../../templates/ui/ui-plugin.js';
 
 const Random = Phaser.Math.Between;
@@ -57,7 +58,7 @@ var getRow = function (scene, data) {
     var sizer = scene.rexUI.add.sizer({
             orientation: 'x',
         })
-        .add(background, -1) // Extend width equal to sizer width
+        .addBackground(background)
         .add(icon) // Minimum size
         .add(nameLabel, 2, 'left')
         .add(contentLabel, 5, 'left');
@@ -84,7 +85,7 @@ var getTable = function (scene, x, y, width, height, table) {
     }
     var data = table.data;
     for (var i = 0, cnt = data.length; i < cnt; i++) {
-        sizer.add(getRow(scene, data[i]), 0, 'left', padding, true);
+        sizer.add(getRow(scene, data[i]), 0, 'left', padding);
     }
     sizer.layout();
     return sizer;

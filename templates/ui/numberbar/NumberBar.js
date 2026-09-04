@@ -1,10 +1,9 @@
 import Sizer from '../sizer/Sizer.js';
+import AddChildCircleMask from '../utils/AddChildCircleMask.js';
 import Slider from '../slider/Slider.js';
-import DefaultMask from '../../../plugins/utils/mask/DefaultMask.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
-const Percent = Phaser.Math.Percent;
-const Linear = Phaser.Math.Linear;
+import { Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
 
 class NumberBar extends Sizer {
     constructor(scene, config) {
@@ -20,10 +19,6 @@ class NumberBar extends Sizer {
         var text = GetValue(config, 'text', undefined);
 
         // Space
-        var paddingLeft = GetValue(config, 'space.left', 0);
-        var paddingRight = GetValue(config, 'space.right', 0);
-        var paddingTop = GetValue(config, 'space.top', 0);
-        var paddingBottom = GetValue(config, 'space.bottom', 0);
         var iconSpace = GetValue(config, 'space.icon', 0);
         var sliderSpace = GetValue(config, 'space.slider', 0);
 
@@ -34,54 +29,47 @@ class NumberBar extends Sizer {
         if (icon) {
             var padding;
             if (this.orientation === 0) {
-                padding = {
-                    left: paddingLeft,
-                    right: (sliderConfig || text) ? iconSpace : paddingRight,
-                    top: paddingTop,
-                    bottom: paddingBottom
+                if (sliderConfig || text) {
+                    padding = { right: iconSpace };
                 }
             } else {
-                padding = {
-                    left: paddingLeft,
-                    right: paddingRight,
-                    top: paddingTop,
-                    bottom: (sliderConfig || text) ? iconSpace : paddingBottom
+                if (sliderConfig || text) {
+                    padding = { bottom: iconSpace };
                 }
             }
 
-            this.add(icon, 0, 'center', padding);
+            this.add(icon,
+                {
+                    proportion: 0,
+                    align: 'center',
+                    padding: padding
+                }
+            )
 
             if (iconMask) {
-                iconMask = new DefaultMask(icon, 1); // Circle mask
-                icon.setMask(iconMask.createGeometryMask());
-                this.add(iconMask, null);
+                iconMask = AddChildCircleMask(this, icon);
             }
         }
 
         var slider;
         if (sliderConfig) {
-            sliderConfig.orientation = (this.orientation == 0) ? 1 : 0;
+            sliderConfig.orientation = this.orientation;
             sliderConfig.eventEmitter = this;
             sliderConfig.value = null;
             if (!sliderConfig.hasOwnProperty('input')) {
                 sliderConfig.input = -1;
             }
             slider = new Slider(scene, sliderConfig);
+            scene.add.existing(slider);
 
             var padding;
             if (this.orientation === 0) {
-                padding = {
-                    left: (icon) ? 0 : paddingLeft,
-                    right: (text) ? sliderSpace : paddingRight,
-                    top: paddingTop,
-                    bottom: paddingBottom
+                if (text) {
+                    padding = { right: sliderSpace };
                 }
             } else {
-                padding = {
-                    left: paddingLeft,
-                    right: paddingRight,
-                    top: (icon) ? 0 : paddingTop,
-                    bottom: (text) ? sliderSpace : paddingBottom
+                if (text) {
+                    padding = { bottom: sliderSpace };
                 }
             }
 
@@ -93,32 +81,24 @@ class NumberBar extends Sizer {
                 var sliderHeight = GetValue(sliderConfig, 'height', undefined);
                 proportion = (sliderHeight === undefined) ? 1 : 0;
             }
-            this.add(slider, proportion, 'center', padding);
+
+            this.add(slider,
+                {
+                    proportion: proportion,
+                    align: 'center',
+                    padding: padding
+                }
+            )
         }
 
 
         if (text) {
-            var padding;
-            if (this.orientation === 0) {
-                padding = {
-                    left: (icon || sliderConfig) ? 0 : paddingLeft,
-                    right: paddingRight,
-                    top: paddingTop,
-                    bottom: paddingBottom
-                }
-            } else {
-                padding = {
-                    left: paddingLeft,
-                    right: paddingRight,
-                    top: (icon || sliderConfig) ? 0 : paddingTop,
-                    bottom: paddingBottom
-                }
-            }
-            this.add(text, 0, 'center', padding);
+            this.add(text);
         }
 
         this.addChildrenMap('background', background);
         this.addChildrenMap('icon', icon);
+        this.addChildrenMap('iconMask', iconMask);
         this.addChildrenMap('slider', slider);
         this.addChildrenMap('text', text);
 
@@ -131,22 +111,34 @@ class NumberBar extends Sizer {
         this.setValue(GetValue(config, 'value', 0));
     }
 
-    setEnable(enable) {
+    get enable() {
         if (this.childrenMap.slider) {
-            return this;
+            return this.childrenMap.slider.enable;
+        } else {
+            return false;
         }
+    }
+
+    set enable(value) {
+        if (this.childrenMap.slider) {
+            this.childrenMap.slider.setEnable(value);
+        }
+    }
+
+    setEnable(enable) {
         if (enable === undefined) {
             enable = true;
         }
-        this.childrenMap.slider.enable = enable;
+        this.enable = enable;
         return this;
     }
 
     get value() {
         if (this.childrenMap.slider) {
             return this.childrenMap.slider.value;
+        } else {
+            return 0;
         }
-        return 0;
     }
 
     set value(value) {
@@ -157,27 +149,53 @@ class NumberBar extends Sizer {
     }
 
     setValue(value, min, max) {
-        if (min !== undefined) {
-            value = Percent(value, min, max);
+        if (this.childrenMap.slider) {
+            this.childrenMap.slider.setValue(value, min, max);
         }
-        this.value = value;
         return this;
     }
 
     addValue(inc, min, max) {
-        if (min !== undefined) {
-            inc = Percent(inc, min, max);
+        if (this.childrenMap.slider) {
+            this.childrenMap.slider.addValue(inc, min, max);
         }
-        this.value += inc;
         return this;
     }
 
     getValue(min, max) {
-        var value = this.value;
-        if (min !== undefined) {
-            value = Linear(min, max, value);
+        if (this.childrenMap.slider) {
+            return this.childrenMap.slider.getValue(min, max);
+        } else {
+            return 0;
         }
-        return value;
+    }
+
+    easeValueTo(value, min, max) {
+        if (this.childrenMap.slider) {
+            this.childrenMap.slider.easeValueTo(value, min, max);
+        }
+        return this;
+    }
+
+    stopEaseValue() {
+        if (this.childrenMap.slider) {
+            this.childrenMap.slider.stopEaseValue();
+        }
+        return this;
+    }
+
+    setEaseValueDuration(duration) {
+        if (this.childrenMap.slider) {
+            this.childrenMap.slider.setEaseValueDuration(duration);
+        }
+        return this;
+    }
+
+    setEaseValueFunction(ease) {
+        if (this.childrenMap.slider) {
+            this.childrenMap.slider.setEaseValueFunction(ease);
+        }
+        return this;
     }
 
     get text() {
@@ -211,4 +229,5 @@ class NumberBar extends Sizer {
         return this;
     }
 }
+
 export default NumberBar;

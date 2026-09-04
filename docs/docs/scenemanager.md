@@ -10,9 +10,24 @@ var newScene = scene.scene.add(key, sceneConfig, autoStart, data);
 ```
 
 - `key` : A unique key used to reference the Scene.
-- `sceneConfig` : The [config for the Scene](scene.md#configuration-of-scene), or a [scene](scene.md#es6-class) class.
+- `sceneConfig` : 
+    - A [scene](scene.md#es6-class) class
+    - A plain object
+        ```javascript
+        {
+            init(data) {},
+            preload() {},
+            create(data) {},
+            update(time, delta) {},
+
+            extend: {
+                data: {},
+                // ...
+            },
+        }
+        ```
 - `autoStart` : Set `true` to start scene immediately after added.
-- `data` : Optional data object. This will be set as Scene.settings.data and passed to `Scene.init`.
+- `data` : Optional data object. This will be set as `scene.settings.data` and passed to `scene.init`.
 
 ### Load scene from external files
 
@@ -77,7 +92,7 @@ scene.scene.remove(key);
     - Fires scene.events `wake`
 - Makes this Scene sleep then starts the Scene given
     ```javascript
-    scene.scene.switch(key);
+    scene.scene.switch(key, data);
     ```
 
 ## Run scene
@@ -93,7 +108,7 @@ scene.scene.run(key, data);
 
 ## Stop scene
 
-Stop : shutdown the Scene, clearing display list, timers, etc.
+Shutdown the Scene, clearing display list, timers, etc.
 
 ```javascript
 scene.scene.stop(key);
@@ -134,6 +149,28 @@ var isVisible = scene.scene.isVisible(key);
 | Run   | :heavy_check_mark: | :heavy_check_mark: |
 | Pause |                    | :heavy_check_mark: |
 | Sleep |                    |                    |
+
+!!! note "Pause/Sleep/Stop"
+    - Pause: Pause `update` stage.
+    - Sleep: Pause `update` stage, and set scene invisible.
+    - Stop: Shoutdown, clearing display list, timers, etc. 
+
+```javascript
+var status = scene.scene.getStatus(key);
+// var status = scene.scene.getStatus();
+```
+
+- `status` :
+    - `Phaser.Scenes.PENDING`, or `0`
+    - `Phaser.Scenes.INIT`, or `1`
+    - `Phaser.Scenes.START`, or `2`
+    - `Phaser.Scenes.LOADING`, or `3`
+    - `Phaser.Scenes.CREATING`, or `4`
+    - `Phaser.Scenes.RUNNING`, or `5`
+    - `Phaser.Scenes.PAUSED`, or `6`
+    - `Phaser.Scenes.SLEEPING`, or `7`
+    - `Phaser.Scenes.SHUTDOWN`, or `8`
+    - `Phaser.Scenes.DESTROYED`, or `9`
 
 ## Get scene
 
@@ -188,40 +225,110 @@ scene.scene.sendToBack(keyA);
 
 ```javascript
 scene.scene.transition({
-    target: nextSceneClass,   // the Scene key to transition to
-    // data: null,            // an object containing any data you wish to be passed to the target scenes init / create methods.
-    // moveAbove: false,      // move the target Scene to be above this current scene before the transition starts
-    // moveBelow: false,      // move the target Scene to be below this current scene before the transition starts
+    target: key,
+    // data: null,
+    // moveAbove: false,
+    // moveBelow: false,
 
-    duration: 1000,           // the duration, in ms
+    duration: 1000,
 
-    // sleep: false,          // set true to sleep this scene, set false to stop this scene
-    // allowInput: false,     // set true to enable input system of current scene and target scene
+    // remove: false,
+    // sleep: false,
+    // allowInput: false,
+
+    // onStart: null,
+    // onStartScope: scene,
 
     // onUpdate: null,
-    // onUpdateScope: scene
+    // onUpdateScope: scene,
 })
 ```
+
+- `target` : The Scene key to transition to.
+- `data` : An object containing any data you wish to be passed to the target scenes init / create methods.
+- `moveAbove`. `moveBelow` : Move the target Scene to be above/below this current scene before the transition starts.
+- `duration` : Transition duration, in ms.
+- `remove` : Set true to remove this scene.
+- `sleep` : Set true to sleep this scene, set false to stop this scene.
+- `allowInput` : Set true to enable input system of current scene and target scene.
+- `onStart`, `onStartScope` : Invoked when transition start
+    ```javascript
+    function(fromScene, toScene, duration) {
+
+    }
+    ```
+    - `fromScene` : Current scene instance
+    - `toScene` : Target scene instance
+    - `duration` : Transition duration, in ms.
+- `onUpdate` ,`onUpdateScope` : Transition callback in each tick.
+    ```javascript
+    function(progress) {
+
+    }
+    ```
+    - `progress` : `0` ~ `1`
+
+### Execution flow
+
+1. Invoke `scene.scene.transition` method.
+    - Current scene : 
+        - Fire `'transitionout'` event.
+            ```javascript
+            fromScene.events.on('transitionout', function(targetScene, duration){ });
+            ```
+        - Run transition's `onUpdate` callback every tick.
+        - Current scene's `update` method is still running every tick.
+    - Target scene :
+        - Start target scene immediately.
+        - Fire target scene's `'transitionstart'` event. (Register this event in `create` stage)
+            ```javascript
+            targetScene.events.on('transitionstart', function(fromScene, duration){ });
+            ```
+1. When transition completed.
+    - Current scene : 
+        - Remove or sleep current scene after transition completed.
+    - Target scene : 
+        - Fire target scene's `transitioncomplete` event.
+            ```javascript
+            targetScene.events.on('transitioncomplete', function(fromScene){ });
+            ```
 
 ### Events
 
 - boot
     ```javascript
-    scene.events.on('transitioninit', function(fromScene, duration)){});
+    scene.events.on('transitioninit', function(fromScene, duration)){ });
     ```
 - start
     ```javascript
-    scene.events.on('transitionstart', function(fromScene, duration){});
+    scene.events.on('transitionstart', function(fromScene, duration){ });
     ```
 - transition-out
     ```javascript
-    scene.events.on('transitionout', function(targetScene){});
+    scene.events.on('transitionout', function(targetScene){ });
     ```
 - complete
     ```javascript
-    scene.events.on('transitioncomplete', function(scene){});
+    scene.events.on('transitioncomplete', function(fromScene){ });
     ```
 - wake : wake-up target scene if it was previously asleep
     ```javascript
-    scene.events.on('transitionwake', function(fromScene, duration){});
+    scene.events.on('transitionwake', function(fromScene, duration){ });
     ```
+
+## System scene
+
+A default empty Scene that lives outside of the Scene list, 
+but can be used by plugins and managers that need access to a live Scene, 
+without being tied to one.
+
+
+```javascript
+var scene = scene.scene.get('__SYSTEM');
+```
+
+or
+
+```javascript
+var scene = scene.scene.systemScene;
+```

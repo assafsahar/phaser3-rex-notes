@@ -1,0 +1,45 @@
+import Phaser from 'phaser';
+import PolarCoordinatePlugin from '../../plugins/polarcoordinate-plugin.js';
+
+class Demo extends Phaser.Scene {
+    constructor() {
+        super({
+            key: 'examples'
+        })
+    }
+
+    preload() {
+    }
+
+    create() {
+        var sprite = this.add.rectangle(0, 0, 30, 30).setStrokeStyle(2, 0xff0000);
+        this.plugins.get('rexPolarCoordinate').add(sprite, 400, 300, 0, 250);
+        this.tweens.add({
+            targets: sprite,
+            polarAngle: 360,
+            duration: 3000,
+            repeat: -1
+        })
+    }
+}
+
+var config = {
+    type: Phaser.AUTO,
+    parent: 'phaser-example',
+    width: 800,
+    height: 600,
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+    },
+    scene: Demo,
+    plugins: {
+        global: [{
+            key: 'rexPolarCoordinate',
+            plugin: PolarCoordinatePlugin,
+            start: true
+        }]
+    }
+};
+
+var game = new Phaser.Game(config);

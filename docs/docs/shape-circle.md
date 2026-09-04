@@ -2,13 +2,11 @@
 
 Circle shape, built-in game object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
-### Create shape
-
-### Add shape object
+### Create shape object
 
 ```javascript
 var circle = scene.add.circle(x, y, radius, fillColor);
@@ -44,10 +42,15 @@ var circle = scene.add.circle(x, y, radius, fillColor);
     - Get
         ```javascript
         var color = circle.fillColor;
+        var alpha = circle.fillAlpha;
         ```
     - Set
         ```javascript
         circle.setFillStyle(color, alpha);
+        ```
+    - Clear
+        ```javascript
+        circle.setFillStyle();
         ```
 - Stroke color
     - Get
@@ -58,11 +61,27 @@ var circle = scene.add.circle(x, y, radius, fillColor);
         ```javascript
         circle.setStrokeStyle(lineWidth, color, alpha);
         ```
+    - Clear
+        ```javascript
+        circle.setStrokeStyle();
+        ```
 
 !!! warning "No tint methods"
     Uses `circle.setFillStyle(color, alpha)` to change color.
 
-### Propertirs
+### Alpha
+
+- Get
+    ```javascript
+    var alpha = circle.alpha;
+    ```
+- Set
+    ```javascript
+    circle.setAlpha(alpha);
+    // circle.alpha = alpha;
+    ```
+
+### Radius
 
 - Radius
     - Get
@@ -87,6 +106,31 @@ var circle = scene.add.circle(x, y, radius, fillColor);
         circle.iterations = iterations;
         ```
 
+### Display size
+
+- Get
+    ```javascript
+    var width = circle.displayWidth;
+    var height = circle.displayHeight;
+    ```
+- Set
+    ```javascript
+    circle.setDisplaySize(width, height);
+    ```
+    or
+    ```javascript
+    circle.displayWidth = width;
+    circle.displayHeight = height;
+    ```
+
 ### Other properties
 
 See [game object](gameobject.md)
+
+### Create mask
+
+See [mask](mask.md)
+
+### Shader effects
+
+Support [internal and external filters](shader-builtin.md)

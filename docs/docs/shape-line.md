@@ -2,13 +2,11 @@
 
 Line shape, built-in game object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
-### Create shape
-
-### Add shape object
+### Create shape object
 
 ```javascript
 var line = scene.add.line(x, y, x1, y1, x2, y2, strokeColor);
@@ -44,10 +42,15 @@ var line = scene.add.line(x, y, x1, y1, x2, y2, strokeColor);
     - Get
         ```javascript
         var color = line.fillColor;
+        var alpha = line.fillAlpha;
         ```
     - Set
         ```javascript
         line.setFillStyle(color, alpha);
+        ```
+    - Clear
+        ```javascript
+        line.setFillStyle();
         ```
 - Stroke color
     - Get
@@ -58,9 +61,25 @@ var line = scene.add.line(x, y, x1, y1, x2, y2, strokeColor);
         ```javascript
         line.setStrokeStyle(lineWidth, color, alpha);
         ```
+    - Clear
+        ```javascript
+        line.setStrokeStyle();
+        ```
 
 !!! warning "No tint methods"
     Uses `line.setFillStyle(color, alpha)` to change color.
+
+### Alpha
+
+- Get
+    ```javascript
+    var alpha = line.alpha;
+    ```
+- Set
+    ```javascript
+    line.setAlpha(alpha);
+    // line.alpha = alpha;
+    ```
 
 ### Set end points
 
@@ -76,6 +95,31 @@ line.setLineWidth(startWidth, endWidth);
 
 - `endWidth` : The end width of the line. Only used in WebGL.
 
+### Display size
+
+- Get
+    ```javascript
+    var width = line.displayWidth;
+    var height = line.displayHeight;
+    ```
+- Set
+    ```javascript
+    line.setDisplaySize(width, height);
+    ```
+    or
+    ```javascript
+    line.displayWidth = width;
+    line.displayHeight = height;
+    ```
+
 ### Other properties
 
 See [game object](gameobject.md)
+
+### Create mask
+
+See [mask](mask.md)
+
+### Shader effects
+
+Support [internal and external filters](shader-builtin.md)

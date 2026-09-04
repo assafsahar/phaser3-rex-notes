@@ -4,7 +4,6 @@ var UidToChess = function (uid) {
     if (uid == null) {
         return null;
     } else {
-        // single uid
         if (!this.boardData.exists(uid)) {
             return null;
         }

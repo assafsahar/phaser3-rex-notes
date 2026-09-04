@@ -1,60 +1,38 @@
-import TickTask from '../../utils/ticktask/TickTask.js';
-import Helpers from '../../utils/arcade/Helpers.js';
+import { Utils as PhaserUtils, Math as PhaserMath } from 'phaser';
+import TickTask from '../../utils/componentbase/SceneUpdateTickTask.js';
+import { SetVelocity } from '../../utils/arcade/Helpers.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
+const GetValue = PhaserUtils.Objects.GetValue;
+const DegToRad = PhaserMath.DegToRad;
+const RadToDeg = PhaserMath.RadToDeg;
 
 class Bullet extends TickTask {
     constructor(gameObject, config) {
         super(gameObject, config);
+        // this.parent = gameObject;
 
-        this.setParent(gameObject);
         this.resetFromJSON(config);
         this.boot();
     }
 
     resetFromJSON(o) {
-        if (this.body === undefined) {
-            this.scene.physics.add.existing(this.gameObject, false);
+        if (!this.parent.body) {
+            this.scene.physics.add.existing(this.parent, false);
         }
-        this.setCascadeMode(GetValue(o, 'cascade', false));
+        this.setWrapMode(GetValue(o, 'wrap', false), GetValue(o, 'padding', 0));
         this.setEnable(GetValue(o, 'enable', true));
         this.setSpeed(GetValue(o, 'speed', 200));
+
+        var angle = GetValue(o, 'angle');
+        if (angle !== undefined) {
+            this.setAngle(angle);
+            var rotation = GetValue(o, 'rotation');
+            if (rotation !== undefined) {
+                this.setRotation(rotation);
+            }
+        }
+
         return this;
-    }
-
-    toJSON() {
-        return {
-            tickingMode: this.tickingMode
-        };
-    }
-
-    boot() {
-        super.boot();
-        if (this.gameObject.on) { // oops, bob object does not have event emitter
-            this.gameObject.on('destroy', this.destroy, this);
-        }
-    }
-
-    shutdown() {
-        super.shutdown();
-        this.gameObject = undefined;
-        this.scene = undefined;
-    }
-
-    destroy() {
-        this.shutdown();
-    }
-
-    startTicking() {
-        super.startTicking();
-        this.scene.events.on('preupdate', this.preupdate, this);
-    }
-
-    stopTicking() {
-        super.stopTicking();
-        if (this.scene) { // Scene might be destoryed
-            this.scene.events.off('preupdate', this.preupdate, this);
-        }
     }
 
     get enable() {
@@ -64,7 +42,7 @@ class Bullet extends TickTask {
     set enable(value) {
         this.isRunning = value;
         if (!value) {
-            this.bodySetVelocity(0, 0);
+            SetVelocity(this.parent, 0, 0);
         }
     }
 
@@ -81,23 +59,65 @@ class Bullet extends TickTask {
         return this;
     }
 
-    preupdate(time, delta) {
+    setWrapMode(wrap, padding) {
+        if (wrap === undefined) {
+            wrap = true;
+        }
+        this.wrap = wrap;
+        this.padding = padding;
+        return this;
+    }
+
+    setAngle(angle) {
+        this.angle = angle;
+        return this;
+    }
+
+    setRotation(rotation) {
+        this.rotation = rotation;
+        return this;
+    }
+
+    set angle(value) {
+        if (typeof (value) === 'number') {
+            value = DegToRad(value);
+        }
+        this.rotation = value;
+    }
+
+    get angle() {
+        var value = this.rotation;
+        if (typeof (value) === 'number') {
+            value = RadToDeg(value);
+        }
+        return value;
+    }
+
+    update(time, delta) {
+        var gameObject = this.parent;
         if (!this.enable) {
-            this.bodySetVelocity(0, 0);
+            SetVelocity(gameObject, 0, 0);
             return this;
         }
-        var rotation = this.gameObject.rotation;
-        var vx = this.speed * Math.cos(rotation);
-        var vy = this.speed * Math.sin(rotation);
-        this.bodySetVelocity(vx, vy);
+
+        if (!gameObject.active) {
+            return this;
+        }
+
+        var rotation = this.rotation;
+        if (rotation == null) {
+            rotation = gameObject.rotation;
+        }
+        var vx = this.speed * PhaserMath.cos(rotation);
+        var vy = this.speed * PhaserMath.sin(rotation);
+        SetVelocity(gameObject, vx, vy);
+
+        if (this.wrap) {
+            gameObject.body.world.wrap(gameObject, this.padding);
+        }
+
         return this;
     }
 }
-
-// mixin
-Object.assign(
-    Bullet.prototype,
-    Helpers
-);
 
 export default Bullet;

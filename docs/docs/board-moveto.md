@@ -5,26 +5,85 @@ Move chess towards target position with a steady speed, chess behavior of Board 
 - Author: Rex
 - Behavior of chess
 
-## Source code
+## Live demos
 
-Included in [board plugin](board.md#source-code).
+- [Push](https://codepen.io/rexrainbow/pen/rNNqpPg)
+- [Follow chess](https://codepen.io/rexrainbow/pen/RwyWjJr)
 
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/board-moveto)
 
-### Install scene plugin
+### Install plugin
 
-Included in board plugin.
+#### Load minify file
+
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.scenePlugin('rexboardplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexboardplugin.min.js', 'rexBoard', 'rexBoard');
+    ```
+- Add move-to behavior
+    ```javascript
+    var moveTo = scene.rexBoard.add.moveTo(chess, config);
+    ```
+
+#### Import plugin
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import BoardPlugin from 'phaser4-rex-plugins/plugins/board-plugin.js';
+    var config = {
+        // ...
+        plugins: {
+            scene: [{
+                key: 'rexBoard',
+                plugin: BoardPlugin,
+                mapping: 'rexBoard'
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add move-to behavior
+    ```javascript
+    var moveTo = scene.rexBoard.add.moveTo(chess, config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import { MoveTo } from 'phaser4-rex-plugins/plugins/board-components.js';
+    ```
+- Add move-to behavior
+    ```javascript
+    var moveTo = new MoveTo(chess, config);
+    ```
 
 ### Create instance
 
 ```javascript
 var moveTo = scene.rexBoard.add.moveTo(chess, {
     // speed: 400,
+
     // rotateToTarget: false,
+
     // occupiedTest: false,
     // blockerTest: false,
+    // moveableTest: undefined,
+    // moveableTestScope: undefined,
+    
     // sneak: false,
 })
 ```
@@ -33,6 +92,18 @@ var moveTo = scene.rexBoard.add.moveTo(chess, {
 - `rotateToTarget` : Set `true` to change angle towards path.
 - `occupiedTest` : Set `true` to test if target tile position is occupied or not, in moveable testing.
 - `blockerTest` : Set `true` to test [blocker property](board-chessdata.md#blocker) in moveable testing.
+- `moveableTest`, `moveableTestScope` : Custom moveable test callback
+    ```javascript
+    function(fromTileXYZ, toTileXYZ, direction, board) {
+        return true;
+    }
+    ```
+    - `fromTileXYZ`, `toTileXYZ` : Move chess from tileXYZ `{x, y, z}`, to tileXYZ `{x, y, z}`
+    - `direction` :
+        - `0` ~ `3` : [Quad grid](board-quadgrid.md#directions) in 4 directions mode.
+        - `0` ~ `7` : [Quad grid](board-quadgrid.md#directions) in 8 directions mode.
+        - `0` ~ `5` : [Hexagon grid](board-hexagongrid.md#directions).
+    - `board` : [Board object](board.md).
 - `sneak` : Set `true` to allow changing tileZ when target tile position is occupied. Changing back when target tile position is not occupied.
     - `occupiedTest` will be ignored when `sneak` is `true`.
 
@@ -147,14 +218,20 @@ moveTo.setSpeed(speed);
 moveTo.setRotateToTarget(rotateToTarget);
 ```
 
-- `rotateToTarget` : Set true to change angle towards target
+- `rotateToTarget` : Set `true` to change angle towards target
 
 ### Events
 
+- Try to move on an occupied tile position
+    ```javascript
+    moveTo.on('occupy', function(occupiedChess, gameObject, moveTo){
+        // Move away occupiedChess
+    });
+    ```
 - On reached target
     ```javascript
-    moveTo.on('complete', function(moveTo, gameObject){});
-    // moveTo.once('complete', function(moveTo, gameObject){});
+    moveTo.on('complete', function(gameObject, moveTo){});
+    // moveTo.once('complete', function(gameObject, moveTo){});
     ```
 
 ### Status

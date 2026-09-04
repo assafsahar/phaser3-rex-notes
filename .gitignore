@@ -1,4 +1,4 @@
 /node_modules/*
-/dist/*
+/dev-dist/*
 /index.html
-package-lock.json
+docs/build.bat

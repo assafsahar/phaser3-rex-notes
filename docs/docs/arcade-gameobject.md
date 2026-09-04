@@ -2,7 +2,7 @@
 
 Arcade physics Image/Sprite/Group object.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
@@ -49,27 +49,33 @@ Arcade physics Image/Sprite/Group object.
         var config = {
             classType: ArcadeSprite,
             enable: true,
-            setCollideWorldBounds: false,
-            setAccelerationX: 0,
-            setAccelerationY: 0,
+            collideWorldBounds: false,
+            customBoundsRectangle: null,
+            accelerationX: 0,
+            accelerationY: 0,
             allowDrag: true,
             allowGravity: true,
-            allowRotation: true
-            setBounceX: 0,
-            setBounceY: 0,
-            setDragX: 0,
-            setDragY: 0,
-            setGravityX: 0,
-            setGravityY: 0,
-            setFrictionX: 0,
-            setFrictionY: 0,
-            setVelocityX: 0,
-            setVelocityY: 0,
-            setAngularVelocity: 0,
-            setAngularAcceleration: 0,
-            setAngularDrag: 0,
-            setMass: 1,
-            setImmovable: false,
+            allowRotation: true,
+            useDamping: false,
+            bounceX: 0,
+            bounceY: 0,
+            dragX: 0,
+            dragY: 0,
+            gravityX: 0,
+            gravityY: 0,
+            frictionX: 0,
+            frictionY: 0,
+            maxSpeed: -1,
+            velocityX: 0,
+            velocityY: 0,
+            maxVelocityX: 10000,
+            maxVelocityY: 10000,
+            angularVelocity: 0,
+            angularAcceleration: 0,
+            angularDrag: 0,
+            mass: 0,
+            immovable: false,
+
             maxSize: -1,
             runChildUpdate: false
         };
@@ -80,16 +86,23 @@ Arcade physics Image/Sprite/Group object.
 - Enable body
     ```javascript
     gameObject.enableBody();
+    // gameObject.enableBody(false, 0, 0, enableGameObject, showGameObject);
     ```
     - Enable and reset position
         ```javascript
         gameObject.enableBody(true, x, y);
+        // gameObject.enableBody(true, x, y, enableGameObject, showGameObject);
         ```
+    - `enableGameObject` : Also activate this Game Object.
+    - `showGameObject` : Also show this Game Object.
 - Disable body
     ```javascript
     gameObject.disableBody();
+    // gameObject.disableBody(disableGameObject, hideGameObject);
     ```
-  
+    - `disableGameObject` : Also deactivate this Game Object.
+    - `hideGameObject` : Also hide this Game Object.
+
 ### Movement
 
 #### Velocity
@@ -191,6 +204,37 @@ Arcade physics Image/Sprite/Group object.
     var immovable = gameObject.body.immovable;
     ```
 
+#### Pushable
+
+- Enable
+    ```javascript
+    gameObject.setPushable();
+    ```
+- Disable
+    ```javascript
+    gameObject.setPushable(false);
+    ```
+- Get
+    ```javascript
+    var pushable = gameObject.body.pushable;
+    ```
+
+##### Slide factor
+
+The Slide Factor controls how much velocity is preserved when this Body is pushed by another Body.
+
+```javascript
+gameObject.setSlideFactor(x, y);
+```
+
+- `x`, `y` :
+    - `1` : Take on all velocity given in the push. Default value.
+    - `0` : Allow this Body to be pushed but then remain completely still after the push ends, 
+      such as you see in a game like *Sokoban*.
+    - Other value between `0` ~ `1` : Keep `x`/`y` of the original velocity when the push ends.
+        - Combine this with the `setDrag()` method to create deceleration.
+
+
 ##### Friction
 
 If this Body is `immovable` and in motion, this the proportion of this Body's movement received by the riding body on each axis.
@@ -209,6 +253,24 @@ If this Body is `immovable` and in motion, this the proportion of this Body's mo
     var fx = gameObject.body.friction.x;
     var fy = gameObject.body.friction.y;
     ```
+
+#### Direct control
+
+Enable `directControl` when game object is controlled by tween or dragging.  
+Default behavior is disable.
+
+- Enable
+    ```javascript
+    gameObject.setDirectControl();
+    // gameObject.setDirectControl(true);
+    ```
+- Disable
+    ```javascript
+    gameObject.setDirectControl(false);
+    ```
+
+!!! note "Use case"
+    Enable `setDirectControl` when game object is controlled by tween or dragging.
 
 ### Rotation
 
@@ -264,11 +326,59 @@ Whether this Body's rotation is affected by its angular acceleration and velocit
 
 ### Collision
 
+#### Collision category
+
+A body is only below to one collision category.  
+A body can collide with multiple collision categories.  
+The default is that all bodies collide with all others.
+
+- Collision category
+    - Get
+        ```javascript
+        var collisionCategory = gameObject.body.collisionCategory;
+        ```
+    - Set
+        ```javascript
+        gameObject.setCollisionCategory(category);
+        ```
+        - `category` : 
+            - `(1 << 0)` 
+            - `(1 << 1)` 
+            - `(1 << 2)` 
+            - ...
+            - `(1 << 31)`
+    - Reset collision category, to default behavior (all bodies collide with all others)
+        ```javascript
+        gameObject.resetCollisionCategory();
+        ```
+        - Set `collisionCategory` to `1`.
+        - Set `collisionMask` to `1`
+- Collision mask
+    - Get
+        ```javascript
+        var collisionMask = gameObject.body.collisionMask;
+        ```
+    - Set
+        ```javascript
+        gameObject.setCollidesWith(categories);
+        ```
+        - `categories` : A single category value, or an array of them.
+    - Add
+        ```javascript
+        gameObject.addCollidesWith(category):
+        ```
+        - `category` : A single category value.
+    - Remove
+        ```javascript
+        gameObject.removeCollidesWith(category);
+        ```
+        - `category` : A single category value.
+
 #### Collision bound
 
 - Rectangle
     ```javascript
-    gameObject.setSize(width, height, center);
+    gameObject.setBodySize(width, height, center);
     ```
     - `center` : `false` to set body's offset to (0, 0)
 - Circle

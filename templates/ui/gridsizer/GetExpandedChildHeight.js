@@ -1,11 +1,11 @@
 var GetExpandedChildHeight = function (child, rowHeight) {
-    var newHeight;
-    var childConfig = child.rexSizer;    
-    if (childConfig.expand) {
+    var childHeight;
+    var childConfig = child.rexSizer;
+    if (childConfig.expandHeight) {
         var padding = childConfig.padding;
-        newHeight = rowHeight - padding.top - padding.bottom;
+        childHeight = rowHeight - ((padding.top + padding.bottom) * this.scaleY);
     }
-    return newHeight;
+    return childHeight;
 }
 
 export default GetExpandedChildHeight;

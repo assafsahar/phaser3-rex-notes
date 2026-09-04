@@ -5,54 +5,84 @@ Run sequence commands in array.
 - Author: Rex
 - Object
 
-## Source code
+## Live demos
 
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/sequence-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexsequenceplugin.min.js)
+- [Sequence](https://codepen.io/rexrainbow/pen/vjPpQa)
 
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/run-sequence)
 
-User could import class directly, or install it by global plugin.
+### Install plugin
 
-### Import class
+#### Load minify file
 
-```javascript
-import Sequence from './plugins/sequence.js';
-```
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.plugin('rexsequenceplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexsequenceplugin.min.js', true);
+    ```
+- Create sequence instance
+    ```javascript
+    var seq = this.plugins.get('rexsequenceplugin').add(config);
+    ```
 
-### Install global plugin
+#### Import plugin
 
-Install plugin in [configuration of game](game.md#configuration)
-
-```javascript
-import SequencePlugin from './plugins/sequence-plugin.js';
-
-var config = {
-    // ...
-    plugins: {
-        global: [{
-            key: 'rexSequence',
-            plugin: SequencePlugin,
-            start: true
-        },
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import SequencePlugin from 'phaser4-rex-plugins/plugins/sequence-plugin.js';
+    var config = {
         // ...
-        ]
-    }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+        plugins: {
+            global: [{
+                key: 'rexSequence',
+                plugin: SequencePlugin,
+                start: true
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Create sequence instance
+    ```javascript
+    var seq = this.plugins.get('rexSequence').add(config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import Sequence from 'phaser4-rex-plugins/plugins/sequence.js';
+    ```
+- Create sequence instance
+    ```javascript
+    var seq = new Sequence(config);
+    ```
 
 ### Create sequence instance
 
 ```javascript
 var seq = this.plugins.get('rexSequence').add({
-    // yoyo: false  // reverse sequence when it reaches the end
-    // repeat: 0,   // repeat count
-    // loop: false  // repeat forever
+    // yoyo: false,
+    // repeat: 0, 
+    // loop: false
 });
 ```
+
+- `yoyo` : Reverse sequence when it reaches the end
+- `repeat` : Repeat count
+- `loop` : Repeat forever
 
 ### Load commands
 
@@ -77,7 +107,7 @@ seq.load(commands, actionScope);
     ```
 - [ActionScope](sequence.md#action-of-commands)
 
-Format of command is the same as [run-command](runcommands#run-commands).
+Format of command is the same as [run-command](runcommands.md).
 
 ### Run commands
 
@@ -89,16 +119,23 @@ seq.start();
     ```javascript
     var eventEmitter = actionScope[fnName].call(actionScope, param0, param1 ...);
     ```
-        - Return an [event emitter](eventemitter3.md) to pause the sequence, otherwise run next command  
-        - Sequence will continue when that event emitter fires `complete` event
+    - Return an [event emitter](eventemitter3.md) to pause the sequence, otherwise run next command  
+    - Sequence will continue when that event emitter fires `complete` event
+
+### Stop
+
+```javascript
+seq.stop();
+```
 
 ### Events
 
 - On sequence completed :
-
-```javascript
-seq.on('complete', function(seq){});
-```
+    ```javascript
+    seq.on('complete', function(actionScope, seq){ 
+        
+    });
+    ```
 
 ### Action of commands
 
@@ -144,3 +181,53 @@ Now this scope supports 3 commands
 - print(msg): `['print', msg]`
 - waitClick(): `['wait-click']`
 - waitTime(delay): `['wait-time', delay]`
+
+### State
+
+```javascript
+var state = seq.state;
+```
+
+- `0` : Idle
+- `1` : Run
+- `2` : Last command
+- `3` : Completed
+
+
+```javascript
+var completed = seq.completed; // seq.state === 3
+```
+
+### Other properties
+
+- Yoyo
+    - Get
+        ```javascript
+        var yoyo = seq.yoyo;
+        ```
+    - Set
+        ```javascript
+        seq.setYoyo();
+        seq.setYoyo(fals);
+        // seq.yoyo = yoyo;
+        ```
+- Repeat
+    - Get
+        ```javascript
+        var repeat = seq.repeat;
+        ```
+    - Set
+        ```javascript
+        seq.setRepeat(count);
+        ```
+- Loop
+    - Get
+        ```javascript
+        var loop = seq.loop;
+        ```
+    - Set
+        ```javascript
+        seq.setLoop();
+        seq.setLoop(fals);
+        // seq.loop = loop;
+        ```

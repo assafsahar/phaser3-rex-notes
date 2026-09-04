@@ -1,53 +1,75 @@
 ## Introduction
 
-[Hexagon shape](https://www.redblobgames.com/grids/hexagons/) and methods, extends from [Polygon shape](geom-hexagon.md).
+[Hexagon shape](https://www.redblobgames.com/grids/hexagons/) and methods, extends from [Polygon geometry object](geom-polygon.md).
 
 - Author: Rex
 - Geometry object
-
-## Source code
-
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/hexagon-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexhexagonplugin.min.js)
 
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/hexagon)
 
-User could import class directly, or install it by global plugin.
+### Install plugin
 
-### Import class
+#### Load minify file
 
-```javascript
-import rexHexagon from './plugins/hexagon.js';
-```
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.plugin('rexhexagonplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexhexagonplugin.min.js', true);
+    ```
+- Add hexagon geometry object
+    ```javascript
+    var hexagon = scene.plugins.get('rexhexagonplugin').add(x, y, size, orientationType);
+    ```
 
-### Install global plugin
+#### Import plugin
 
-Install plugin in [configuration of game](game.md#configuration)
-
-```javascript
-import HexagonPlugin from './plugins/hexagon-plugin.js';
-
-var config = {
-    // ...
-    plugins: {
-        global: [{
-            key: 'rexHexagon',
-            plugin: HexagonPlugin,
-            start: true
-        },
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import HexagonPlugin from 'phaser4-rex-plugins/plugins/hexagon-plugin.js';
+    var config = {
         // ...
-        ]
-    }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+        plugins: {
+            global: [{
+                key: 'rexHexagon',
+                plugin: HexagonPlugin,
+                start: true
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add hexagon geometry object
+    ```javascript
+    var hexagon = scene.plugins.get('rexHexagon').add(x, y, size, orientationType);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import Hexagon from 'phaser4-rex-plugins/plugins/hexagon.js';
+    ```
+- Add hexagon geometry object
+    ```javascript
+    var hexagon = new Hexagon(x, y, size, orientationType);
+    ```
 
 ### Create shape
 
 ```javascript
-var hexagon = scene.plugins.get('rexHexagon').add(x, y, size, type);
+var hexagon = scene.plugins.get('rexHexagon').add(x, y, size, orientationType);
 ```
 or
 ```javascript
@@ -55,19 +77,18 @@ var hexagon = scene.plugins.get('rexHexagon').add({
     x: 0,
     y: 0,
     size: 20,
-    type: 0     // 0|'flat'|'vertical'|1|'pointy'|'horizontal'
+    orientationType: 0     // 0|'flat'|'vertical'|1|'pointy'|'horizontal'
 });
 ```
 or
 ```javascript
-var hexagon = new rexHexagon(x, y, size, type);
-// var hexagon = new Phaser.Geom.rexHexagon(x, y, size, type);
+var hexagon = new Phaser.Geom.rexHexagon(x, y, size, orientationType);
 ```
 
 - `x` : Center X.
 - `y` : Center Y.
 - `size` : Distance between center to each corner.
-- `type` : See [here](https://www.redblobgames.com/grids/hexagons/#basics)
+- `orientationType` : See [here](https://www.redblobgames.com/grids/hexagons/#basics)
     - `0`, `'flat'`, or `'y'`
     - `1`, `'pointy'` or ,`'x'`
 
@@ -79,7 +100,7 @@ See [Polygon shape](geom-polygon.md#draw-on-graphics).
 
 - All properties
     ```javascript
-    hexagon.setTo(x, y, size, type);
+    hexagon.setTo(x, y, size, orientationType);
     ```
 - Position
     ```javascript
@@ -110,15 +131,15 @@ See [Polygon shape](geom-polygon.md#draw-on-graphics).
     ```javascript
     hexagon.size = size;
     ```
-- Type
+- Orientation type
     ```javascript
-    hexagon.setType(type);
+    hexagon.setType(orientationType);
     ```
     or
     ```javascript
-    hexagon.type = type;
+    hexagon.orientationType = orientationType;
     ```
-    - `type` : See [here](https://www.redblobgames.com/grids/hexagons/#basics)
+    - `orientationType` : See [here](https://www.redblobgames.com/grids/hexagons/#basics)
         - `0`, `'flat'`, or `'y'`
         - `1`, `'pointy'` or ,`'x'` 
 

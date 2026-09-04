@@ -1,56 +1,28 @@
-import GetSceneObject from '../../utils/system/GetSceneObject.js';
+import { Utils as PhaserUtils, Math as PhaserMath } from 'phaser';
+import EaseValueTaskBase from '../../utils/componentbase/tweentask/EaseValueTaskBase.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
-const GetAdvancedValue = Phaser.Utils.Objects.GetAdvancedValue;
+const GetValue = PhaserUtils.Objects.GetValue;
+const GetAdvancedValue = PhaserUtils.Objects.GetAdvancedValue;
+const Linear = PhaserMath.Linear;
 
-class Fade {
+class Fade extends EaseValueTaskBase {
     constructor(gameObject, config) {
-        this.gameObject = gameObject;
-        this.scene = GetSceneObject(gameObject);
+        super(gameObject, config);
+        // this.parent = gameObject;
+        // this.timer
 
-        this.alphaStart = undefined;
-        this.alphaEnd = undefined;
-        this.tween = undefined;
         this.resetFromJSON(config);
         this.boot();
     }
 
     resetFromJSON(o) {
+        super.resetFromJSON(o);
+
         this.setMode(GetValue(o, 'mode', 0));
         this.setAlphaRange(
-            GetAdvancedValue(o, 'start', this.gameObject.alpha),
+            GetAdvancedValue(o, 'start', this.parent.alpha),
             GetAdvancedValue(o, 'end', 0)
         );
-        this.setDelay(GetAdvancedValue(o, 'delay', 0));
-        this.setFadeOutTime(GetAdvancedValue(o, 'duration', 1000));
-        return this;
-    }
-
-    toJSON() {
-        return {
-            mode: this.mode,
-            start: this.alphaStart,
-            end: this.alphaEnd,
-            delay: this.delay,
-            duration: this.duration
-        };
-    }
-
-    boot() {
-        if (this.gameObject.on) { // oops, bob object does not have event emitter
-            this.gameObject.on('destroy', this.destroy, this);
-        }
-    }
-
-    shutdown() {
-        this.stop();
-        this.gameObject = undefined;
-        this.scene = undefined;
-        return this;
-    }
-
-    destroy() {
-        this.shutdown();
         return this;
     }
 
@@ -61,62 +33,46 @@ class Fade {
         this.mode = m;
         return this;
     }
+
     setAlphaRange(start, end) {
         this.alphaStart = start;
         this.alphaEnd = end;
         return this;
     }
-    setDelay(time) {
-        this.delay = time;
-        return this;
-    }
-    setFadeOutTime(time) {
-        this.duration = time;
-        return this;
-    }
 
     start() {
-        if (this.tween) {
+        if (this.timer.isRunning) {
             return this;
         }
 
-        if (this.duration === 0) {
-            this.gameObject.alpha = this.alphaEnd;
-            this.stop();
-            this.complete();
-            return this;
-        }
+        var gameObject = this.parent;
+        gameObject.setAlpha(this.alphaStart);
 
-        this.gameObject.alpha = this.alphaStart;
-        this.tween = this.scene.tweens.add({
-            targets: this.gameObject,
-            alpha: this.alphaEnd,
+        this.timer
+            .setDelay(this.delay)
+            .setDuration(this.duration)
+            .setRepeat((this.mode === 2) ? -1 : 0);
 
-            delay: this.delay,
-            duration: this.duration,
-            ease: 'Linear',
-            yoyo: (this.mode == 2),
-            repeat: ((this.mode == 2) ? -1 : 0),
-            onComplete: this.complete,
-            onCompleteScope: this
-        });
+        super.start();
         return this;
     }
 
-    stop() {
-        if (!this.tween) {
-            return this;
+    updateTarget(gameObject, timer) {
+        var t = timer.t;
+        if (timer.isOddIteration) {  // Yoyo
+            t = 1 - t;
         }
 
-        this.tween.remove();
-        this.tween = undefined;
-        return this;
+        gameObject.alpha = Linear(this.alphaStart, this.alphaEnd, t);
     }
 
     complete() {
+        super.complete();
         if (this.mode === 1) {
-            this.gameObject.destroy();
+            this.parent.destroy();
+            // Will also destroy this behavior
         }
+        return this;
     }
 
 }

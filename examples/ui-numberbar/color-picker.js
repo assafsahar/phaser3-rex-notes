@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import UIPlugin from '../../templates/ui/ui-plugin.js';
 
 class Demo extends Phaser.Scene {
@@ -7,7 +8,7 @@ class Demo extends Phaser.Scene {
         })
     }
 
-    preload() {}
+    preload() { }
 
     create() {
         var mainPanel = createMainPanel(this)
@@ -16,7 +17,7 @@ class Demo extends Phaser.Scene {
         //.drawBounds(this.add.graphics(), 0xff0000);
     }
 
-    update() {}
+    update() { }
 }
 
 var createMainPanel = function (scene) {
@@ -24,14 +25,14 @@ var createMainPanel = function (scene) {
     var objectPanel = scene.add.rectangle(0, 0, 200, 200);
     var controller = createController(scene);
     var mainPanel = scene.rexUI.add.sizer({
-            orientation: 'x',
-        }).add(
-            controller, //child
-            0, // proportion
-            'top', // align
-            0, // paddingConfig
-            false, // expand
-        )
+        orientation: 'x',
+    }).add(
+        controller, //child
+        0, // proportion
+        'top', // align
+        0, // paddingConfig
+        false, // expand
+    )
         .add(
             objectPanel, //child
             0, // proportion
@@ -60,8 +61,8 @@ var createController = function (scene) {
     var greenSlider = createSlider(scene, 'G', 0x00c853, 0x009624, 0x5efc82).setName('G');
     var blueSlider = createSlider(scene, 'B', 0x304ffe, 0x0026ca, 0x7a7cff).setName('B');
     var controlPanel = scene.rexUI.add.sizer({
-            orientation: 'y',
-        })
+        orientation: 'y',
+    })
         .add(
             redSlider, //child
             0, // proportion
@@ -109,6 +110,7 @@ var createSlider = function (scene, colorText, colorPrimary, colorDark, colorLig
             track: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 10, colorPrimary),
             indicator: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 10, colorLight),
             input: 'click',
+            easeValue: { duration: 250 },
             width: 100, // Fixed width
         },
 

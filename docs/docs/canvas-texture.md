@@ -1,8 +1,8 @@
 ## Introduction
 
-Canvas texture stored in [texture cache](texture.md), built-in object of phaser.
+Canvas Texture stored in [texture cache](textures.md), built-in object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
@@ -25,7 +25,20 @@ var context = texture.getContext();
 
 ```javascript
 texture.drawFrame(key, frame, x, y);
+// texture.drawFrame(key, frame, x, y, update);
 ```
+
+- `update` : Update the internal ImageData buffer and arrays. Default value is `true`.
+
+### Draw image
+
+```javascript
+texture.draw(x, y, source);
+// texture.draw(x, y, source, update);
+```
+
+- `source` : The HTML Image element, or HTML Canvas element to draw to this canvas.
+- `update` : Update the internal ImageData buffer and arrays. Default value is `true`.
 
 ### Clear
 
@@ -35,7 +48,10 @@ texture.clear();
 
 ```javascript
 texture.clear(x, y, width, height);
+// // texture.clear(x, y, width, height, update);
 ```
+
+- `update` : Update the internal ImageData buffer and arrays. Default value is `true`.
 
 ### Refresh texture
 
@@ -70,3 +86,16 @@ texture.refresh();
     ```javascript
     var imageData = texture.getData(x, y, width, height);
     ```
+
+### Add frame
+
+```javascript
+texture.add(name, sourceIndex, x, y, width, height);
+```
+
+- `name` : The name of this Frame. The name is unique within the Texture.
+- `sourceIndex` : The index of the TextureSource that this Frame is a part of.
+- `x` : The x coordinate of the top-left of this Frame.
+- `y` : The y coordinate of the top-left of this Frame.
+- `width` : The width of this Frame.
+- `height` : The height of this Frame.

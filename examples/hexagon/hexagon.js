@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import HexagonPlugin from '../../plugins/hexagon-plugin.js';
 
 class Demo extends Phaser.Scene {

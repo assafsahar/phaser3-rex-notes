@@ -2,13 +2,11 @@
 
 Star shape, built-in game object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
-### Create shape
-
-### Add shape object
+### Create shape object
 
 ```javascript
 var star = scene.add.star(x, y, points, innerRadius, outerRadius, fillColor);
@@ -48,10 +46,15 @@ var star = scene.add.star(x, y, points, innerRadius, outerRadius, fillColor);
     - Get
         ```javascript
         var color = star.fillColor;
+        var alpha = star.fillAlpha;
         ```
     - Set
         ```javascript
         star.setFillStyle(color, alpha);
+        ```
+    - Clear
+        ```javascript
+        star.setFillStyle();
         ```
 - Stroke color
     - Get
@@ -62,11 +65,27 @@ var star = scene.add.star(x, y, points, innerRadius, outerRadius, fillColor);
         ```javascript
         star.setStrokeStyle(lineWidth, color, alpha);
         ```
+    - Clear
+        ```javascript
+        star.setStrokeStyle();
+        ```
 
 !!! warning "No tint methods"
     Uses `star.setFillStyle(color, alpha)` to change color.
 
-### Properties
+### Alpha
+
+- Get
+    ```javascript
+    var alpha = star.alpha;
+    ```
+- Set
+    ```javascript
+    star.setAlpha(alpha);
+    // star.alpha = alpha;
+    ```
+
+### Radius
 
 - Inner radius
     - Get
@@ -108,6 +127,31 @@ var star = scene.add.star(x, y, points, innerRadius, outerRadius, fillColor);
         star.points = points;
         ```
 
+### Display size
+
+- Get
+    ```javascript
+    var width = star.displayWidth;
+    var height = star.displayHeight;
+    ```
+- Set
+    ```javascript
+    star.setDisplaySize(width, height);
+    ```
+    or
+    ```javascript
+    star.displayWidth = width;
+    star.displayHeight = height;
+    ```
+
 ### Other properties
 
 See [game object](gameobject.md)
+
+### Create mask
+
+See [mask](mask.md)
+
+### Shader effects
+
+Support [internal and external filters](shader-builtin.md)

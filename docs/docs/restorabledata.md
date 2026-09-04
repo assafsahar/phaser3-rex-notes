@@ -5,44 +5,70 @@ Restorable data manager, extends from [built-in data manager](datamanager.md).
 - Author: Rex
 - Member of scene
 
-## Source code
+## Live demos
 
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/restorabledata-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexrestorabledataplugin.min.js)
+- [Restorable canvas](https://codepen.io/rexrainbow/pen/ZEbJMKZ)
 
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/restorabledata)
 
-User could import class directly, or install it by global plugin.
+### Install plugin
 
-### Import class
+#### Load minify file
 
-```javascript
-import rexRData from './plugins/restorabledata.js';
-```
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.plugin('rexrestorabledataplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexrestorabledataplugin.min.js', true);
+    ```
+- Add restorable data object
+    ```javascript
+    var data = scene.plugins.get('rexrestorabledataplugin').add(parent);
+    ```
 
-### Install global plugin
+#### Import plugin
 
-Install plugin in [configuration of game](game.md#configuration)
-
-```javascript
-import RDataPlugin from './plugins/restorabledata-plugin.js';
-
-var config = {
-    // ...
-    plugins: {
-        global: [{
-            key: 'rexRData',
-            plugin: RDataPlugin,
-            start: true
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import RestorableDataPlugin from 'phaser4-rex-plugins/plugins/restorabledata-plugin.js';
+    var config = {
+        // ...
+        plugins: {
+            global: [{
+                key: 'rexRestorableData',
+                plugin: RestorableDataPlugin,
+                start: true
+            },
+            // ...
+            ]
         }
         // ...
-        ]
-    }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add restorable data object
+    ```javascript
+    var data = scene.plugins.get('rexRestorableData').add(parent);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import RestorableData from 'phaser4-rex-plugins/plugins/restorabledata.js';
+    ```
+- Add restorable data object
+    ```javascript
+    var data = new RestorableData(parent);
+    ```
 
 ### Create instance
 
@@ -117,6 +143,17 @@ data.commit(alias);
 Version starts from `0` which has no data. Each `data.commit()` will increase this version number.
 
 ### Save/load status
+
+- Get current status
+    ```javascript
+    var o = data.toJSON();
+    ```
+- Load status
+    ```javascript
+    data.resetFromJSON(o);
+    ```
+
+or
 
 - Get current status via JSON string
     ```javascript

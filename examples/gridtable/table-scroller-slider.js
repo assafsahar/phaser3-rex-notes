@@ -1,8 +1,9 @@
+import Phaser from 'phaser';
 import GridTablePlugin from '../../plugins/gridtable-plugin.js';
 import ScrollerPlugin from '../../plugins/scroller-plugin.js';
 import SliderPlugin from '../../plugins/slider-plugin.js';
 
-const COLOR_PRIMARY = 0x4e342e;
+const COLOR_MAIN = 0x4e342e;
 const COLOR_LIGHT = 0x7b5e57;
 const COLOR_DARK = 0x260e04;
 
@@ -16,18 +17,15 @@ class Demo extends Phaser.Scene {
     preload() { }
 
     create() {
-        var newCellObject = function (cell) {
+        var onCellVisible = function (cell) {
             var scene = cell.scene;
-            var bg = scene.add.rectangle(0, 0, cell.width, cell.height, COLOR_PRIMARY)
+            var bg = scene.add.rectangle(0, 0, cell.width, cell.height, COLOR_MAIN)
                 .setStrokeStyle(2, COLOR_LIGHT)
                 .setOrigin(0);
             var txt = scene.add.text(5, 5, cell.index);
             var container = scene.add.container(0, 0, [bg, txt]);
-            return container;
-        }
 
-        var onCellVisible = function (cell) {
-            cell.setContainer(newCellObject(cell));
+            cell.setContainer(container);
         };
         var table = this.add.rexGridTable(400, 300, 250, 400, {
             cellWidth: 240,
@@ -35,7 +33,7 @@ class Demo extends Phaser.Scene {
             cellsCount: 100,
             columns: 1,
             cellVisibleCallback: onCellVisible.bind(this),
-            clamplTableOXY: false,
+            clampTableOXY: false,
             mask: {
                 padding: 2,
             }
@@ -60,7 +58,7 @@ class Demo extends Phaser.Scene {
         // drag table content
         var topRight = table.getTopRight();
         var bottomRight = table.getBottomRight();
-        var thumb = this.add.image(0, 0, 'dot').setScale(4, 4);
+        var thumb = this.add.rectangle(0, 0, 20, 20, 0xffffff);
         thumb.slider = this.plugins.get('rexSlider').add(thumb, {
             endPoints: [{
                 x: topRight.x + 10,

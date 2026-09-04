@@ -5,44 +5,66 @@ A clock to count elapsed time.
 - Author: Rex
 - Member of scene
 
-## Source code
-
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/clock-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexclockplugin.min.js)
-
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/clock)
 
-User could import class directly, or install it by global plugin.
+### Install plugin
 
-### Import class
+#### Load minify file
 
-```javascript
-import rexClock from './plugins/clock.js';
-```
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.plugin('rexclockplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexclockplugin.min.js', true);
+    ```
+- Add clock object
+    ```javascript
+    var clock = scene.plugins.get('rexclockplugin').add(scene, config);
+    ```
 
-### Install global plugin
+#### Import plugin
 
-Install plugin in [configuration of game](game.md#configuration)
-
-```javascript
-import ClockPlugin from './plugins/clock-plugin.js';
-
-var config = {
-    // ...
-    plugins: {
-        global: [{
-            key: 'rexClock',
-            plugin: ClockPlugin,
-            start: true
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import ClockPlugin from 'phaser4-rex-plugins/plugins/clock-plugin.js';
+    var config = {
+        // ...
+        plugins: {
+            global: [{
+                key: 'rexClock',
+                plugin: ClockPlugin,
+                start: true
+            },
+            // ...
+            ]
         }
         // ...
-        ]
-    }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add clock object
+    ```javascript
+    var clock = scene.plugins.get('rexClock').add(scene, config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import Clock from 'phaser4-rex-plugins/plugins/clock.js';
+    ```
+- Add clock object
+    ```javascript
+    var clock = new Clock(scene, config);
+    ```
 
 ### Create instance
 
@@ -61,10 +83,17 @@ clock.start();
 // clock.start(startAt);  // start-at time in ms
 ```
 
+### Force ticking
+
+```javascript
+clock.tick(0);
+// clock.tick(delta);
+```
+
 ### Get elapsed time
 
 ```javascript
-var now = clock.now;  // elapsed time in ms
+var now = clock.now;  // Elapsed time in ms
 ```
 
 ### Pause, Resume, stop counting
@@ -89,7 +118,21 @@ var isRunning = clock.isRunning;
 
 ### Time-scale
 
-```javascript
-var timeScale = clock.timeScale;
-clock.timeScale = 0.5;
-```
+- Get
+    ```javascript
+    var timeScale = clock.timeScale;
+    ```
+- Set
+    ```javascript
+    clock.setTimeScale(timeScale);
+    // clock.timeScale = timeScale;
+    ```
+
+### Events
+
+- On ticking
+    ```javascript
+    clock.on('update', function(now, delta){ })
+    ```
+    - `now` : Elapsed time in ms.
+    - `delta` : Delta time in ms.

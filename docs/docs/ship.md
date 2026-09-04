@@ -5,50 +5,98 @@ Move game object as a [space ship](https://labs.phaser.io/view.html?src=src\phys
 - Author: Rex
 - Arcade behavior of game object
 
-## Source code
-
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/ship-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexshipplugin.min.js)
-
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/ship)
 
-User could import class directly, or install it by global plugin.
+### Install plugin
 
-### Import class
+#### Load minify file
 
-```javascript
-import rexShip from './plugins/ship.js';
-```
-
-### Install global plugin
-
-Enable [arcade physics engine](arcade-world.md) and install plugin in [configuration of game](game.md#configuration)
-
-```javascript
-import ShipPlugin from './plugins/ship-plugin.js';
-
-var config = {
-    // ...
-    physics: {
-        default: 'arcade',
-        arcade: {
-            // debug: true
+- Enable [arcade physics engine](arcade-world.md) in [configuration of game](game.md#configuration)
+    ```javascript
+    var config = {
+        // ...
+        physics: {
+            default: 'arcade',
+            arcade: {
+                // debug: true
+            }
         }
-    },
-    plugins: {
-        global: [{
-            key: 'rexShip',
-            plugin: ShipPlugin,
-            start: true
+    }
+    var game = new Phaser.Game(config);
+    ```
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.plugin('rexshipplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexshipplugin.min.js', true);
+    ```
+- Add ship behavior
+    ```javascript
+    var ship = scene.plugins.get('rexshipplugin').add(gameObject, config);
+    ```
+
+#### Import plugin
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Enable [arcade physics engine](arcade-world.md) and install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import ShipPlugin from 'phaser4-rex-plugins/plugins/ship-plugin.js';
+    var config = {
+        physics: {
+            default: 'arcade',
+            arcade: {
+                // debug: true
+            }
         },
         // ...
-        ]
+        plugins: {
+            global: [{
+                key: 'rexShip',
+                plugin: ShipPlugin,
+                start: true
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add ship behavior
+    ```javascript
+    var ship = scene.plugins.get('rexShip').add(gameObject, config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Enable [arcade physics engine](arcade-world.md) in [configuration of game](game.md#configuration)
+    ```javascript
+    var config = {
+        // ...
+        physics: {
+            default: 'arcade',
+            arcade: {
+                // debug: true
+            }
+        }
     }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+    var game = new Phaser.Game(config);
+    ```
+- Import class
+    ```javascript
+    import Ship from 'phaser4-rex-plugins/plugins/ship.js';
+    ```
+- Add ship behavior
+    ```javascript
+    var ship = new Ship(gameObject, config);
+    ```
 
 ### Create instance
 
@@ -72,10 +120,10 @@ var ship = scene.plugins.get('rexShip').add(gameObject, {
 - Rotation
     - [`turnSpeed`](arcade-body.md#angular-velocity) : Angular velocity
 - [Wrap](arcade-world.md#wrap)
-    - `wrap` : Set `true` to enable wrap mode.
+    - `wrap` : Set `true` to enable wrap mode. Default value is `true`.
     - `padding`
 - `enable` : set `false` to disable moving.
-- `cursorKeys` : CursorKey object, using [keyboard's cursorKeys](keyboardevents.md#get-state-of-cursorkeys) by default.
+- `cursorKeys` : CursorKey object, using [keyboard's cursorKeys](keyboardevents.md#key-object-of-cursorkeys) by default.
 
 ### Set max speed
 

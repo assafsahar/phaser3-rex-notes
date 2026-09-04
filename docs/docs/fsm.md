@@ -5,98 +5,95 @@
 - Author: Rex
 - Object
 
-## Source code
-
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/fsm-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexfsmplugin.min.js)
-
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/fsm)
 
-### New class
+### Install plugin
 
-#### Import FSM class
+#### Load minify file
 
-```javascript
-import FSM from './plugins/fsm.js';
-```
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.plugin('rexfsmplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexfsmplugin.min.js', true);
+    ```
+- Add FSM object
+    ```javascript
+    var states = scene.plugins.get('rexfsmplugin').add(config);
+    ```
 
-#### Create new class
+#### Import plugin
 
-```javascript
-class State extends FSM {
-    constructor() {
-        super();
-    }
-
-    next_A() { return 'B' }
-
-    enter_A() { /* ... */ }
-
-    exit_A() { /* ... */ }
-}
-```
-
-Members:
-
-- `next_` + stateName: Callback to get next state.
-- `enter_` + stateName: Callback when enter state.
-- `exit_` + stateName: Callback when exit state.
-
-#### Create instance
-
-```javascript
-var state = new State();
-```
-
-### Create by config
-
-#### Install global plugin
-
-Install plugin in [configuration of game](game.md#configuration)
-
-```javascript
-import FSMPlugin from './plugins/fsm-plugin.js';
-
-var config = {
-    // ...
-    plugins: {
-        global: [{
-            key: 'rexFSM',
-            plugin: FSMPlugin,
-            start: true
-        },
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import FSMPlugin from 'phaser4-rex-plugins/plugins/fsm-plugin.js';
+    var config = {
         // ...
-        ]
-    }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+        plugins: {
+            global: [{
+                key: 'rexFSM',
+                plugin: FSMPlugin,
+                start: true
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add FSM object
+    ```javascript
+    var states = scene.plugins.get('rexFSM').add(config);
+    ```
 
-#### Create instance
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import FSM from 'phaser4-rex-plugins/plugins/fsm.js';
+    ```
+- Add FSM object
+    ```javascript
+    var states = new FSM(config);
+    ```
+
+### Create instance
+
+#### Create by config
 
 ```javascript
-var config = {
+var states = scene.plugins.get('rexFSM').add({
     start: 'A',   // default: undefined
     states: {
         A: {
             next: 'B',  // function() { return 'B'; }
-            enter: function() {},
-            exit: function() {}
+            enter: function() {},                 // this: this fsm instance
+            exit: function() {},                  // this: this fsm instance
+            update: function(time, delta) {},     // this: this fsm instance
+            preupdate: function(time, delta) {},  // this: this fsm instance
+            postupdate: function(time, delta) {}, // this: this fsm instance
         },
         // ...
     },
-    init: function() {},
+    init: function() {},   // this: this fsm instance
     extend: {
-        i: 0,
+        i: 0,        // Add member `i` into this fsm instance
         name: 'abc'
         // ...
     },
     enable: true,
-    eventEmitter: undefined,
-}
-var state = scene.plugins.get('rexFSM').add(config)
+    scene: undefined,
+    eventEmitter: undefined
+});
 ```
 
 - `start`: Initial state.
@@ -104,50 +101,103 @@ var state = scene.plugins.get('rexFSM').add(config)
     - stateName
         - `next`: String of next state, or a callback to get next state.
         - `enter`: Callback when enter state.
+            ```javascript
+            function() {
+                // this : this fsm instance
+            }
+            ``` 
         - `exit`: Callback when exit state.
+             ```javascript
+            function() {
+                // this : this fsm instance
+            }
+            ``` 
+        - `update`, `preupdate`, `postupdate` : Callback invoked by [scene's `'update'`, `'preupdate'`, `'postupdate'` events](scene.md#events).
+            ```javascript
+            function(time, delta) {
+                // this : this fsm instance
+            }
+            ``` 
 - `init`: Initial callback when creating instance.
-- `extend`: Inject key-value pairs into instance.
+    ```javascript
+    function() {
+        // this : this fsm instance
+    }
+    ``` 
+- `extend`: Inject key-value pairs into this fsm instance.
 - `enable`: Set `false` to block any state changing.
+- `scene` : [Scene object](scene.md) for [*startUpdate*, *startPreUpdate*, *startPostUpdate* method](fsm.md#update). Optional.
 - `eventEmitter`
     - `undefined` : Create a private event emitter, default value.
     - `false` : Don't add any event emitter, i.e. no event will be fired.
     - [Event emitter object](eventemitter3.md) : Fire event through this event emitter.
 
+#### Inheritance
+
+1. Create new class
+    ```javascript
+    class State extends FSM {
+        constructor() {
+            super();
+        }
+    
+        next_A() { return 'B' }
+    
+        enter_A() { }
+    
+        exit_A() { }
+
+        update_A(time, delta) { }
+        preupdate_A(time, delta) { }
+        postupdate_A(time, delta) { }
+    }
+    ```
+    Members:
+        - `next_` + stateName : Callback to get next state.
+        - `enter_` + stateName : Callback when enter state.
+        - `exit_` + stateName : Callback when exit state.
+        - `update_` + stateName, `preupdate_` + stateName, `postupdate_` + stateName : Callback invoked by [scene's `'update'`, `'preupdate'`, `'postupdate'` events](scene.md#events).
+1. Create instance
+    ```javascript
+    var states = new State();
+    ```
+
 ### Read state
 
 - Current state
     ```javascript
-    var curState = state.state;
+    var curState = states.state;
     ```
 - Previous state
     ```javascript
-    var preState = state.prevState;
+    var preState = states.prevState;
     ```
 
 ### Start at state
 
-Set new state without triggering any [state-changing](fsm.md#state-changing) callbacks or events.
-
 ```javascript
-state.start(newState);
+states.start(newState);
 ```
+
+!!! note
+    Set new state without triggering any [state-changing](fsm.md#state-changing) callbacks or events.
 
 ### Next state
 
 ```mermaid
 graph TB
 
-next["state.next()"] --> next_A["state.next_A()<br>return 'B'"]
+next["states.next()"] --> next_A["states.next_A()<br>return 'B'"]
 
-next_A --> eventStateChange["state.emit('statechange', state)<br>state.prevState -> state.state"]
+next_A --> eventStateChange["states.emit('statechange', states)<br>states.prevState -> states.state"]
 
 subgraph State changing
 
-eventStateChange --> exit_A["state.exit_A()"]
-exit_A --> eventExitA["state.emit('exit_A', state)"]
+eventStateChange --> exit_A["states.exit_A()"]
+exit_A --> eventExitA["states.emit('exit_A', states)"]
 
-eventExitA --> enter_B["state.enter_B()"]
-enter_B --> eventEnterB["state.emit('enter_B', state)"]
+eventExitA --> enter_B["states.enter_B()"]
+enter_B --> eventEnterB["states.emit('enter_B', states)"]
 
 subgraph Exit
 exit_A
@@ -161,7 +211,7 @@ end
 
 end
 
-goto["state.goto('B')"] --> eventStateChange
+goto["states.goto('B')"] --> eventStateChange
 
 subgraph Request
 
@@ -181,12 +231,12 @@ end
 
 - Get next state by callback
     ```javascript
-    state.next();    // nextState = state.next_A()    
+    states.next();    // nextState = states.next_A()    
     ```
 - Goto state
     ```javascript
-    state.goto(nextState);
-    // state.state = nextState;
+    states.goto(nextState);
+    // states.state = nextState;
     ```
 
 #### State-changing
@@ -197,21 +247,21 @@ For example, state is changing from 'A' to 'B'.
 
 1. event `statechange`
     ```javascript
-    state.on('statechange', function(state) {
-        console.log( state.prevState + '->' + state.state );
+    states.on('statechange', function(states) {
+        console.log( states.prevState + '->' + states.state );
     });
     ```
-1. callback `state.exit_A`
+1. callback `states.exit_A`
 1. event `exit_A`
     ```javascript
-    state.on('exit_A', function(state) {
+    states.on('exit_A', function(states) {
         /*...*/
     });
     ```
-1. callback `state.enter_B`
+1. callback `states.enter_B`
 1. event `enter_B`
     ```javascript
-    state.on('enter_B', function(state) {
+    states.on('enter_B', function(states) {
         /*...*/
     });
     ```
@@ -219,8 +269,91 @@ For example, state is changing from 'A' to 'B'.
 ### Enable
 
 ```javascript
-state.setEnable();
-// state.setEnable(false); // disable
+states.setEnable();
+// states.setEnable(false); // disable
 ```
 
-`state.next()` and `state.goto()` will be ignored if disabled.
+or
+
+```javascript
+states.toggleEnable();
+```
+
+`states.next()` and `states.goto()` will be ignored if disabled.
+
+### Update
+
+- Start
+    ```javascript
+    states.startUpdate();
+    states.startPreUpdate();
+    states.startPostUpdate();
+    // Assume that `scene` is assigned in config of constructor
+    ```
+    or
+    ```javascript
+    states.startUpdate(scene);
+    states.startPreUpdate(scene);
+    states.startPostUpdate(scene);
+    ```
+    - `scene` : [Scene object](scene.md)
+- Stop
+    ```javascript
+    states.stopUpdate();
+    states.stopPreUpdate();
+    states.stopPostUpdate();
+    ```
+
+### Add new state
+
+```javascript
+states.addState(name, {
+    next: 'B',  // function() { return 'B'; }
+    enter: function() {},
+    exit: function() {},
+    update: function(time, delta) {},
+    preupdate: function(time, delta) {},
+    postupdate: function(time, delta) {},
+})
+```
+```javascript
+states.addState({
+    name: 'A',
+    next: 'B',  // function() { return 'B'; }
+    enter: function() {},
+    exit: function() {},
+    update: function(time, delta) {},
+    preupdate: function(time, delta) {},
+    postupdate: function(time, delta) {},
+})
+```
+
+or
+
+```javascript
+states.addStates({
+    'A' : {
+        next: 'B',  // function() { return 'B'; }
+        enter: function() {},
+        exit: function() {},
+        update: function(time, delta) {},
+        preupdate: function(time, delta) {},
+        postupdate: function(time, delta) {},
+    },
+    // ...
+})
+```
+```javascript
+states.addStates([
+    {
+        name: 'A',
+        next: 'B',  // function() { return 'B'; }
+        enter: function() {},
+        exit: function() {},
+        update: function(time, delta) {},
+        preupdate: function(time, delta) {},
+        postupdate: function(time, delta) {},
+    },
+    // ...
+]);
+```

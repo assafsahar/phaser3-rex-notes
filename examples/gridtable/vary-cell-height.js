@@ -1,6 +1,7 @@
+import Phaser from 'phaser';
 import GridTablePlugin from '../../plugins/gridtable-plugin.js';
 
-const COLOR_PRIMARY = 0x4e342e;
+const COLOR_MAIN = 0x4e342e;
 const COLOR_LIGHT = 0x7b5e57;
 const COLOR_DARK = 0x260e04;
 
@@ -14,27 +15,24 @@ class Demo extends Phaser.Scene {
     preload() { }
 
     create() {
-        var newCellObject = function (cell) {
+        var onCellVisible = function (cell) {
             var scene = cell.scene;
             var cellIdx = cell.index;
-            // cell.height = (cellIdx % 2) ? 40 : 80;  // se height of visible cell
+            cell.height = (cellIdx % 2) ? 40 : 80;  // Set height of visible cell
 
-            var color = (cellIdx % 2) ? COLOR_PRIMARY : COLOR_DARK;
+            var color = (cellIdx % 2) ? COLOR_MAIN : COLOR_DARK;
             var bg = scene.add.rectangle(0, 0, cell.width, cell.height, color)
                 .setStrokeStyle(2, COLOR_LIGHT)
                 .setOrigin(0);
             var txt = scene.add.text(5, 5, cellIdx);
             var container = scene.add.container(0, 0, [bg, txt]);
-            return container;
-        }
 
-        var onCellVisible = function (cell) {
-            cell.setContainer(newCellObject(cell));
+            cell.setContainer(container);
             //console.log('Cell ' + cell.index + ' visible');
         };
         var table = this.add.rexGridTable(400, 300, 250, 400, {
             cellWidth: 240,
-            cellHeight: 60,
+            cellHeight: 1,
             cellsCount: 20,
             columns: 1,
             cellVisibleCallback: onCellVisible.bind(this),
@@ -43,20 +41,13 @@ class Demo extends Phaser.Scene {
             }
         });
 
-        // set height of all cells
-        for (var i = 0, cnt = table.cellsCount; i < cnt; i++) {
-            var cellHeight = (i % 2) ? 40 : 80;
-            table.setCellHeight(i, cellHeight);
-        }
-        table.updateTable(); // refresh visible cells
-
-        // draw bound
+        // Draw bound
         this.add.graphics()
             .lineStyle(2, 0xff0000)
             .strokeRectShape(table.getBounds())
             .setDepth(1);
 
-        // drag table content
+        // Drag table content
         table.setInteractive();
         table.on('pointermove', function (pointer) {
             if (!pointer.isDown) {
@@ -66,9 +57,16 @@ class Demo extends Phaser.Scene {
             var dy = pointer.y - pointer.prevPosition.y;
             table.addTableOXY(dx, dy).updateTable();
         });
+
+        var print = this.add.text(0, 0, '');
+        table.on('cellheightchange', function () {
+            print.text = table.tableHeight;
+        })
+        table.emit('cellheightchange');
     }
 
-    update() { }
+    update() {
+    }
 }
 
 var config = {

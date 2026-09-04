@@ -1,8 +1,7 @@
 import BaseCmd from './BaseCmd.js';
 import Clone from '../../../../utils/object/Clone.js';
 import Clear from '../../../../utils/object/Clear.js';
-
-const GetValue = Phaser.Utils.Objects.GetValue;
+import GetValue from '../../../../utils/object/GetValue.js';
 
 class LabelCmd extends BaseCmd {
     constructor(scenario) {
@@ -49,7 +48,7 @@ class LabelCmd extends BaseCmd {
         this.lastLabel = label;
         //this.scenario.resetClock(); // TODO
         var scenario = this.scenario;
-        scenario.emit('labelchange', this.lastLabel, this.prevLabel, scenario);
+        scenario.emit('labelchange', this.lastLabel, this.prevLabel, scenario.scope, scenario);
     }
 
     getLabel(inst) {

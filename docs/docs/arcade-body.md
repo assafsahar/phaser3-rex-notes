@@ -2,7 +2,7 @@
 
 Arcade physics body.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
@@ -12,19 +12,19 @@ Arcade physics body.
 1. Add existing game object(s) to physics world
     - Add a game object
         ```javascript
-        var gameObject = scene.physics.add.existing(gameObject, isStatic);
+        var gameObject = scene.physics.add.existing(gameObject, bodyType);
         ```
-        - `isStatic` :
+        - `bodyType` :
             - `0` : Dynamic body
             - `1` : Static body
     - Add game objects
         ```javascript
-        scene.physics.world.enable(gameObjects, isStatic);
+        scene.physics.world.enable(gameObjects, bodyType);
         ```
         - `gameObjects` : An array of game objects, or a group object
-        - `isStatic` :
+        - `bodyType` :
             - `0` : Dynamic body
-            - `1` : Static body 
+            - `1` : Static body
 1. Get physics body
     ```javascript
     var body = gameObject.body;
@@ -50,10 +50,67 @@ Whether this Body is updated by the physics simulation.
     ```javascript
     body.enable = false;
     ```
+
+### Direct control
+
+Enable `directControl` when game object is controlled by tween or dragging.  
+Default behavior is disable.
+
+- Enable
+    ```javascript
+    body.setDirectControl();
+    // body.setDirectControl(true);
+    ```
+    or
+    ```javascript
+    body.directControl = true;
+    ```
+- Disable
+    ```javascript
+    body.setDirectControl(false);
+    ```
+    or
+    ```javascript
+    body.directControl = false;
+    ```
+
+### Immovable
+
+Whether this Body can be moved by collisions with another Body.
+
+- Enable
+    ```javascript
+    body.setImmovable();
+    // body.immovable = true;
+    ```
+- Disable (defalut)
+    ```javascript
+    body.setImmovable(false);
+    // body.immovable = false;
+    ```
 - Get
     ```javascript
-    var enable = body.moves;
+    var immovable = body.immovable;
     ```
+
+### Pushable
+
+Sets if this Body can be pushed by another Body.
+
+- Enable (default value of dynamic body)
+    ```javascript
+    body.pushable = true;
+    ```
+- Disable, reflect back all of the velocity it is given to the colliding body.
+    ```javascript
+    body.pushable = false;
+    ```
+- Get
+    ```javascript
+    var pushable = body.pushable;
+    ```
+
+### Moveable
 
 Whether the Body's position and rotation are affected by its velocity, acceleration, drag, and gravity.
 
@@ -70,8 +127,9 @@ Whether the Body's position and rotation are affected by its velocity, accelerat
     var moves = body.moves;
     ```
 
-!!! note "Use case"
-    Set `body.moves` to `false` when game object is controlled by tween or dragging.
+### Destroy
+
+Physics body will be destroyed automatically when game object is destroyed.
 
 ### Movement
 
@@ -108,6 +166,11 @@ Whether the Body's position and rotation are affected by its velocity, accelerat
 - Set
     ```javascript
     body.setMaxVelocity(x, y);
+    ```
+    or
+    ```javascript
+    body.setMaxVelocityX(x);
+    body.setMaxVelocityY(y);
     ```
 - Get 
     ```javascript
@@ -183,10 +246,26 @@ Reduces speed per second.
     ```javascript
     body.setAllowDrag(false);
     ```
-- Enable damping (default: false)
+- Enable Damping (default: disable)
     ```javascript
-    body.useDamping = true;
+    body.setDamping(true);
+    // body.useDamping = true;
     ```
+
+#### Slide factor
+
+The Slide Factor controls how much velocity is preserved when this Body is pushed by another Body.
+
+```javascript
+body.slideFactor.set(x, y);
+```
+
+- `x`, `y` :
+    - `1` : Take on all velocity given in the push. Default value.
+    - `0` : Allow this Body to be pushed but then remain completely still after the push ends, 
+      such as you see in a game like *Sokoban*.
+    - Other value between `0` ~ `1` : Keep `x`/`y` of the original velocity when the push ends.
+        - Combine this with the `setDrag()` method to create deceleration.
 
 #### Reset position
 
@@ -201,21 +280,6 @@ Sets acceleration, velocity, and speed to zero.
 ```javascript
 body.stop();
 ```
-
-#### Immovable
-
-- Enable
-    ```javascript
-    body.setImmovable();
-    ```
-- Disable (defalut)
-    ```javascript
-    body.setImmovable(false);
-    ```
-- Get
-    ```javascript
-    var immovable = body.immovable;
-    ```
 
 ##### Friction
 
@@ -300,6 +364,54 @@ Reduces angular speed per second.
 
 ### Collision
 
+#### Collision category
+
+A body is only below to one collision category.  
+A body can collide with multiple collision categories.  
+The default is that all bodies collide with all others.
+
+- Collision category
+    - Get
+        ```javascript
+        var collisionCategory = body.collisionCategory;
+        ```
+    - Set
+        ```javascript
+        body.setCollisionCategory(category);
+        ```
+        - `category` : 
+            - `(1 << 0)` 
+            - `(1 << 1)` 
+            - `(1 << 2)` 
+            - ...
+            - `(1 << 31)`
+    - Reset collision category, to default behavior (all bodies collide with all others)
+        ```javascript
+        body.resetCollisionCategory();
+        ```
+        - Set `collisionCategory` to `1`.
+        - Set `collisionMask` to `1`
+- Collision mask
+    - Get
+        ```javascript
+        var collisionMask = body.collisionMask;
+        ```
+    - Set
+        ```javascript
+        body.setCollidesWith(categories);
+        ```
+        - `categories` : A single category value, or an array of them.
+    - Add
+        ```javascript
+        body.addCollidesWith(category):
+        ```
+        - `category` : A single category value.
+    - Remove
+        ```javascript
+        body.removeCollidesWith(category);
+        ```
+        - `category` : A single category value.
+
 #### Collision bound
 
 - Rectangle
@@ -307,7 +419,7 @@ Reduces angular speed per second.
     body.setSize(width, height, center);
     ```    
     - `center` : `false` to set body's offset to (0, 0).
-        - No effect in [Graphics](graphics.md) object.
+        - Not work in [Graphics](graphics.md) object.
 - Circle
     ```javascript
     body.setCircle(radius, offsetX, offsetY);
@@ -391,13 +503,26 @@ var hit = body.hitTest(x, y);
 
 #### World bounds
 
+- [Default world bounds](arcade-world.md#world-bounds)
+- Custom world bounds :
+    ```javascript
+    body.setBoundsRectangle(bounds);
+    ```
+    - `bounds` : A [rectangle object](geom-rectangle.md).
 - Enable
     ```javascript
     body.setCollideWorldBounds();
     ```
-- Disable (default))
+- Disable (default)
     ```javascript
     body.setCollideWorldBounds(false);
+    ```
+- Get world bounds [rectangle](geom-rectangle.md)
+    ```javascript
+    var top = body.world.bounds.top;
+    var bottom = body.world.bounds.bottom;
+    var left = body.world.bounds.left;
+    var right = body.world.bounds.right;
     ```
 
 ##### Blocked

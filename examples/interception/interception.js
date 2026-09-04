@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import InterceptionPlugin from '../../plugins/interception-plugin.js';
 import BulletPlugin from '../../plugins/bullet-plugin.js';
 

@@ -2,22 +2,27 @@
 
 Get color value, built-in methods of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
 ### Get color integer
 
+- Hex string, or color integer
+    ```javascript
+    var color = Phaser.Display.Color.ValueToColor(input);
+    ```
+    - `input` : Hex string, or color integer
 - RGB to color
     ```javascript
     var color = Phaser.Display.Color.GetColor(red, green, blue);
     ```
-    - red, green, blue : 0 ~ 255
+    - `red`, `green`, `blue` : 0 ~ 255
 - RGBA to color
     ```javascript
     var color = Phaser.Display.Color.GetColor32(red, green, blue, alpha);
     ```
-    - red, green, blue, alpha : 0 ~ 255
+    - `red`, `green`, `blue`, `alpha` : 0 ~ 255
 - Hex string to color
     ```javascript
     var color = Phaser.Display.Color.HexStringToColor(hex).color;
@@ -25,7 +30,7 @@ Get color value, built-in methods of phaser.
     - hex : `#0033ff`, `#03f`, `0x0033ff`, or `0x03f`
 - RGB string to color
     ```javascript
-    var color = Phaser.Display.Color.RGBStringToColor(rgb);
+    var color = Phaser.Display.Color.RGBStringToColor(rgb).color;
     ```
     - rgb : `'rgb(r,g,b)'`, or `'rgba(r,g,b,a)'`
         - r, g, b : 0 ~ 255
@@ -34,7 +39,12 @@ Get color value, built-in methods of phaser.
     ```javascript
     var color = Phaser.Display.Color.HSVToRGB(h, s, v).color;
     ```
-    - h, s, v : 0 ~ 1
+    - `h`, `s`, `v` : 0 ~ 1
+- HSL to color
+    ```javascript
+    var color = Phaser.Display.Color.HSLToColor(h, s, l).color;
+    ```
+    - `h`, `s`, `l` : 0 ~ 1
 
 ### Color integer to RGB
 
@@ -42,8 +52,8 @@ Get color value, built-in methods of phaser.
 var rgb = Phaser.Display.Color.IntegerToRGB(color);
 ```
 
-- color : Color integer (`0xAARRGGBB`)
-- rgb : JSON object (`{r, g, b, a}`)
+- `color` : Color integer (`0xAARRGGBB`)
+- `rgb` : JSON object (`{r, g, b, a}`)
 
 ### HSV color wheel
 
@@ -58,7 +68,7 @@ var rgb = Phaser.Display.Color.IntegerToRGB(color);
 
 ### Color object
 
-#### create color object
+#### Create color object
 
 - Create via r,g,b,a components
     ```javascript
@@ -71,6 +81,33 @@ var rgb = Phaser.Display.Color.IntegerToRGB(color);
     var color = Phaser.Display.Color.IntegerToColor(colorInteger);
     ```
     - colorInteger : Color integer (`0xAARRGGBB`)
+- Create via `{r, g, b, a}`
+    ```javascript
+    var color = Phaser.Display.Color.ObjectToColor(input)
+    ```
+    - `input` : An object containing `r`, `g`, `b` and `a` properties in the range `0` to `255`.
+- Create via RGB string
+    ```javascript
+    var color = Phaser.Display.Color.RGBStringToColor(rgb);
+    ```
+    - rgb : `'rgb(r,g,b)'`, or `'rgba(r,g,b,a)'`
+        - r, g, b : 0 ~ 255
+        - a : 0 ~ 1
+- Create via hex string
+    ```javascirpt
+    var color = Phaser.Display.Color.HexStringToColor('#0033ff');
+    ```
+    - `hex` : The hex color value to convert, such as `#0033ff` or the short-hand format: `#03f`.
+- Create via HSV
+    ```javascript
+    var color = Phaser.Display.Color.HSVToRGB(h, s, v);
+    ```
+    - `h`, `s`, `v` : 0 ~ 1
+- Create via HSL
+    ```javascript
+    var color = Phaser.Display.Color.HSLToColor(h, s, l);
+    ```
+    - `h`, `s`, `l` : 0 ~ 1
 
 #### Set color
 
@@ -120,6 +157,8 @@ var rgb = Phaser.Display.Color.IntegerToRGB(color);
     ```javascript
     color.random(min, max);
     ```
+    - `min` : 0 ~ 255. Default value is 0.
+    - `max` : 0 ~ 255. Default value is 255.
 - Set to random gray
     ```javascript
     color.randomGray();
@@ -232,3 +271,29 @@ var newColor = color.clone();
 var hexString = Phaser.Display.Color.RGBToString(color.r, color.g, color.b, color.a);
 // var hexString = Phaser.Display.Color.RGBToString(color.r, color.g, color.b, color.a, prefix);
 ```
+
+### Interpolation
+
+Interpolate between 2 colors.
+
+```javascript
+var colorOut = Phaser.Display.Color.Interpolate.RGBWithRGB(r1, g1, b1, r2, g2, b2, length, index);
+var colorOut = Phaser.Display.Color.Interpolate.ColorWithColor(color1, color2, length, index, hsv, hsvSign);
+var colorOut = Phaser.Display.Color.Interpolate.ColorWithRGB(color, r, g, b, length, index);
+```
+
+- `length`, `index` : t = `index/length` (0~1)
+
+```javascript
+var colorOut = Phaser.Display.Color.Interpolate.HSVWithHSV(h1, s1, v1, h2, s2, v2, length, index, sign);
+```
+
+- `h1`, `h2` : Hue of the first/second color (`0` to `1`).
+- `s1`, `s2` : Saturation of the first/second color (`0` to `1`).
+- `v1`, `v2` : Value (brightness) of the first/second color (`0` to `1`).
+- `length` : Distance to interpolate over. Default value is `100`.
+- `index` : Index to start from. Default value is `0`.
+- `sign` : Hue interpolation direction. 
+    - `0` : nearest. Default behavior.
+    - positive : always increase.
+    - negative : always decrease.

@@ -1,24 +1,24 @@
 // https://labs.phaser.io/view.html?src=src\physics\arcade\asteroids%20movement.js
 
-import TickTask from '../../utils/ticktask/TickTask.js';
-import Helpers from '../../utils/arcade/Helpers.js';
+import TickTask from '../../utils/componentbase/SceneUpdateTickTask.js';
+import { SetAcceleration, SetAngularVelocity } from '../../utils/arcade/Helpers.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
+import { Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
 
 class Ship extends TickTask {
     constructor(gameObject, config) {
         super(gameObject, config);
+        // this.parent = gameObject;
 
-        this.setParent(gameObject);
         this.resetFromJSON(config);
         this.boot();
     }
 
     resetFromJSON(o) {
-        if (this.body === undefined) {
-            this.scene.physics.add.existing(this.gameObject, false);
+        if (!this.parent.body) {
+            this.scene.physics.add.existing(this.parent, false);
         }
-        this.setCascadeMode(GetValue(o, 'cascade', false));
         this.setEnable(GetValue(o, 'enable', true));
         this.setMaxSpeed(GetValue(o, 'maxSpeed', 200));
         this.setAcceleration(GetValue(o, 'acceleration', 200));
@@ -29,41 +29,6 @@ class Ship extends TickTask {
         return this;
     }
 
-    toJSON() {
-        return {
-            tickingMode: this.tickingMode
-        };
-    }
-
-    boot() {
-        super.boot();
-        if (this.gameObject.on) { // oops, bob object does not have event emitter
-            this.gameObject.on('destroy', this.destroy, this);
-        }
-    }
-
-    shutdown() {
-        super.shutdown();
-        this.gameObject = undefined;
-        this.scene = undefined;
-    }
-
-    destroy() {
-        this.shutdown();
-    }
-
-    startTicking() {
-        super.startTicking();
-        this.scene.events.on('preupdate', this.preupdate, this);
-    }
-
-    stopTicking() {
-        super.stopTicking();
-        if (this.scene) { // Scene might be destoryed
-            this.scene.events.off('preupdate', this.preupdate, this);
-        }
-    }
-
     get enable() {
         return this.isRunning;
     }
@@ -71,8 +36,8 @@ class Ship extends TickTask {
     set enable(value) {
         this.isRunning = value;
         if (!value) {
-            this.bodySetAcceleration(0);
-            this.bodySetAngularVelocity(0);
+            SetAcceleration(this.parent, 0, 0);
+            SetAngularVelocity(this.parent, 0);
         }
     }
 
@@ -84,9 +49,18 @@ class Ship extends TickTask {
         return this;
     }
 
+    get maxSpeed() {
+        return this._maxSpeed;
+    }
+
+    set maxSpeed(value) {
+        this._maxSpeed = value;
+        var body = this.parent.body;
+        body.setMaxSpeed(value);
+    }
+
     setMaxSpeed(speed) {
-        var body = this.gameObject.body;
-        body.setMaxSpeed(speed);
+        this.maxSpeed = speed;
         return this;
     }
 
@@ -95,12 +69,19 @@ class Ship extends TickTask {
         return this;
     }
 
-    setDrag(drag) {
-        var body = this.gameObject.body;
-        body.setDrag(drag);
-        this.drag = drag;
+    get drag() {
+        return this._drag;
+    }
 
+    set drag(value) {
+        this._drag = value;
+        var body = this.parent.body;
+        body.setDrag(value);
         body.useDamping = true;
+    }
+
+    setDrag(drag) {
+        this.drag = drag;
         return this;
     }
 
@@ -110,6 +91,9 @@ class Ship extends TickTask {
     }
 
     setWrapMode(wrap, padding) {
+        if (wrap === undefined) {
+            wrap = true;
+        }
         this.wrap = wrap;
         this.padding = padding;
         return this;
@@ -123,43 +107,56 @@ class Ship extends TickTask {
         return this;
     }
 
-    preupdate(time, delta) {
+    get isLeft() {
+        var leftKey = this.cursorKeys.left;
+        return (this.enable && leftKey) ? leftKey.isDown : false;
+    }
+
+    get isRight() {
+        var rightKey = this.cursorKeys.right;
+        return (this.enable && rightKey) ? rightKey.isDown : false;
+    }
+
+    get isUp() {
+        var upKey = this.cursorKeys.up;
+        return (this.enable && upKey) ? upKey.isDown : false;
+    }
+
+    get isDown() {
+        var downKey = this.cursorKeys.down;
+        return (this.enable && downKey) ? downKey.isDown : false;
+    }
+
+    update(time, delta) {
+        var gameObject = this.parent;
         if (!this.enable) {
-            this.bodySetAcceleration(0);
-            this.bodySetAngularVelocity(0);
+            SetAcceleration(gameObject, 0, 0);
+            SetAngularVelocity(gameObject, 0);
             return this;
         }
 
-        var cursorKeys = this.cursorKeys;
-        var isUpDown = cursorKeys.up.isDown;
-        var isLeftDown = cursorKeys.left.isDown;
-        var isRightDown = cursorKeys.right.isDown;
-        var body = this.gameObject.body;
-
-        // speed up
-        if (isUpDown) {
-            var rotation = this.gameObject.rotation;
-            var ax = Math.cos(rotation) * this.acceleration;
-            var ay = Math.sin(rotation) * this.acceleration;
-            this.bodySetAcceleration(ax, ay);
-        } else {
-            this.bodySetAcceleration(0);
+        if (!gameObject.active) {
+            return this;
         }
 
-        // turn left/right
-        var dx = ((isLeftDown) ? -1 : 0) + ((isRightDown) ? 1 : 0);
-        this.bodySetAngularVelocity(this.angularVelocity * dx);
+        // Speed up
+        if (this.isUp) {
+            var rotation = gameObject.rotation;
+            var ax = Math.cos(rotation) * this.acceleration;
+            var ay = Math.sin(rotation) * this.acceleration;
+            SetAcceleration(gameObject, ax, ay);
+        } else {
+            SetAcceleration(gameObject, 0, 0);
+        }
+
+        // Turn left/right
+        var dx = ((this.isLeft) ? -1 : 0) + ((this.isRight) ? 1 : 0);
+        SetAngularVelocity(gameObject, this.angularVelocity * dx);
 
         if (this.wrap) {
-            body.world.wrap(this.gameObject, this.padding);
+            gameObject.body.world.wrap(gameObject, this.padding);
         }
     }
 }
-
-// mixin
-Object.assign(
-    Ship.prototype,
-    Helpers
-);
 
 export default Ship;

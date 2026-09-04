@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import UIPlugin from '../../templates/ui/ui-plugin.js';
 
 class Demo extends Phaser.Scene {
@@ -8,98 +9,105 @@ class Demo extends Phaser.Scene {
 
     }
 
-    preload() {}
+    preload() { }
 
     create() {
         var dialog = this.rexUI.add.dialog({
-                x: 400,
-                y: 300,
-                width: 500,
+            x: 400, y: 300,
+            width: 500,
 
-                background: this.rexUI.add.roundRectangle(0, 0, 100, 100, 20, 0x1565c0),
+            background: this.rexUI.add.roundRectangle(0, 0, 100, 100, 20, 0x1565c0),
 
-                title: createLabel(this, 'Title').setDraggable(),
+            title: CreateLabel(this, 'Title'),
 
-                toolbar: [
-                    createLabel(this, 'O'),
-                    createLabel(this, 'X')
-                ],
+            toolbar: [
+                CreateLabel(this, 'O'),
+                CreateLabel(this, 'X')
+            ],
 
-                content: createLabel(this, 'Content'),
+            leftToolbar: [
+                CreateLabel(this, 'A'),
+                CreateLabel(this, 'B')
+            ],
 
-                description: createLabel(this, 'Description'),
+            content: CreateLabel(this, 'Content'),
 
-                choices: [
-                    createLabel(this, 'Choice0'),
-                    createLabel(this, 'Choice1'),
-                    createLabel(this, 'Choice2')
-                ],
+            description: CreateLabel(this, 'Description'),
 
-                actions: [
-                    createLabel(this, 'Action0'),
-                    createLabel(this, 'Action1')
-                ],
+            choices: [
+                CreateLabel(this, 'Choice0'),
+                CreateLabel(this, 'Choice1'),
+                CreateLabel(this, 'Choice2')
+            ],
 
-                space: {
-                    left: 20,
-                    right: 20,
-                    top: -20,
-                    bottom: -20,
+            actions: [
+                CreateLabel(this, 'Action0'),
+                CreateLabel(this, 'Action1')
+            ],
 
-                    title: 25,
-                    // titleLeft: 30,
-                    content: 25,
-                    description: 25,
-                    // descriptionLeft: 20,
-                    // descriptionRight: 20,
-                    choices: 25,
+            space: {
+                left: 20,
+                right: 20,
+                top: -20,
+                bottom: -20,
 
-                    // toolbarItem: 5,
-                    choice: 15,
-                    action: 15,
-                },
+                title: 25,
+                // titleLeft: 30,
+                content: 25,
+                description: 25,
+                // descriptionLeft: 20,
+                // descriptionRight: 20,
+                choices: 25,
 
-                expand: {
-                    title: false,
-                    // content: false,
-                    // description: false,
-                    // choices: false,
-                    // actions: false,
-                },
+                leftToolbarItem: 5,
+                toolbarItem: 5,
+                choice: 15,
+                action: 15,
+            },
 
-                align: {
-                    // title: 'center',
-                    // content: 'right',
-                    // description: 'left',
-                    // choices: 'left',
-                    actions: 'left', // 'center'|'left'|'right'
-                },
+            expand: {
+                title: false,
+                // content: false,
+                // description: false,
+                // choices: false,
+                // actions: true,
+            },
 
-                click: {
-                    mode: 'release'
-                }
-            })
+            align: {
+                title: 'center',
+                // content: 'right',
+                // description: 'left',
+                // choices: 'left',
+                actions: 'right', // 'center'|'left'|'right'
+            },
+
+            click: {
+                mode: 'release'
+            }
+        })
+            .setDraggable('background')   // Draggable-background
             .layout()
             // .drawBounds(this.add.graphics(), 0xff0000)
-            .popUp(1000);
+            .popUp(1000)
+        // .moveFrom('-=400', undefined, 1000, 'Bounce')
 
         this.print = this.add.text(0, 0, '');
         dialog
-            .on('button.click', function (button, groupName, index) {
+            .on('button.click', function (button, groupName, index, pointer, event) {
                 this.print.text += groupName + '-' + index + ': ' + button.text + '\n';
             }, this)
-            .on('button.over', function (button, groupName, index) {
+            .on('button.over', function (button, groupName, index, pointer, event) {
                 button.getElement('background').setStrokeStyle(1, 0xffffff);
             })
-            .on('button.out', function (button, groupName, index) {
+            .on('button.out', function (button, groupName, index, pointer, event) {
                 button.getElement('background').setStrokeStyle();
             });
     }
 
-    update() {}
+    update() { }
 }
 
-var createLabel = function (scene, text) {
+var CreateLabel = function (scene, text) {
     return scene.rexUI.add.label({
         width: 40, // Minimum width of round-rectangle
         height: 40, // Minimum height of round-rectangle

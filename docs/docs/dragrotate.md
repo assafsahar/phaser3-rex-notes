@@ -5,58 +5,90 @@ Get dragging angle around a specific point.
 - Author: Rex
 - Member of scene
 
-## Source code
+## Live demos
 
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dragrotate-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexdragrotateplugin.min.js)
+- [Spin-button](https://codepen.io/rexrainbow/pen/NJKywR)
+- [Origin game object](https://codepen.io/rexrainbow/pen/zYywmVX)
 
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/dragrotate)
 
-User could import class directly, or install it by global plugin.
+### Install plugin
 
-### Import class
+#### Load minify file
 
-```javascript
-import rexDragRotate from './plugins/dragrotate.js';
-```
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.plugin('rexdragrotateplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexdragrotateplugin.min.js', true);
+    ```
+- Add drag-rotate input
+    ```javascript
+    var dragRotate = scene.plugins.get('rexdragrotateplugin').add(scene, config);
+    ```
 
-### Install global plugin
+#### Import plugin
 
-Install plugin in [configuration of game](game.md#configuration)
-
-```javascript
-import DragRotatePlugin from './plugins/dragrotate-plugin.js';
-
-var config = {
-    // ...
-    plugins: {
-        global: [{
-            key: 'rexDragRotate',
-            plugin: DragRotatePlugin,
-            start: true
-        },
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import DragRotatePlugin from 'phaser4-rex-plugins/plugins/dragrotate-plugin.js';
+    var config = {
         // ...
-        ]
-    }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+        plugins: {
+            global: [{
+                key: 'rexDragRotate',
+                plugin: DragRotatePlugin,
+                start: true
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add drag-rotate input
+    ```javascript
+    var dragRotate = scene.plugins.get('rexDragRotate').add(scene, config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import DragRotate from 'phaser4-rex-plugins/plugins/dragrotate.js';
+    ```
+- Add drag-rotate input
+    ```javascript
+    var dragRotate = new DragRotate(scene, config);
+    ```
 
 ### Create instance
 
 ```javascript
 var dragRotate = scene.plugins.get('rexDragRotate').add(scene, {
+    origin: undefined,
     x: 0,
     y: 0,
-    maxRadius: 100
+    
+    maxRadius: undefined
     minRadius: 0,
+
     // enable: true,
 });
 ```
 
-- `x`, `y` : Orgin point, in world position.
+- `origin` : Use game object's position as origin point.
+    - `undefined` : Use fixed origin position.
+- `x`, `y` : Fixed orgin point, in world position.
 - `maxRadius`, `minRadius` : Dragging is valid when distance between touch pointer and origin position is larger then `minRadius` and less then `maxRadius`.
 - `enable` : Set `false` to disable input events.
 
@@ -69,23 +101,33 @@ var dragRotate = scene.plugins.get('rexDragRotate').add(scene, {
 - Set
     ```javascript
     dragRotate.setEnable(enable);  // enable: true, or false
+    // dragRotate.enable = enable;
+    ```
+- Toggle
+    ```javascript
+    dragRotate.toggleEnable();
     ```
 
 ### Origin point
 
-- Get
+- Use game object's position as origin point.
     ```javascript
-    var x = dragRotate.x;
-    var y = dragRotate.y;
+    dragRotate.setOrigin(gameObject);
     ```
-- Set
-    ```javascript
-    dragRotate.setOrigin(x, y);
-    ```
-    or
-    ```javascript
-    dragRotate.setOrigin(pointer); // pointer: {x, y}
-    ```
+- Fixed orgin point
+    - Get
+        ```javascript
+        var x = dragRotate.x;
+        var y = dragRotate.y;
+        ```
+    - Set
+        ```javascript
+        dragRotate.setOrigin(x, y);
+        ```
+        or
+        ```javascript
+        dragRotate.setOrigin(pointer); // pointer: {x, y}
+        ```
 
 !!! note
     Parameter `(x,y)` is world position, not camera position.
@@ -122,6 +164,12 @@ var isDrag = dragRotate.isDrag;
 
 Return `true` if `(dragRotate.state === 1)` and catched touch pointer just moved.
 
+### Drag cancel
+
+```javascript
+dragRotate.dragCancel();
+```
+
 ### Events
 
 #### On dragging
@@ -142,8 +190,8 @@ Return `true` if `(dragRotate.state === 1)` and catched touch pointer just moved
             ```javascript
             gameObject.angle += dragRotate.deltAangle;
             ```    
-    - `dragRotate.cw` : Return `true` if dragging is clock-wise.
-    - `dragRotate.ccw` : Return `true` if dragging is counter-clock-wise.
+    - `dragRotate.cw` : Return `true` if dragging is dragrotate-wise.
+    - `dragRotate.ccw` : Return `true` if dragging is counter-dragrotate-wise.
 
 #### On drag start, on drag end
 
@@ -162,7 +210,7 @@ Return `true` if `(dragRotate.state === 1)` and catched touch pointer just moved
 
 ### Catched touch pointer
 
-- [Pointer](touchevents.md#properties-of-point), available when state is `1`
+- [Pointer](touchevents.md#pointer), available when state is `1`
     ```javascript
     var pointer = dragRotate.pointer;
     ```

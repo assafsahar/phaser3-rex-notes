@@ -1,67 +1,109 @@
-import GetSceneObject from '../../utils/system/GetSceneObject.js';
-import IsTextGameObject from '../../utils/text/IsTextGameObject.js';
-// import IsCanvasTextGameObject from '../../utils/canvastext/IsCanvasTextGameObject.js';
+import ComponentBase from '../../utils/componentbase/ComponentBase.js';
+import {
+    TextType, TagTextType, BitmapTextType
+} from '../../utils/text/GetTextObjectType.js';
+import GetTextObjectType from '../../utils/text/GetTextObjectType.js';
+import TextToLines from '../../utils/text/TextToLines.js';
+import TextHeightToLineCount from '../../utils/text/TextHeightToLineCount.js';
+import Methods from './methods/Methods.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
-const Clamp = Phaser.Math.Clamp;
+import { Math as PhaserMath, Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
+const Clamp = PhaserMath.Clamp;
 
-class TextPagePlugin {
+class TextPage extends ComponentBase {
     constructor(gameObject, config) {
-        this.gameObject = gameObject;
-        this.scene = GetSceneObject(gameObject);
-        this.setTextObjectType();
+        super(gameObject, { eventEmitter: false });
+        // No event emitter
+        // this.parent = gameObject;
 
-        this.lines = undefined; // Array (default text object), or pens-manager (tag text object)
+        this.textObjectType = GetTextObjectType(this.parent);
+
+        this.pageStartIndexes = [];
+
+        // Text object : array of string
+        // Tag text object : pens-manager
+        // Bitmap text object : array of string
+        this.lines = TextToLines(this.parent, '');
+
+        this.sections = [];
+
         this.resetFromJSON(config);
-        this.boot();
     }
 
     resetFromJSON(o) {
+        this.setMaxLines(GetValue(o, 'maxLines', undefined));
+        this.setPageBreak(GetValue(o, 'pageBreak', '\f\n'));
         this.setText(GetValue(o, 'text', ''));
-        this.setStartIdx(GetValue(o, 'start', 0));
-        this.setPageIdx(GetValue(o, 'page', -1));
+
+        this.startLineIndex = GetValue(o, 'start', -1);
+        this.endLineIndex = GetValue(o, 'end', undefined);
+
+        var pageIndex = GetValue(o, 'page');
+        if (pageIndex === undefined) {
+            this.resetIndex();
+        } else {
+            this.setPageIndex(pageIndex);
+        }
+
         return this;
     }
 
     toJSON() {
         return {
-            text: this.text,
-            start: this.startLineIdx,
+            maxLines: this.maxLines,
+            text: this.content,
+            start: this.startLineIndex,
+            end: this.endLineIndex,
             page: this.pageIndex,
-
-            pageCount: this.pageCount
-
+            pageBreak: this.pageBreak
         };
     }
 
-    boot() {
-        if (this.gameObject.on) { // oops, bob object does not have event emitter
-            this.gameObject.on('destroy', this.destroy, this);
+    shutdown(fromScene) {
+        // Already shutdown
+        if (this.isShutdown) {
+            return;
         }
+
+        switch (this.textObjectType) {
+            case TextType:
+                this.lines.length = 0;
+                break;
+            case TagTextType:
+                this.lines.destroy();
+                break;
+            case BitmapTextType:
+                this.lines.length = 0;
+                break;
+        }
+
+        this.pageStartIndexes.length = 0;
+        this.sections.length = 0;
+
+        this.lines = undefined;
+        this.pageStartIndexes = undefined;
+        this.sections = undefined;
+
+        super.shutdown(fromScene);
     }
 
-    shutdown() {
-        if (this.lines === undefined) {
-            // Do nothing
-        } else if (this.textObjectType === 0) {
-            this.lines.length = 0;
-        } else {
-            this.lines.destroy();
-        }
-
-        this.gameObject = undefined;
-        this.scene = undefined;
-
+    setMaxLines(maxLines) {
+        this.maxLines = maxLines;
         return this;
     }
 
-    destroy() {
-        this.shutdown();
+    setPageBreak(pageBreak) {
+        this.pageBreak = pageBreak;
+        return this;
     }
 
-    setTextObjectType() {
-        this.textObjectType = IsTextGameObject(this.gameObject) ? 0 : 1;
-        return this;
+    get pageCount() {
+        return this.pageStartIndexes.length;
+    }
+
+    get lastPageIndex() {
+        return this.pageCount - 1;
     }
 
     get isFirstPage() {
@@ -72,143 +114,175 @@ class TextPagePlugin {
         return (this.pageIndex >= (this.pageCount - 1));
     }
 
-    setText(text, resetPageIdx) {
-        if (resetPageIdx === undefined) {
-            resetPageIdx = true;
-        }
-        this.text = transferText(text);
-
-        // Wrap content in lines
-        if (this.textObjectType === 0) {
-            this.lines = this.gameObject.getWrappedText(this.text); // lines in array
-        } else {
-            this.lines = this.gameObject.getPenManager(this.text, this.lines); // pen manager
-        }
-
-        this.pageCount = Math.ceil(this.totalLinesCount / this.pageLinesCount);
-        if (resetPageIdx) {
-            this.resetPageIdx();
-        }
-        return this;
-    }
-
-    appendText(text) {
-        this.setText(this.text.concat(transferText(text)));
-        return this;
-    }
-
-    getPage(idx) {
-        if (idx === undefined) {
-            idx = this.pageIndex;
-        }
-        return this.setPageIdx(idx).getLines();
-    }
-
-    getNextPage() {
-        return this.getPage(this.pageIndex + 1);
-    }
-
-    getPreviousPage() {
-        return this.getPage(this.pageIndex - 1);
-    }
-
-    showPage(idx) {
-        this.displayText(this.getPage());
-        return this;
-    }
-
-    showNextPage() {
-        this.displayText(this.getNextPage());
-        return this;
-    }
-
-    showPreviousPage() {
-        this.displayText(this.getPreviousPage());
-        return this;
-    }
-
-    show() {
-        this.displayText(this.getLines());
-        return this;
-    }
-
-    showNextLine() {
-        this.displayText(this.setStartIdx(this.startLineIdx + 1).getLines());
-        return this;
-    }
-
-    showPreviousLine() {
-        this.displayText(this.setStartIdx(this.startLineIdx - 1).getLines());
-        return this;
-    }
-
-    setStartIdx(idx) {
-        idx = Clamp(idx, 0, this.totalLinesCount - 1);
-        this.startLineIdx = idx;
-        return this;
-    }
-
-    resetPageIdx() {
-        this.pageIndex = -1;
-    }
-
-    setPageIdx(idx) {
-        idx = Clamp(idx, 0, this.pageCount - 1);
-        this.pageIndex = idx;
-        this.setStartIdx(this.pageIndex * this.pageLinesCount);
-        return this;
+    get pageHeight() {
+        var padding = this.parent.padding;
+        return this.parent.height - padding.top - padding.bottom;
     }
 
     get totalLinesCount() {
-        var count;
-        if (this.textObjectType === 0) {
-            count = this.lines.length;
-        } else {
-            count = this.lines.linesCount;
-        }
-        return count;
+        return (this.lines) ? this.lines.length : 0;
     }
 
     get pageLinesCount() {
-        var count;
-        var maxLines = this.gameObject.style.maxLines;
-        if (maxLines > 0) {
-            count = maxLines;
+        // Since the line height of each line is the same, 
+        // each page will have the same number of lines
+
+        if (this.maxLines !== undefined) {
+            return this.maxLines;
+
+        } else if (this.isVariableLineHeightMode) {
+            throw new Error('pageLinesCount is not supported when isVariableLineHeightMode is enabled');
+
         } else {
-            count = this.totalLinesCount;
+            var count;
+            switch (this.textObjectType) {
+                case TextType:
+                case TagTextType:
+                    var maxLines = this.parent.style.maxLines;
+                    if (maxLines > 0) {
+                        count = maxLines;
+                    } else {
+                        count = Math.floor(TextHeightToLineCount(this.parent));
+                    }
+                    break;
+                case BitmapTextType:
+                    count = this.totalLinesCount;
+                    break;
+            }
+            return count;
+
         }
-        return count;
     }
 
-    getLines(startLineIdx) {
-        if (startLineIdx === undefined) {
-            startLineIdx = this.startLineIdx;
-        }
-        var endLineIdx = startLineIdx + this.pageLinesCount;
-        var text;
-        if (this.textObjectType === 0) {
-            text = this.lines.slice(startLineIdx, endLineIdx).join('\n');
-        } else {
-            var startIdx = this.lines.getLineStartIndex(startLineIdx);
-            var endIdx = this.lines.getLineEndIndex(endLineIdx - 1);
-            text = this.lines.getSliceTagText(startIdx, endIdx, true);
-        }
-        return text;
+    get isVariableLineHeightMode() {
+        return (this.textObjectType === TagTextType) &&
+            (!this.parent.style.fixedLineHeightMode) &&
+            (this.maxLines === undefined) &&
+            (this.parent.style.maxLines <= 0);
     }
 
-    displayText(text) {
-        this.gameObject.setText(text);
+    getPageIndexByLineIndex(lineIndex) {
+        var pageCount = this.pageStartIndexes.length;
+        if (pageCount === 0) {
+            return 0;
+        }
+        if (lineIndex == null || lineIndex <= this.pageStartIndexes[0]) {
+            return 0;
+        }
+        for (var i = pageCount - 1; i >= 0; i--) {
+            if (lineIndex >= this.pageStartIndexes[i]) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    getLineIndexByHeight(lineIndex, pageHeight) {
+        var lines = this.lines.lines;
+        if (!lines || lines.length === 0) {
+            return 0;
+        }
+        if (lineIndex < 0) {
+            lineIndex = 0;
+        } else if (lineIndex >= lines.length) {
+            return lines.length;
+        }
+        var base = lines[lineIndex].startOffset;
+        var target = base + pageHeight;
+        var left = lineIndex;
+        var right = lines.length - 1;
+        var result = lines.length;
+        while (left <= right) {
+            var mid = (left + right) >> 1;
+            if (lines[mid].endOffset > target) {
+                result = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        return result;
+    }
+
+    getLastStartLineIndexByHeight(pageHeight) {
+        if (pageHeight <= 0) {
+            return 0;
+        }
+        var lines = this.lines.lines;
+        if (!lines || lines.length === 0) {
+            return 0;
+        }
+        var lastLine = lines[lines.length - 1];
+        var targetStartOffset = lastLine.endOffset - pageHeight;
+        if (targetStartOffset <= 0) {
+            return 0;
+        }
+        return this.getLineIndexByStartOffsetCeil(targetStartOffset);
+    }
+
+    getLineIndexByStartOffset(targetOffset) {
+        var lines = this.lines.lines;
+        if (!lines || lines.length === 0) {
+            return 0;
+        }
+        if (targetOffset <= lines[0].startOffset) {
+            return 0;
+        }
+        var left = 0;
+        var right = lines.length - 1;
+        var result = 0;
+        while (left <= right) {
+            var mid = (left + right) >> 1;
+            if (lines[mid].startOffset <= targetOffset) {
+                result = mid;
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        return result;
+    }
+
+    getLineIndexByStartOffsetCeil(targetOffset) {
+        var lines = this.lines.lines;
+        if (!lines || lines.length === 0) {
+            return 0;
+        }
+        if (targetOffset <= lines[0].startOffset) {
+            return 0;
+        }
+        var left = 0;
+        var right = lines.length - 1;
+        var result = lines.length - 1;
+        while (left <= right) {
+            var mid = (left + right) >> 1;
+            if (lines[mid].startOffset >= targetOffset) {
+                result = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        return result;
+    }
+
+    get isFirstLine() {
+        return (this.startLineIndex <= 0);
+    }
+
+    get isLastLine() {
+        return this.endLineIndex === this.totalLinesCount;
+    }
+
+    get content() {
+        return this.sections.join(this.pageBreak);
     }
 }
 
-var transferText = function (text) {
-    if (Array.isArray(text)) {
-        text = text.join('\n');
-    } else if (typeof (text) === 'number') {
-        text = text.toString();
-    }
-    return text;
-}
+Object.assign(
+    TextPage.prototype,
+    Methods,
+);
 
 
-export default TextPagePlugin;
+export default TextPage;

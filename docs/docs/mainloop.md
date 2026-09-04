@@ -8,30 +8,32 @@
         }, scope);
         ```
 1.  Update the Scene Manager and all active Scenes
-    1.  scene.sys.events `preupdate` event
+    1.  scene.events `preupdate` event
         - Register event
             ```javascript
-            scene.sys.events.on('preupdate', function(time, delta){
+            scene.events.on('preupdate', function(time, delta){
                 //
             }, scope);
             ```
+        - InputPlugin.preUpdate()
         - TweenManager.preUpdate() to arrange active targets
         - UpdateList.preUpdate(), to arrange game objects in UpdateList
-    1.  scene.sys.events `update` event
+    1.  scene.events `update` event
         - Register event
             ```javascript
-            scene.sys.events.on('update', function(time, delta){
+            scene.events.on('update', function(time, delta){
                 //
             }, scope);
             ```
         - TweenManager.update(), to run active tweens
         - UpdateList.update
             - gameObject.preUpdate
+        - Update arcade world
     1. scene.update()
-    1. scene.sys.events `postupdate` event
+    1. scene.events `postupdate` event
         - Register event
             ```javascript
-            scene.sys.events.on('postupdate', function(time, delta){
+            scene.events.on('postupdate', function(time, delta){
                 //
             }, scope);
             ```
@@ -43,20 +45,34 @@
         }, scope);
         ```
 1. game.renderer.preRender()
+1. game.events `prerenderclear` event
+    - Register event
+        ```javascript
+        scene.game.events.on('prerenderclear', function(){
+            //
+        }, scope);
+        ```
 1. game.events `prerender` event
     - Register event
         ```javascript
-        scene.game.events.on('prerender', function(renderer, time, delta){
+        scene.game.events.on('prerender', function(){
             //
         }, scope);
         ```
 1. SceneManager.render()
     1. Sort display list
-    1. Render cameras
-    1. scene.sys.events `render` event
+    1. scene.events `prerender` event
         - Register event
             ```javascript
-            scene.game.events.on('render', function(renderer){
+            scene.events.on('prerender', function(renderer){
+                //
+            }, scope);
+            ```
+    1. Render cameras
+    1. scene.events `render` event
+        - Register event
+            ```javascript
+            scene.events.on('render', function(renderer){
                 //
             }, scope);
             ```
@@ -81,6 +97,7 @@ graph TB
 
 subgraph Render
 GameRenderPreRender["game.renderer.preRender()"]
+GameEventPreRenderClear>"game.events: prerenderclear"]
 GameEventPreRender>"game.events: prerender"]
 SceneManagerRender["SceneManager.render()<br>...See 'Scene steps'..."]
 GameRenderPostRender["game.renderer.postRender()"]
@@ -99,7 +116,8 @@ GameEventPreStep --> GameEventStep
 GameEventStep --> SceneManagerUpdate
 SceneManagerUpdate --> GameEventPostStep
 GameEventPostStep --> GameRenderPreRender
-GameRenderPreRender --> GameEventPreRender
+GameRenderPreRender --> GameEventPreRenderClear
+GameEventPreRenderClear --> GameEventPreRender
 GameEventPreRender --> SceneManagerRender
 SceneManagerRender --> GameRenderPostRender
 GameRenderPostRender --> GameEventPostRender
@@ -112,14 +130,16 @@ GameEventPostRender --> GameEventPreStep
 graph TB
 
 subgraph Render
-SceneEventRender>"scene.sys.events: render"]
+SceneEventPreRender>"scene.events: prerender"]
+SceneCameraRender["scene.cameras.render()"]
+SceneEventRender>"scene.events: render"]
 end
 
 subgraph Update
-SceneEventPreUpdate>"scene.sys.events: preupdate<br><br>TweenManager.preUpdate()<br>UpdateList.preUpdate()"]
-SceneEventUpdate>"scene.sys.events: update<br><br>TweenManager.update()<br>UpdateList.update()<br>gameObject.preUpdate()"]
+SceneEventPreUpdate>"scene.events: preupdate<br><br>InputPlugin.preUpdate()<br>TweenManager.preUpdate()<br>UpdateList.preUpdate()"]
+SceneEventUpdate>"scene.events: update<br><br>TweenManager.update()<br>UpdateList.update()<br>gameObject.preUpdate()"]
 SceneUpdate["scene.update()"]
-SceneEventPostUpdate>"scene.sys.events: postupdate"]
+SceneEventPostUpdate>"scene.events: postupdate"]
 end
 
 
@@ -127,5 +147,22 @@ SceneEventPreUpdate --> SceneEventUpdate
 SceneEventUpdate --> SceneUpdate
 SceneUpdate --> SceneEventPostUpdate
 
-SceneEventPostUpdate -.-> SceneEventRender
+SceneEventPostUpdate -.-> SceneEventPreRender
+SceneEventPreRender --> SceneCameraRender
+SceneCameraRender --> SceneEventRender
 ```
+
+## Rendering order
+
+- For each scene from bottom to top, in game
+    - For each camera from bottom to top, in scene
+        - For each game object from bottom to top in scene's displayList
+            - Render this game object
+                - Render children game objects, if game object is a [container](container.md) or a [layer](layer.md)
+
+
+!!! note
+    A game object can be seen by all cameras of this scene, 
+    therefore game object could be rendering more than one times.
+
+    See also [Ignore game object](camera.md#ignore-game-object)

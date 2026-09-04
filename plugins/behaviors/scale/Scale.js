@@ -1,57 +1,32 @@
-import GetSceneObject from '../../utils/system/GetSceneObject.js';
+import { Utils as PhaserUtils, Math as PhaserMath } from 'phaser';
+import EaseValueTaskBase from '../../utils/componentbase/tweentask/EaseValueTaskBase.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
-const GetAdvancedValue = Phaser.Utils.Objects.GetAdvancedValue;
+const GetValue = PhaserUtils.Objects.GetValue;
+const GetAdvancedValue = PhaserUtils.Objects.GetAdvancedValue;
+const Linear = PhaserMath.Linear;
 
-class Scale {
+class Scale extends EaseValueTaskBase {
     constructor(gameObject, config) {
-        this.gameObject = gameObject;
-        this.scene = GetSceneObject(gameObject);
+        super(gameObject, config);
+        // this.parent = gameObject;
+        // this.timer
 
         this.scaleStart = {};
         this.scaleEnd = {};
-        this.tween = undefined;
+
         this.resetFromJSON(config);
         this.boot();
     }
 
     resetFromJSON(o) {
+        super.resetFromJSON(o);
+
         this.setMode(GetValue(o, 'mode', 0));
         this.setScaleRange(
             GetAdvancedValue(o, 'start', undefined),
             GetAdvancedValue(o, 'end', 0)
         );
-        this.setDelay(GetAdvancedValue(o, 'delay', 0));
-        this.setFadeOutTime(GetAdvancedValue(o, 'duration', 1000));
-        this.setEase(GetValue(o, 'ease', undefined));
-        return this;
-    }
 
-    toJSON() {
-        return {
-            mode: this.mode,
-            start: this.scaleStart,
-            end: this.scaleEnd,
-            delay: this.delay,
-            duration: this.duration
-        };
-    }
-
-    boot() {
-        if (this.gameObject.on) { // oops, bob object does not have event emitter
-            this.gameObject.on('destroy', this.destroy, this);
-        }
-    }
-
-    shutdown() {
-        this.stop();
-        this.gameObject = undefined;
-        this.scene = undefined;
-        return this;
-    }
-
-    destroy() {
-        this.shutdown();
         return this;
     }
 
@@ -65,78 +40,78 @@ class Scale {
 
     setScaleRange(start, end) {
         if (typeof (start) === 'number') {
-            this.scaleStart.x = start;
-            this.scaleStart.y = start;
+            this.startX = start;
+            this.startY = start;
         } else {
-            this.scaleStart.x = GetValue(start, 'x', this.gameObject.scaleX);
-            this.scaleStart.y = GetValue(start, 'y', this.gameObject.scaleY);
+            this.startX = GetAdvancedValue(start, 'x', this.parent.scaleX);
+            this.startY = GetAdvancedValue(start, 'y', this.parent.scaleY);
         }
         if (typeof (end) === 'number') {
-            this.scaleEnd.x = end;
-            this.scaleEnd.y = end;
+            this.endX = end;
+            this.endY = end;
         } else {
-            this.scaleEnd.x = GetValue(end, 'x', this.scaleStart.x);
-            this.scaleEnd.y = GetValue(end, 'y', this.scaleStart.y);
+            this.endX = GetAdvancedValue(end, 'x', undefined);
+            this.endY = GetAdvancedValue(end, 'y', undefined);
         }
-        return this;
-    }
 
-    setDelay(time) {
-        this.delay = time;
-        return this;
-    }
-
-    setFadeOutTime(time) {
-        this.duration = time;
-        return this;
-    }
-
-    setEase(ease) {
-        if (ease === undefined) {
-            ease = 'Linear';
-        }
-        this.ease = ease;
+        this.hasScaleX = (this.startX !== undefined) && (this.endX !== undefined);
+        this.hasScaleY = (this.startY !== undefined) && (this.endY !== undefined);
         return this;
     }
 
     start() {
-        if (this.tween) {
+        if (this.timer.isRunning) {
             return this;
         }
 
-        this.gameObject.scaleX = this.scaleStart.x;
-        this.gameObject.scaleY = this.scaleStart.y;
-        this.tween = this.scene.tweens.add({
-            targets: this.gameObject,
-            scaleX: this.scaleEnd.x,
-            scaleY: this.scaleEnd.y,
+        var gameObject = this.parent;
+        if (this.hasScaleX) {
+            gameObject.scaleX = this.startX;
+        }
+        if (this.hasScaleY) {
+            gameObject.scaleY = this.startY;
+        }
 
-            duration: this.duration,
-            ease: this.ease,
-            yoyo: (this.mode == 2),
-            repeat: ((this.mode == 2) ? -1 : 0),
-            onComplete: this.complete,
-            onCompleteScope: this
-        });
+        var repeat = this.repeat;
+        if (this.mode === 2) {  // Yoyo
+            if (repeat !== -1) {
+                repeat = ((repeat + 1) * 2) - 1;
+            }
+        }
+
+        this.timer
+            .setDelay(this.delay)
+            .setDuration(this.duration)
+            .setRepeat(repeat);
+
+        super.start();
         return this;
     }
 
-    stop() {
-        if (!this.tween) {
-            return this;
+    updateTarget(gameObject, timer) {
+        var t = timer.t;
+        if (timer.isOddIteration) {  // Yoyo
+            t = 1 - t;
         }
+        t = this.easeFn(t);
 
-        this.tween.remove();
-        this.tween = undefined;
-        return this;
+        if (this.hasScaleX) {
+            gameObject.scaleX = Linear(this.startX, this.endX, t);
+        }
+        if (this.hasScaleY) {
+            gameObject.scaleY = Linear(this.startY, this.endY, t);
+        }
     }
 
     complete() {
-        if (this.mode === 1) {
-            this.gameObject.destroy();
-        }
-    }
+        super.complete();
 
+        if (this.mode === 1) {
+            this.parent.destroy();
+            // Will also destroy this behavior
+        }
+        return this;
+    }
 }
 
 const MODE = {

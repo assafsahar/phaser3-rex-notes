@@ -1,21 +1,23 @@
+import ComponentBase from '../../utils/componentbase/ComponentBase.js';
 import GetChessData from '../chess/GetChessData.js';
+import Methods from './Methods.js';
 import CONST from './const.js';
-import AStarSearch from './astartsearch/AStarSearch.js';
-import GetCost from './GetCost.js';
-import FindArea from './FindArea.js';
-import GetPath from './GetPath.js';
-import FindPath from './FindPath.js';
-import TileXYToCost from './TileXYToCost.js';
+import IsPlainObject from '../../utils/object/IsPlainObject.js';
 import GetValue from '../../utils/object/GetValue.js';
 
 const BLOCKER = CONST.BLOCKER;
 const INFINITY = CONST.INFINITY;
 
-class PathFinder {
+class PathFinder extends ComponentBase {
     constructor(gameObject, config) {
-        this.gameObject = gameObject;
-        this.chessData = GetChessData(gameObject);
-        this.nodesManager = undefined;
+        if (IsPlainObject(gameObject)) {
+            config = gameObject;
+            gameObject = undefined;
+        }
+        super(gameObject, { eventEmitter: false });
+
+        this.setChess(gameObject);
+        this.nodeManager = undefined;
         this.resetFromJSON(config);
     }
 
@@ -36,23 +38,42 @@ class PathFinder {
         return this;
     }
 
-    boot() {
-        if (this.gameObject.on) { // oops, bob object does not have event emitter
-            this.gameObject.on('destroy', this.destroy, this);
+    shutdown(fromScene) {
+        // Already shutdown
+        if (this.isShutdown) {
+            return;
         }
-    }
 
-    shutdown() {
-        if (this.nodesManager !== undefined) {
-            this.nodesManager.destroy();
+        if (this.nodeManager !== undefined) {
+            this.nodeManager.destroy();
         }
-        this.gameObject = undefined;
         this.chessData = undefined;
-        return this;
+
+        super.shutdown(fromScene);
     }
 
-    destroy() {
-        this.shutdown();
+    get gameObject() {
+        return this.parent;
+    }
+
+    setChess(gameObject) {
+        if (gameObject) {
+            this.chessData = GetChessData(gameObject);
+            if (this.parent !== gameObject) {
+                // Remove attatched event from previous gameObject
+                if (this.parent && this.parent.once) {
+                    this.parent.off('destroy', this.onParentDestroy, this);
+                }
+                // Attach event
+                this.setParent(gameObject);
+                if (this.parent && this.parent.once) {
+                    this.parent.once('destroy', this.onParentDestroy, this);
+                }
+            }
+        } else {
+            this.setParent();
+            this.chessData = undefined;
+        }
         return this;
     }
 
@@ -128,17 +149,9 @@ class PathFinder {
     }
 }
 
-var methods = {
-    aStarSearch: AStarSearch,
-    getCost: GetCost,
-    findArea: FindArea,
-    getPath: GetPath,
-    findPath: FindPath,
-    tileXYToCost: TileXYToCost,
-};
 Object.assign(
     PathFinder.prototype,
-    methods
+    Methods
 );
 
 const PATHMODE = {

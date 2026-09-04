@@ -2,7 +2,7 @@
 
 Path in curves, built-in object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
@@ -34,110 +34,122 @@ var path = new Phaser.Curves.Path(json);
 
 ### Add curve
 
-#### Add line
+#### Line
 
-1. Create line object
+- Add line object
+    1. Create line object
+        ```javascript
+        var curve = new Phaser.Curves.Line({x: x0, y: y0}, {x: x1, y: y1});
+        ```
+        or
+        ```javascript
+        var curve = new Phaser.Curves.Line([x0, y0, x1, y1]);
+        ```
+    1. Add to path
+        ```javascript
+        path.add(curve);
+        ```
+- Add line started from previous end point to next point
     ```javascript
-    var curve = new Phaser.Curves.Line(p0, p1); // p0, p1: {x, y}
+    path.lineTo(endX, endY);
     ```
     or
     ```javascript
-    var curve = new Phaser.Curves.Line([x0, y0, x1, y1]);
-    ```
-1. Add to path
-    ```javascript
-    path.add(curve);
+    path.lineTo(new Phaser.Math.Vector2({x, y}));
     ```
 
-Add line started from previous end point to next point
+Properties:
 
-```javascript
-path.lineTo(endX, endY);
-```
-or
-```javascript
-path.lineTo(point);  // point : Phaser.Math.Vector2
-```
+- `curve.p0` : The first endpoint.
+    - `curve.p0.x`, `curve.p0.y`
+- `curve.p1` : The second endpoint.
+    - `curve.p1.x`, `curve.p1.y`
 
-#### Add circle/ellipse/arc
+#### Circle/ellipse/arc
 
-1. Create circle/ellipse/arc object
+- Add circle/ellipse/arc object
+    1. Create circle/ellipse/arc object
+        - Circle
+            ```javascript
+            var curve = new Phaser.Curves.Ellipse(x, y, radius);
+            ```
+        - Ellipse
+            ```javascript
+            var curve = new Phaser.Curves.Ellipse(x, y, xRadius, yRadius);
+            ```
+        - Arc
+            ```javascript
+            var curve = new Phaser.Curves.Ellipse(x, y, xRadius, yRadius, startAngle, endAngle, clockwise, rotation);
+            ```
+            - `startAngle`, `endAngle` : Degrees.
+    1. Add to path
+        ```javascript
+        path.add(curve);
+        ```
+- Add circle/ellipse/arc started from previous end point to next point
     - Circle
         ```javascript
-        var curve = new Phaser.Curves.Ellipse(x, y, radius);
+        path.circleTo(radius);
         ```
     - Ellipse
         ```javascript
-        var curve = new Phaser.Curves.Ellipse(x, y, xRadius, yRadius);
+        path.ellipseTo(xRadius, yRadius);
         ```
     - Arc
         ```javascript
-        var curve = new Phaser.Curves.Ellipse(x, y, xRadius, yRadius, startAngle, endAngle, clockwise, rotation);
+        path.ellipseTo(xRadius, yRadius, startAngle, endAngle, clockwise, rotation);
         ```
-1. Add to path
-    ```javascript
-    path.add(curve);
-    ```
 
-Add circle/ellipse/arc started from previous end point to next point
+Properties:
 
-- Circle
-    ```javascript
-    path.circleTo(radius);
-    ```
-- Ellipse
-    ```javascript
-    path.ellipseTo(xRadius, yRadius);
-    ```
-- Arc
-    ```javascript
-    path.ellipseTo(xRadius, yRadius, startAngle, endAngle, clockwise, rotation);
-    ```
+- `curve.p0` : Center point.
+    - `curve.p0.x`, `curve.p0.y`
+- `curve.xRadius`, `curve.yRadius` : Horizontal/vertical radiuse.
+- `curve.startAngle`, `curve.endAngle` : Start/end angle, in degrees.
+- `curve.clockwise` : `true` if Clockwise, `false` if anti-clockwise.
+- `curve.angle` : Rotation, in degrees.
+    - `curve.rotation` : Rotation, in radians.
 
-#### Add spline
+#### Spline
 
-1. Create spline object
+- Add spline object
+    1. Create spline object
+        ```javascript
+        var curve = new Phaser.Curves.Spline([
+            p0,            // {x, y}, or [x, y]
+            p1,            // {x, y}, or [x, y]
+            // ...
+        ]);
+        ```
+        or
+        ```javascript
+        var curve = new Phaser.Curves.Spline([
+            x0, y0,
+            x1, y1,
+            // ...
+        ]);
+        ```
+    1. Add to path
+        ```javascript
+        path.add(curve);
+        ```
+- Add spline started from previous end point to next point
     ```javascript
-    var points = [
+    var points = ;
+    path.splineTo([
         p0,            // {x, y}, or [x, y]
         p1,            // {x, y}, or [x, y]
         // ...
-    ];
-    var curve = new Phaser.Curves.Spline(points);
+    ]);
     ```
     or
     ```javascript
-    var points = [
+    path.splineTo([
         x0, y0,
         x1, y1,
         // ...
-    ];
-    var curve = new Phaser.Curves.Spline(points);
+    ]);
     ```
-1. Add to path
-    ```javascript
-    path.add(curve);
-    ```
-
-Add spline started from previous end point to next point
-
-```javascript
-var points = [
-    p0,            // {x, y}, or [x, y]
-    p1,            // {x, y}, or [x, y]
-    // ...
-];
-path.splineTo(points);
-```
-or
-```javascript
-var points = [
-    x0, y0,
-    x1, y1,
-    // ...
-];
-path.splineTo(points);
-```
 
 ##### Append point
 
@@ -145,7 +157,7 @@ path.splineTo(points);
 var point = curve.addPoint(x, y);
 ```
 
-#### Add quadratic bezier curve
+#### Quadratic bezier curve
 
 1. Create quadratic bezier curve object
     ```javascript
@@ -175,7 +187,7 @@ or
 path.quadraticBezierTo(endPoint, controlPoint);  // point : Phaser.Math.Vector2
 ```
 
-#### Add cubic bezier curve
+#### Cubic bezier curve
 
 1. Create quadratic bezier curve object
     ```javascript
@@ -224,11 +236,31 @@ path.fromJSON(json);
 var curves = path.curves;
 ```
 
+#### Get curve at t
+
+```javascript
+var curve = path.getCurveAt(t);
+```
+
+- `t` : The normalized location on the Path. Between `0` and `1`
+
 ### Draw on [graphics](graphics.md)
 
 ```javascript
 path.draw(graphics);
+// path.draw(graphics, pointsTotal);
 ```
+
+- `pointsTotal` : The number of points to draw for each Curve.
+
+or
+
+```javascript
+curve.draw(graphics);
+// curve.draw(graphics, pointsTotal);
+```
+
+- `pointsTotal` : The resolution of the curve.
 
 ### Point
 
@@ -254,22 +286,37 @@ path.draw(graphics);
     // var out = curve.getRandomPoint(out);  // modify out
     ```    
 - Get n points
-    ```javascript
-    var points = path.getPoints(n);
-    ```
-    or
-    ```javascript
-    var points = curve.getPoints(n);
-    ```    
-- Get n points equally spaced out along the curve
+    - Path
+        ```javascript
+        var points = path.getPoints(divisions);
+        ```
+        - `divisions` : The number of divisions per resolution **per curve**.
+    - Curve
+        ```javascript
+        var points = curve.getPoints(divisions);
+        // var points = curve.getPoints(divisions, undefined, out);
+        ```
+        or
+        ```javascript
+        var points = curve.getPoints(undefined, stepRate);
+        // var points = curve.getPoints(undefined, stepRate, out);
+        ```
+        - `divisions` : The number of divisions in this curve.
+            1. `divisions`, if `divisions > 0`, else
+            1. `this.getLength / stepRate`, if `stepRate > 0`, else
+            1. `defaultDivisions`
+        - `points` : Return `1 + divisions` points.
+- Get (n+1) points equally spaced out along the curve
     ```javascript
     var points = path.getSpacedPoints(n);
     ```
     or
     ```javascript
     var points = curve.getSpacedPoints(n);
+    // var points = curve.getSpacedPoints(undefined, stepRate);
+    // var points = curve.getSpacedPoints(divisions, stepRate, out);
     ```
-- Get points spaced out n distance pixels apart    
+- Get points spaced out n distance pixels apart
     ```javascript
     var points = curve.getDistancePoints(n)
     ```
@@ -302,10 +349,14 @@ path.draw(graphics);
     Path object does **NOT** support this feature yet.
 - Get tangent
     ```javascript
+    var out = path.getTangent(t);  // t: 0~1
+    // var out = path.getTangent(t, out);  // modify out
+    ```
+    or
+    ```javascript
     var out = curve.getTangent(t);  // t: 0~1
     // var out = curve.getTangent(t, out);  // modify out
     ```
-    Path object does **NOT** support this feature yet.
 
 ### Length of path
 
@@ -317,6 +368,8 @@ or
 var l = curve.getLength();
 ```
 
+Length of path/curve will be cached.
+
 #### Update length
 
 ```javascript
@@ -326,8 +379,6 @@ or
 ```javascript
 curve.updateArcLengths();
 ```
-
-Length of path/curve will be cached.
 
 ### Curves to JSON
 
@@ -356,3 +407,9 @@ var out = curve.getBounds();    // accuracy = 16
 ```
 
 - `out` : A [rectangle object](geom-rectangle.md)
+
+### Destroy
+
+```javascript
+path.destroy();
+```

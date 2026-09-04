@@ -2,7 +2,7 @@
 
 Non-rendering rectangular game object for creating drop zones and input hit areas, built-in game object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
@@ -19,7 +19,8 @@ var zone = scene.make.zone({
     x: 0,
     y: 0,
     //width: 1,
-    //height: 1
+    //height: 1,
+    // origin: {x: 0.5, y: 0.5},
 });
 ```
 
@@ -46,10 +47,6 @@ var zone = scene.make.zone({
     var zone = new MyZone(x, y, width, height);
     ```
 
-### Other properties
-
-See [game object](gameobject.md)
-
 ### Input hit zone
 
 ```javascript
@@ -60,6 +57,10 @@ See [touch events](touchevents.md#register-interactive)
 
 ### Drop zones
 
+- Default drop zone
+    ```javascript
+    zone.setDropZone();
+    ```
 - Rectangle drop zone
     ```javascript
     zone.setRectangleDropZone(width, height);
@@ -70,7 +71,7 @@ See [touch events](touchevents.md#register-interactive)
     ```
 - Custom drop zone
     ```javascript
-    zone.setInteractive(shape, callback, true);
+    zone.setDropZone(shape, callback);
     ```
     - `callback`
         ```javascript
@@ -80,3 +81,7 @@ See [touch events](touchevents.md#register-interactive)
         ```
     
 See [drop zone](touchevents.md#drop-zone)
+
+### Other properties
+
+See [game object](gameobject.md)

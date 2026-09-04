@@ -1,11 +1,12 @@
 import TwoPointersTracer from '../twopointerstracer/TwoPointersTracer.js';
 import FSM from '../../../fsm.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
+import { Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
 
 class Pinch extends TwoPointersTracer {
-    constructor(scene, config) {
-        super(scene, config);
+    constructor(gameObject, config) {
+        super(gameObject, config);
 
         var self = this;
         var stateConfig = {
@@ -44,7 +45,10 @@ class Pinch extends TwoPointersTracer {
     onDrag2Start() {
         this.scaleFactor = 1;
         this.prevDistance = this.distanceBetween;
-        this.state = (this.dragThreshold === 0) ? RECOGNIZED : BEGIN;
+        this.state = BEGIN;
+        if (this.dragThreshold === 0) {
+            this.state = RECOGNIZED;
+        }
     }
 
     onDrag2End() {
@@ -71,8 +75,13 @@ class Pinch extends TwoPointersTracer {
         }
     }
 
-    get isPinch() {
+    get isPinching() {
         return (this.state === RECOGNIZED);
+    }
+
+    // Backward compatible
+    get isPinched() {
+        return this.isPinching;
     }
 
     setDragThreshold(distance) {

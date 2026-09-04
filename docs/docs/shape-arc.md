@@ -2,13 +2,11 @@
 
 Arc shape, built-in game object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
 ### Create shape
-
-### Add shape object
 
 ```javascript
 var arc = scene.add.arc(x, y, radius, startAngle, endAngle, anticlockwise, fillColor);
@@ -44,10 +42,15 @@ var arc = scene.add.arc(x, y, radius, startAngle, endAngle, anticlockwise, fillC
     - Get
         ```javascript
         var color = arc.fillColor;
+        var alpha = arc.fillAlpha;
         ```
     - Set
         ```javascript
         arc.setFillStyle(color, alpha);
+        ```
+    - Clear
+        ```javascript
+        arc.setFillStyle();
         ```
 - Stroke color
     - Get
@@ -58,25 +61,28 @@ var arc = scene.add.arc(x, y, radius, startAngle, endAngle, anticlockwise, fillC
         ```javascript
         arc.setStrokeStyle(lineWidth, color, alpha);
         ```
+    - Clear
+        ```javascript
+        arc.setStrokeStyle();
+        ```
 
 !!! warning "No tint methods"
     Uses `arc.setFillStyle(color, alpha)` to change color.
 
-### Propertirs
+### Alpha
 
-- Radius
-    - Get
-        ```javascript
-        var radius = arc.radius;
-        ```
-    - Set
-        ```javascript
-        arc.setRadius(radius);
-        ```
-        or
-        ```javascript
-        arc.radius = radius;
-        ```
+- Get
+    ```javascript
+    var alpha = arc.alpha;
+    ```
+- Set
+    ```javascript
+    arc.setAlpha(alpha);
+    // arc.alpha = alpha;
+    ```
+
+### Angle
+
 - Start angle, in degrees.
     - Get
         ```javascript
@@ -113,6 +119,22 @@ var arc = scene.add.arc(x, y, radius, startAngle, endAngle, anticlockwise, fillC
         ```javascript
         arc.anticlockwise = anticlockwise;
         ```
+
+### Radius
+
+- Radius
+    - Get
+        ```javascript
+        var radius = arc.radius;
+        ```
+    - Set
+        ```javascript
+        arc.setRadius(radius);
+        ```
+        or
+        ```javascript
+        arc.radius = radius;
+        ```
 - Iterations: Increase this value for smoother arcs, at the cost of more polygons being rendered. Default is `0.01`
     - Get
         ```javascript
@@ -123,6 +145,31 @@ var arc = scene.add.arc(x, y, radius, startAngle, endAngle, anticlockwise, fillC
         arc.iterations = iterations;
         ```
 
+### Display size
+
+- Get
+    ```javascript
+    var width = arc.displayWidth;
+    var height = arc.displayHeight;
+    ```
+- Set
+    ```javascript
+    arc.setDisplaySize(width, height);
+    ```
+    or
+    ```javascript
+    arc.displayWidth = width;
+    arc.displayHeight = height;
+    ```
+
 ### Other properties
 
 See [game object](gameobject.md)
+
+### Create mask
+
+See [mask](mask.md)
+
+### Shader effects
+
+Support [internal and external filters](shader-builtin.md)

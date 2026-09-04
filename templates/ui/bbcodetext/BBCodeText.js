@@ -1,2 +1,2 @@
-import BBCodeText from '../../../plugins/gameobjects/bbocdetext/BBCodeText.js';
+import BBCodeText from '../../../plugins/bbcodetext.js';
 export default BBCodeText;

@@ -1,39 +1,31 @@
 import BaseSizer from '../basesizer/BaseSizer.js';
-import ParsePaddingConfig from '../utils/ParsePaddingConfig.js';
-import GetChildrenWidth from './GetChildrenWidth.js';
-import GetChildrenHeight from './GetChildrenHeight.js';
+import Methods from './Methods.js';
 import GetChildrenProportion from './GetChildrenProportion.js';
-import GetChildrenSizers from './GetChildrenSizers.js';
-import Layout from './Layout.js';
-import _layoutInit from './_layoutInit.js';
-import ORIENTATIONMODE from '../utils/OrientationConst.js';
-import ALIGNMODE from '../utils/AlignConst.js';
+import GetOrientationMode from '../utils/GetOrientationMode.js';
 
-const IsPlainObject = Phaser.Utils.Objects.IsPlainObject;
-const GetValue = Phaser.Utils.Objects.GetValue;
-const RemoveItem = Phaser.Utils.Array.Remove;
-const ALIGN_CENTER = Phaser.Display.Align.CENTER;
+import { Utils as PhaserUtils } from 'phaser';
+const IsPlainObject = PhaserUtils.Objects.IsPlainObject;
+const GetValue = PhaserUtils.Objects.GetValue;
 
 class Sizer extends BaseSizer {
-    constructor(scene, x, y, minWidth, minHeight, orientation) {
-        var config;
+    constructor(scene, x, y, minWidth, minHeight, orientation, config) {
         if (IsPlainObject(x)) {
             config = x;
             x = GetValue(config, 'x', 0);
             y = GetValue(config, 'y', 0);
             minWidth = GetValue(config, 'width', undefined);
             minHeight = GetValue(config, 'height', undefined);
+            orientation = GetValue(config, 'orientation', 0);
         } else if (IsPlainObject(minWidth)) {
             config = minWidth;
             minWidth = GetValue(config, 'width', undefined);
             minHeight = GetValue(config, 'height', undefined);
+            orientation = GetValue(config, 'orientation', 0);
         } else if (IsPlainObject(orientation)) {
             config = orientation;
-        }
-
-        if (config !== undefined) {
             orientation = GetValue(config, 'orientation', 0);
         }
+
         if (orientation === undefined) {
             orientation = 0;
         }
@@ -42,110 +34,47 @@ class Sizer extends BaseSizer {
         this.type = 'rexSizer';
         this.sizerChildren = [];
         this.setOrientation(orientation);
-    }
+        this.setItemSpacing(GetValue(config, 'space.item', 0));
+        this.setStartChildIndex(GetValue(config, 'startChildIndex', 0));
+        this.setRTL(GetValue(config, 'rtl', false));
 
-    destroy(fromScene) {
-        //  This Game Object has already been destroyed
-        if (!this.scene) {
-            return;
-        }
-        this.sizerChildren.length = 0;
-        super.destroy(fromScene);
+        this.addChildrenMap('items', this.sizerChildren);
     }
 
     setOrientation(orientation) {
-        if (typeof (orientation) === 'string') {
-            orientation = ORIENTATIONMODE[orientation];
-        }
-        this.orientation = orientation;
+        this.orientation = GetOrientationMode(orientation);
         return this;
     }
 
-    add(gameObject, proportion, align, paddingConfig, expand) {
-        super.add(gameObject);
-
-        var proportionType = typeof (proportion);
-        if (proportion === null) {
-            return this;
-        } else if (proportionType === 'number') {
-
-        } else if (proportionType === 'string') {
-            proportion = PROPORTIONMODE[proportion];
-        } else if (IsPlainObject(proportion)) {
-            var config = proportion;
-            proportion = GetValue(config, 'proportion', 0);
-            align = GetValue(config, 'align', ALIGN_CENTER);
-            paddingConfig = GetValue(config, 'padding', 0);
-            expand = GetValue(config, 'expand', false);
-        }
-
-        if (typeof (align) === 'string') {
-            align = ALIGNMODE[align];
-        }
-
-        if (proportion === undefined) {
-            proportion = 0;
-        }
-        if (align === undefined) {
-            align = ALIGN_CENTER;
-        }
-        if (paddingConfig === undefined) {
-            paddingConfig = 0;
-        }
-        if (expand === undefined) {
-            expand = false;
-        }
-
-        var config = this.getSizerConfig(gameObject);
-        config.parent = this;
-        config.proportion = proportion;
-        config.align = align;
-        config.padding = ParsePaddingConfig(paddingConfig);
-        config.expand = expand;
-        this.sizerChildren.push(gameObject);
+    setItemSpacing(space) {
+        this.space.item = space;
         return this;
     }
 
-    insert(index, gameObject, proportion, align, paddingConfig, expand) {
-        this.add(gameObject, proportion, align, paddingConfig, expand);
-        this.moveTo(gameObject, index);
+    setStartChildIndex(index) {
+        this.startChildIndex = index;
         return this;
     }
 
-    remove(gameObject) {
-        var config = this.getSizerConfig(gameObject);
-        if (config.parent !== this) {
-            return this;
+    setRTL(enable) {
+        if (enable === undefined) {
+            enable = true;
         }
-        config.parent = undefined;
-        RemoveItem(this.sizerChildren, gameObject);
-        super.remove(gameObject);
+        this.rtl = enable;
         return this;
     }
 
     get childrenProportion() {
         if (this._childrenProportion === undefined) {
-            this._childrenProportion = this.getChildrenProportion();
+            this._childrenProportion = GetChildrenProportion.call(this);
         }
         return this._childrenProportion;
     }
 }
 
-var methods = {
-    getChildrenWidth: GetChildrenWidth,
-    getChildrenHeight: GetChildrenHeight,
-    getChildrenProportion: GetChildrenProportion,
-    getChildrenSizers: GetChildrenSizers,
-    layout: Layout,
-    _layoutInit: _layoutInit,
-}
 Object.assign(
     Sizer.prototype,
-    methods
+    Methods
 );
 
-const PROPORTIONMODE = {
-    min: 0,
-    full: -1,
-}
 export default Sizer;

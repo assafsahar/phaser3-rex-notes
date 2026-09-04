@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import InputTextPlugin from '../../plugins/inputtext-plugin.js'
 
 class Demo extends Phaser.Scene {
@@ -12,33 +13,60 @@ class Demo extends Phaser.Scene {
     create() {
         var printText = this.add.text(400, 200, '', {
             fontSize: '12px',
-        }).setOrigin(0.5).setFixedSize(100, 100);
+            fixedWidth: 100,
+            fixedHeight: 100,
+        }).setOrigin(0.5);
         var inputText = this.add.rexInputText(400, 400, 10, 10, {
             type: 'textarea',
             text: 'hello world',
             fontSize: '12px',
-            onTextChanged: function () {
+        })
+            .resize(100, 100)
+            .setOrigin(0.5)
+            .on('textchange', function (inputText) {
                 printText.text = inputText.text;
-            },
-            // onClick: function() {
-            //     printText.text = inputText.text;
-            // },
-            // onDoubleClick: function() {
-            //     printText.text = inputText.text;
-            // }
-            onFocus: function() {
-                console.log('OnFocus');
-            },
-            onBlur: function() {
-                console.log('OnBlur');
-            }
-        }).resize(100, 100).setOrigin(0.5);
+            })
+            .on('focus', function (inputText) {
+                console.log('On focus');
+            })
+            .on('blur', function (inputText) {
+                console.log('On blur');
+            })
+            .on('click', function (inputText) {
+                console.log('On click');
+            })
+            .on('dblclick', function (inputText) {
+                console.log('On dblclick');
+            })
+            .on('pointermove', function (inputText) {
+                console.log('On pointermove');
+            })
+            .on('keydown', function (inputText, e) {
+                //console.log(`Keydown ${e.which} : ${e.code}`)
+            })
+            .on('keypress', function (inputText, e) {
+                //console.log(`keypress ${e.which} : ${e.code}`)
+            })
+            .on('compositionUpdate', function (inputText, e) {
+                console.log(`CompositionUpdate ${e.data}`)
+            })
 
         printText.text = inputText.text;
 
         // this.input.keyboard.addKey('ENTER').on('down', function (event) {
         //     console.log('enter');
         // });
+
+        this.input.on('pointerdown', function () {
+            inputText.setBlur();
+            console.log('pointerdown outside');
+        })
+
+        inputText.on('keydown', function (inputText, e) {
+            if ((inputText.inputType !== 'textarea') && (e.key === 'Enter')) {
+                inputText.setBlur();
+            }
+        })
     }
 
     update() { }

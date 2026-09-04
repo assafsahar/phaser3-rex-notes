@@ -5,17 +5,31 @@ const BLOCKER = CONST.BLOCKER;
 const INFINITY = CONST.INFINITY;
 
 var IsPathVisible = function (tileXYArray, visiblePoints) {
+    if (this.preTest(tileXYArray, visiblePoints) === false) {
+        return false;
+    }
+
+    if (this.costCallback === undefined) {
+        return true;
+    }
     var myTileXYZ = this.chessData.tileXYZ;
-    var tileXY, cost;
+    var tileXY, cost, behindBlocker = false;
     for (var i = 1, cnt = tileXYArray.length; i < cnt; i++) {
         tileXY = tileXYArray[i];
         if (AreTileXYEqual(myTileXYZ, tileXY)) {
             continue;
         }
-        cost = this.getCost(tileXY);
-        if (cost === BLOCKER) {
+
+        if (behindBlocker) {
             return false;
         }
+
+        cost = this.getCost(tileXY, tileXYArray);
+        if (cost === BLOCKER) {
+            behindBlocker = true;
+            continue;
+        }
+
         if (visiblePoints !== INFINITY) {
             visiblePoints -= cost;
             if (visiblePoints < 0) {

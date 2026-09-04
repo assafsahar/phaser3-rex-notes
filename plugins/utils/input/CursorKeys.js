@@ -1,14 +1,36 @@
-const Key = Phaser.Input.Keyboard.Key;
+import { Input as PhaserInput } from 'phaser';
+const Key = PhaserInput.Keyboard.Key;
+const KeyCodes = PhaserInput.Keyboard.KeyCodes;
+const KeyNames = ['up', 'down', 'left', 'right'];
 
 class CursorKeys {
-    constructor() {
-        this.cursorKeys = {
-            up: new Key(),
-            down: new Key(),
-            left: new Key(),
-            right: new Key()
-        }
+    constructor(scene) {
+        // scene: scene instance, or undefined
+        this.scene = scene;
+
+        this.keys = {};
+        this.cursorKeys = {};
         this.noKeyDown = true;
+
+        for (var i = 0, cnt = KeyNames.length; i < cnt; i++) {
+            var keyName = KeyNames[i];
+            this.addKey(keyName);
+            this.cursorKeys[keyName] = this.keys[keyName];
+        }
+
+    }
+
+    shutdown(fromScene) {
+        this.scene = undefined;
+        for (var key in this.keys) {
+            this.keys[key].destroy();
+        }
+        this.keys = undefined;
+        this.cursorKeys = undefined;
+    }
+
+    destroy(fromScene) {
+        shutdown(fromScene);
     }
 
     createCursorKeys() {
@@ -16,7 +38,7 @@ class CursorKeys {
     }
 
     setKeyState(keyName, isDown) {
-        var key = this.cursorKeys[keyName];
+        var key = this.keys[keyName];
 
         if (!key.enabled) {
             return this;
@@ -26,11 +48,12 @@ class CursorKeys {
         }
 
         if (key.isDown !== isDown) {
-            fakeEvent.timeDown = Date.now();
+            FakeEvent.timeStamp = Date.now();
+            FakeEvent.keyCode = key.keyCode;
             if (isDown) {
-                key.onDown(fakeEvent);
+                key.onDown(FakeEvent);
             } else {
-                key.onUp(fakeEvent);
+                key.onUp(FakeEvent);
             }
         }
 
@@ -39,38 +62,63 @@ class CursorKeys {
 
     clearAllKeysState() {
         this.noKeyDown = true;
-        for (var keyName in this.cursorKeys) {
+        for (var keyName in this.keys) {
             this.setKeyState(keyName, false);
         }
         return this;
     }
 
     getKeyState(keyName) {
-        return this.cursorKeys[keyName];
+        return this.keys[keyName];
     }
 
     get upKeyDown() {
-        return this.cursorKeys.up.isDown;
+        return this.keys.up.isDown;
     }
 
     get downKeyDown() {
-        return this.cursorKeys.down.isDown;
+        return this.keys.down.isDown;
     }
 
     get leftKeyDown() {
-        return this.cursorKeys.left.isDown;
+        return this.keys.left.isDown;
     }
 
     get rightKeyDown() {
-        return this.cursorKeys.right.isDown;
+        return this.keys.right.isDown;
     }
 
     get anyKeyDown() {
         return !this.noKeyDown;
     }
+
+    addKey(keyName, keyCode) {
+        if (keyCode === undefined) {
+            keyCode = keyName;
+        }
+
+        if (typeof (keyCode) === 'string') {
+            keyCode = keyCode.toUpperCase();
+            if (KeyCodes.hasOwnProperty(keyCode)) {
+                keyCode = KeyCodes[keyCode];
+            }
+        }
+
+        this.keys[keyName] = new Key(this.scene, keyCode);
+        return this;
+    }
+
+    addKeys(keyNames) {
+        for (var i = 0, cnt = keyNames.length; i < cnt; i++) {
+            this.addKey(keyNames[i]);
+        }
+        return this;
+    }
 }
 
-var fakeEvent = {
+var FakeEvent = {
+    timeStamp: 0,
+    keyCode: 0,
     altKey: false,
     ctrlKey: false,
     shiftKey: false,

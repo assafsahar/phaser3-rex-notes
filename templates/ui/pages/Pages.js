@@ -1,49 +1,18 @@
-import BaseSizer from '../basesizer/BaseSizer.js';
-import AddPage from './AddPage.js';
-import GetPage from './GetPage.js';
-import SwapPage from './SwapPage.js';
-import GetChildrenWidth from './GetChildrenWidth.js';
-import GetChildrenHeight from './GetChildrenHeight.js';
-import GetChildrenSizers from './GetChildrenSizers.js';
-import Layout from './Layout.js';
-import _layoutInit from './_layoutInit.js';
+import OverlapSizer from '../overlapsizer/OverlapSizer.js';
+import Methods from './methods/Methods.js';
 
-const IsPlainObject = Phaser.Utils.Objects.IsPlainObject;
-const GetValue = Phaser.Utils.Objects.GetValue;
-const Map = Phaser.Structs.Map;
+import { Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
 
-class Pages extends BaseSizer {
-    constructor(scene, x, y, minWidth, minHeight, config) {
-        if (IsPlainObject(x)) {
-            config = x;
-            x = GetValue(config, 'x', 0);
-            y = GetValue(config, 'y', 0);
-            minWidth = GetValue(config, 'width', undefined);
-            minHeight = GetValue(config, 'height', undefined);
-        } else if (IsPlainObject(minWidth)) {
-            config = minWidth;
-            minWidth = GetValue(config, 'width', undefined);
-            minHeight = GetValue(config, 'height', undefined);
-        }
-
-        super(scene, x, y, minWidth, minHeight, config);
-
+class Pages extends OverlapSizer {
+    constructor(scene, config) {
+        super(scene, config);
         this.type = 'rexPages';
+        this.childrenMap = this.sizerChildren;
         this._previousKey = undefined;
         this._currentKey = undefined;
-        this.sizerChildren = new Map();
         this.setSwapMode(GetValue(config, 'swapMode', 0));
-
-        this.addChildrenMap('pages', this.pages);
-    }
-
-    destroy(fromScene) {
-        //  This Game Object has already been destroyed
-        if (!this.scene) {
-            return;
-        }
-        this.sizerChildren.clear();
-        super.destroy(fromScene);
+        this.setFadeInDuration(GetValue(config, 'fadeIn', 0));
     }
 
     setSwapMode(mode) {
@@ -51,6 +20,11 @@ class Pages extends BaseSizer {
             mode = SWAPMODE[mode];
         }
         this.swapMode = mode;
+        return this;
+    }
+
+    setFadeInDuration(duration) {
+        this.fadeInDuration = duration;
         return this;
     }
 
@@ -75,27 +49,13 @@ class Pages extends BaseSizer {
     }
 
     get keys() {
-        return this.sizerChildren.keys();
-    }
-
-    get pages() {
-        return this.sizerChildren.entries;
+        return Object.keys(this.sizerChildren);
     }
 }
 
-var methods = {
-    addPage: AddPage,
-    getPage: GetPage,
-    swapPage: SwapPage,
-    getChildrenWidth: GetChildrenWidth,
-    getChildrenHeight: GetChildrenHeight,
-    getChildrenSizers: GetChildrenSizers,
-    layout: Layout,
-    _layoutInit: _layoutInit,
-}
 Object.assign(
     Pages.prototype,
-    methods
+    Methods
 );
 
 const SWAPMODE = {

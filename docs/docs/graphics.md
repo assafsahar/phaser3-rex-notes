@@ -2,7 +2,7 @@
 
 Drawing on webgl or canvas, built-in game object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
@@ -85,13 +85,17 @@ var graphics = scene.add.graphics({
         ```
     - Fill gradient color (WebGL only)
         ```javascript
-        graphics.fillStyle(topLeft, topRight, bottomLeft, bottomRight);  // alpha= 1
-        // graphics.fillStyle(topLeft, topRight, bottomLeft, bottomRight, alpha);
+        graphics.fillGradientStyle(topLeft, topRight, bottomLeft, bottomRight, alpha);  // alpha= 1
+        // graphics.fillGradientStyle(topLeft, topRight, bottomLeft, bottomRight, alphaTopLeft, alphaTopRight, alphaBottomLeft, alphaBottomRight);
         ```
         - `topLeft` : The tint being applied to the top-left of the Game Object.
         - `topRight` : The tint being applied to the top-right of the Game Object.
         - `bottomLeft` : The tint being applied to the bottom-left of the Game Object.
         - `bottomRight` : The tint being applied to the bottom-right of the Game Object.
+        - `alphaTopLeft` : The top left alpha value.
+        - `alphaTopRight` : The top right alpha value.
+        - `alphaBottomLeft` : The bottom left alpha value.
+        - `alphaBottomRight` : The bottom right alpha value.
 
 #### Clear
 
@@ -124,7 +128,9 @@ graphics.fillRoundedRect(x, y, width, height, radius);
 graphics.strokeRoundedRect(x, y, width, height, radius);
 ```
 
-- `radius` : number or an object `{tl, tr, bl, br}`
+- `radius` : number or an object `{tl, tr, bl, br}`, 
+    - Positive value : Convex corner.
+    - Negative value : Concave corner.
 
 #### Triangle
 
@@ -209,23 +215,6 @@ Fill this shape
 graphics.fillPath();
 ```
 
-#### Fill pattern
-
-1. Load texture pattern
-    ```javascript
-    graphics.setTexture(key, frame, mode);
-    ```
-    - `mode` :
-        - `0` : Multiply
-        - `1` : Alpha only
-        - `2` : Texture only
-1. Fill pattern
-    ```javascript
-    graphics.fillRect(x, y, width, height);
-    ```
-
-WebGL only
-
 ##### Clear pattern
 
 ```javascript
@@ -237,9 +226,9 @@ graphics.setTexture();
 ```javascript
 graphics.save();
 graphics.restore();
-graphics.translate(x, y);
-graphics.scale(x, y);
-graphics.rotate(radians);
+graphics.translateCanvas(x, y);
+graphics.scaleCanvas(x, y);
+graphics.rotateCanvas(radians);
 ```
 
 ### Generate texture
@@ -248,10 +237,14 @@ graphics.rotate(radians);
 graphics.generateTexture(key, width, height);  // key: texture key
 ```
 
+### Other properties
+
+See [game object](gameobject.md)
+
 ### Create mask
 
-```javascript
-var mask = graphics.createGeometryMask();
-```
-
 See [mask](mask.md)
+
+### Shader effects
+
+Support [internal and external filters](shader-builtin.md)

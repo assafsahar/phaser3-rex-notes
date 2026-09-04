@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import TagTextPlugin from '../../plugins/tagtext-plugin.js';
 import TextPagePlugin from '../../plugins/textpage-plugin.js'
 
@@ -65,8 +66,8 @@ class Demo extends Phaser.Scene {
         txt.page.setText(lines);
         txt.page.showPage();
 
-        this.input.keyboard.on('keydown_DOWN', txt.page.showNextPage, txt.page);
-        this.input.keyboard.on('keydown_UP', txt.page.showPreviousPage, txt.page);
+        this.input.keyboard.on('keydown-DOWN', txt.page.showNextPage, txt.page);
+        this.input.keyboard.on('keydown-UP', txt.page.showPreviousPage, txt.page);
 
 
         var printPageIdx = function () {
@@ -78,8 +79,8 @@ class Demo extends Phaser.Scene {
             console.log(s);
         }
         printPageIdx();
-        this.input.keyboard.on('keydown_UP', printPageIdx);
-        this.input.keyboard.on('keydown_DOWN', printPageIdx);
+        this.input.keyboard.on('keydown-UP', printPageIdx);
+        this.input.keyboard.on('keydown-DOWN', printPageIdx);
     }
 
     update() {}

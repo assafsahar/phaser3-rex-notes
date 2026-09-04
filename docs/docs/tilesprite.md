@@ -2,7 +2,7 @@
 
 Display of repeating texture, built-in game object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
@@ -38,6 +38,7 @@ var image = scene.make.tileSprite({
     //    x: 1,
     //    y: 1
     //},
+    // origin: {x: 0.5, y: 0.5},
 
     add: true
 });
@@ -93,8 +94,8 @@ See [game object](gameobject.md)
 
 ### Create mask
 
-```javascript
-var mask = image.createBitmapMask();
-```
-
 See [mask](mask.md)
+
+### Shader effects
+
+Support [internal and external filters](shader-builtin.md)

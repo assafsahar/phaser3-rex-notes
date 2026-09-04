@@ -6,7 +6,7 @@ Carry DOM element, built-in game object of phaser.
 !!! tip "Limitations"
     Dom elements appear above or below your game canvas. You cannot blend them into the display list, meaning you cannot have a DOM Element, then a Sprite, then another DOM Element behind it.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
@@ -18,10 +18,19 @@ Carry DOM element, built-in game object of phaser.
 ```javascript
 var config = {
     // ...
-    parent: divId,    
+    parent: divId,
+    // fullscreenTarget: divId, // For fullscreen
     dom: {
         createContainer: true
-    }
+    },
+    input: {
+        mouse: {
+            target: divId
+        },
+        touch: {
+            target: divId
+        },
+    },
     // ...
 }
 var game = new Phaser.Game(config);
@@ -46,6 +55,18 @@ var game = new Phaser.Game(config);
         var domElement = scene.add.dom(x, y).createFromHTML(htmlString);  // elementType = 'div'
         // var domElement = scene.add.dom(x, y).createFromHTML(htmlString, elementType);
         ```
+        - `elementType : The tag name of the element into which all of the html will be inserted. Defaults to a plain div tag.
+
+#### Create element
+
+```javascript
+scene.add.dom(x, y).createElement(tagName);
+// scene.add.dom(x, y).createElement(tagName, style, innerText);
+```
+
+- `tagName` : A string that specifies the type of element to be created. For example, `'div'`
+- `style` : Either a DOMString that holds the CSS styles to be applied to the created element, or an object the styles will be readyfrom. Optional.
+- `innerText` : A DOMString that holds the text that will be set as the innerText of the created element. Optional.
 
 #### Add existing DOM
 
@@ -73,7 +94,9 @@ var game = new Phaser.Game(config);
         }
         // ...
 
-        // preUpdate(time, delta) {}
+        // preUpdate(time, delta) {
+        //     super.preUpdate(time, delta);
+        // }
     }
     ```
     - `scene.add.existing(gameObject)` : Adds an existing Game Object to this Scene.
@@ -157,6 +180,15 @@ Each DOM element object has 1 DOM element.
 domElement.setDepth(value);
 ```
 
+### Set size
+
+```javascript
+var style = domElement.node.style;
+style.width = width + 'px';
+style.height = height + 'px';
+domElement.updateSize();
+```
+
 ### Skew
 
 ```javascript
@@ -178,7 +210,27 @@ The rotate3d() CSS function defines a transformation that rotates an element aro
 domElement.rotate3d.set(x, y, z, a);
 ```
 
+or
+
+```javascript
+domElement.rotate3d.x = x;
+domElement.rotate3d.y = y;
+domElement.rotate3d.z = z;
+domElement.rotate3d.w = a;
+```
+
 [Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/transform-function/rotate3d)
+
+
+### Interactive with other game objects
+
+1. DOM game object always put above game canvas, i.e. DOM game object will render above any other kind of game object.
+1. DOM game object will receive touch event even if it is not the first touched game object.
+1. P3's `'pointerdown'`, `'pointerup'` events will be fired above/under DOM game object.
+1. P3's `'pointermove'` event won't be fired above/under DOM game object, except 
+    - Setting DOM game object to be invisilbe.
+    - Assign input.mouse.target parameter of game config.
+1. DOM game object only can be displayed by main camera. i.e. dom game object can't add to other camera.
 
 ### Other properties
 

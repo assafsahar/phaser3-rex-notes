@@ -13,8 +13,7 @@ class Bank {
         var refs = this.refs;
         var uidKey = this.uidKey;
         if (uidKey) {
-            var uid = gameObject[uidKey];
-            if (uid != null) {
+            if (gameObject.hasOwnProperty('uidKey') && gameObject[uidKey] != null) {
                 return this;
             }
         }
@@ -33,7 +32,7 @@ class Bank {
                 gameObject[uidKey] = uid;
             }
             if (this.autoRemove && gameObject.on) {
-                gameObject.on('destroy', function () {
+                gameObject.once('destroy', function () {
                     this.remove(uid);
                 }, this)
             }

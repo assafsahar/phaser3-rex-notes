@@ -1,52 +1,40 @@
-const GetValue = Phaser.Utils.Objects.GetValue;
-const GetAdvancedValue = Phaser.Utils.Objects.GetAdvancedValue;
+import { Utils as PhaserUtils, Math as PhaserMath } from 'phaser';
+import EaseValueTaskBase from '../../utils/componentbase/tweentask/EaseValueTaskBase.js';
+import IsSoundObject from '../../utils/system/IsSoundObject.js';
 
-class Fade {
+const GetValue = PhaserUtils.Objects.GetValue;
+const GetAdvancedValue = PhaserUtils.Objects.GetAdvancedValue;
+const Linear = PhaserMath.Linear;
+
+class Fade extends EaseValueTaskBase {
     constructor(scene, sound, config) {
-        this.sound = sound;
-        this.scene = scene;
+        if (IsSoundObject(scene)) {
+            config = sound;
+            sound = scene;
+            scene = undefined;
+        }
+
+        sound.active = true;
+        sound.scene = scene;
+        sound.game = sound.manager.game;
+
+        super(sound, config);
+        // this.parent = parent
+        // this.timer
 
         this.volume = {};
-        this.tween = undefined;
         this.resetFromJSON(config);
-        this.boot();
     }
 
     resetFromJSON(o) {
+        super.resetFromJSON(o);
         this.setMode(GetValue(o, 'mode', 0));
+        this.setEnable(GetValue(o, 'enable', true));
         this.setVolumeRange(
-            GetAdvancedValue(o, 'volume.start', this.sound.volume),
+            GetAdvancedValue(o, 'volume.start', this.parent.volume),
             GetAdvancedValue(o, 'volume.end', 0)
         );
-        this.setDelay(GetAdvancedValue(o, 'delay', 0));
-        this.setFadeOutTime(GetAdvancedValue(o, 'duration', 1000));
         return this;
-    }
-
-    toJSON() {
-        return {
-            mode: this.mode,
-            volume: this.volume,
-            delay: this.delay,
-            duration: this.duration
-        };
-    }
-
-    boot() {
-        this.scene.events.on('destroy', this.destroy, this);
-        if (this.sound.on) {
-            this.sound.on('destroy', this.destroy, this);
-        }
-    }
-
-    shutdown() {
-        this.stop();
-        this.sound = undefined;
-        this.scene = undefined;
-    }
-
-    destroy() {
-        this.shutdown();
     }
 
     setMode(m) {
@@ -56,68 +44,47 @@ class Fade {
         this.mode = m;
         return this;
     }
+
     setVolumeRange(start, end) {
         this.volume.start = start;
         this.volume.end = end;
         return this;
     }
-    setDelay(time) {
-        this.delay = time;
-        return this;
-    }
-    setFadeOutTime(time) {
-        this.duration = time;
-        return this;
-    }
 
     start() {
-        if (this.tween) {
-            return;
+        if (this.timer.isRunning) {
+            return this;
         }
 
-        var volume = this.volume;
-        this.tween = this.scene.tweens.add({
-            targets: this.sound,
-            volume: {
-                getStart: function () {
-                    return volume.start;
-                },
-                getEnd: function () {
-                    return volume.end;
-                }
-            },
+        this.parent.setVolume(this.volume.start);
 
-            delay: this.delay,
-            duration: this.duration,
-            ease: 'Linear',
-            onComplete: this.complete,
-            onCompleteScope: this
-        });
+        this.timer
+            .setDelay(this.delay)
+            .setDuration(this.duration);
 
+        super.start();
         return this;
     }
 
-    stop() {
-        if (!this.tween) {
-            return;
-        }
-
-        this.tween.remove();
-        this.tween = undefined;
-        return this;
+    updateTarget(parent, timer) {
+        parent.volume = Linear(this.volume.start, this.volume.end, timer.t);
     }
 
     complete() {
+        super.complete();
+
         switch (this.mode) {
             case 1:
-                this.sound.stop();
+                this.parent.stop();
                 break;
             case 2:
-                this.sound.destroy();
+                this.parent.stop();
+                this.parent.destroy();
                 break;
         }
-    }
 
+        return this;
+    }
 }
 
 const MODE = {

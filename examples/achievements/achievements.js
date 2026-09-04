@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import AchievementsPlugin from '../../plugins/achievements-plugin.js';
 
 class Demo extends Phaser.Scene {
@@ -5,16 +6,15 @@ class Demo extends Phaser.Scene {
         super({
             key: 'examples'
         })
-        this.print;
     }
 
     preload() {}
 
     create() {
         var table = `,,A,A
-1,A,>= 10,< 20
-1,B,>= 20,< 50
-1,C,>= 50,`;
+Lv1,AchA,>= 10,< 20
+Lv1,AchB,>= 20,< 50
+Lv1,AchC,>= 50,`;
         var achievements = this.plugins.get('rexAchievements').add().loadCSV(table);
 
         var dumpState = function (levelName, achievementName, obtainedState) {
@@ -29,16 +29,16 @@ class Demo extends Phaser.Scene {
         }
         console.log('---- Run test ----');
         achievements
-            .runTest('1', {
+            .runTest('Lv1', {
                 A: 30
             })
-            .forEachObtainedState('1', dumpState);
+            .forEachObtainedState('Lv1', dumpState);
         console.log('---- Run test ----');
         achievements
-            .runTest('1', {
+            .runTest('Lv1', {
                 A: 100
             })
-            .forEachObtainedState('1', dumpState);
+            .forEachObtainedState('Lv1', dumpState);
     }
 
     update() {}

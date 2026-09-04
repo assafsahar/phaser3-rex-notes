@@ -1,64 +1,96 @@
-var isInValidKey = function (keys) {
-    return (keys == null) || (keys === "") || (keys.length === 0);
+var IsNil = function (value) {
+    return value === null || value === undefined;
+}
+
+var IsObjectLike = function (value) {
+    return value !== null && typeof value === 'object';
 };
 
-var getEntry = function (target, keys, defaultEntry) {
-    if (defaultEntry === undefined) {
-        defaultEntry = {};
+var HasOwn = Object.prototype.hasOwnProperty;
+
+var IsUnsafeKey = function (key) {
+    return key === '__proto__' || key === 'constructor' || key === 'prototype';
+}
+
+var HasUnsafeKey = function (keys) {
+    for (var i = 0, cnt = keys.length; i < cnt; i++) {
+        if (IsUnsafeKey(keys[i])) {
+            return true;
+        }
     }
-    var entry = target;
-    if (isInValidKey(keys)) {
-        //entry = root;
+    return false;
+}
+
+var NormalizePath = function (path, delimiter) {
+    if (Array.isArray(path)) {
+        // Do nothing
+    } else if (typeof path !== 'string') {
+        path = [];
+    } else if (path.trim() === '') {
+        path = [];
     } else {
-        if (typeof (keys) === "string") {
-            keys = keys.split(".");
-        }
+        path = path.split(delimiter).filter(Boolean);
+    }
+    return path;
+}
 
-        var key;
-        for (var i = 0, cnt = keys.length; i < cnt; i++) {
-            key = keys[i];
-            if ((entry[key] == null) || (typeof (entry[key]) !== "object")) {
-                var newEntry;
-                if (i === cnt - 1) {
-                    newEntry = defaultEntry;
-                } else {
-                    newEntry = {};
-                }
-
-                entry[key] = newEntry;
-            }
-
-            entry = entry[key];
-        }
+/**
+ * Set a nested value into target by path (mutates target).
+ *
+ * - If keys is a string and does NOT contain delimiter, write directly.
+ * - Intermediate non-plain-object values are always overwritten with {}.
+ *
+ * @param {object} target
+ * @param {string|string[]} keys
+ * @param {*} value
+ * @param {string} [delimiter='.']
+ * @returns {object} the same target reference
+ */
+var SetValue = function (target, keys, value, delimiter = '.') {
+    if (!IsObjectLike(target)) {
+        return target;
     }
 
-    return entry;
-};
-var SetValue = function (target, keys, value) {
-    // no object
-    if (typeof (target) !== "object") {
-        return;
+    // Invalid key: no-op; don't replace root
+    if (IsNil(keys) || keys === '' || (Array.isArray(keys) && keys.length === 0)) {
+        return target;
     }
 
-    // invalid key
-    else if (isInValidKey(keys)) {
-        // don't erase target
-        if (value == null) {
-            return;
-        }
-        // set target to another object
-        else if (typeof (value) === "object") {
-            target = value;
-        }
-    } else {
-        if (typeof (keys) === "string") {
-            keys = keys.split(".");
+    // Fast path: single key
+    if (
+        (typeof keys === 'string' && keys.indexOf(delimiter) === -1) ||
+        (typeof keys === 'number')
+    ) {
+        if (IsUnsafeKey(keys)) {
+            return target;
         }
 
-        var lastKey = keys.pop();
-        var entry = getEntry(target, keys);
-        entry[lastKey] = value;
+        target[keys] = value;
+        return target;
     }
-};
+
+    var pathSegments = NormalizePath(keys, delimiter);
+    if (pathSegments.length === 0 || HasUnsafeKey(pathSegments)) {
+        return target;
+    }
+
+    var cursor = target;
+    var pathSegmentsCount = pathSegments.length;
+
+    for (var index = 0; index < pathSegmentsCount - 1; index++) {
+        var segment = pathSegments[index];
+        var next = HasOwn.call(cursor, segment) ? cursor[segment] : undefined;
+
+        if (!IsObjectLike(next)) {
+            // Force overwrite intermediates
+            cursor[segment] = {};
+        }
+
+        cursor = cursor[segment];
+    }
+
+    cursor[pathSegments[pathSegmentsCount - 1]] = value;
+    return target;
+}
 
 export default SetValue;

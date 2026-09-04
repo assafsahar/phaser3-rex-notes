@@ -1,8 +1,9 @@
 import ResizeGameObject from '../../../plugins/utils/size/ResizeGameObject.js';
-import GlobZone from '../../../plugins/utils/actions/GlobZone.js';
+import PreLayoutChild from './utils/PreLayoutChild.js';
+import LayoutChild from './utils/LayoutChild.js';
 
-const AlignIn = Phaser.Display.Align.In.QuickSet;
-const ALIGN_CENTER = Phaser.Display.Align.CENTER;
+import { Display as PhaserDisplay } from 'phaser';
+const ALIGN_CENTER = PhaserDisplay.Align.CENTER;
 
 var LayoutBackgrounds = function () {
     if (this.backgroundChildren === undefined) {
@@ -10,21 +11,34 @@ var LayoutBackgrounds = function () {
     }
     var backgrounds = this.backgroundChildren;
 
-    var child;
-    var x = this.left,
-        y = this.top,
-        width = this.width,
-        height = this.height;
-
+    var startX = this.left,
+        startY = this.top;
+    var parentWidth = this.width * this.scaleX,
+        parentHeight = this.height * this.scaleY;
+    var child, childConfig, padding,
+        x, y, width, height;
     for (var i = 0, cnt = backgrounds.length; i < cnt; i++) {
         child = backgrounds[i];
-        if (child.rexSizer.hidden) {
+        childConfig = child.rexSizer;
+        if (childConfig.hidden) {
             continue;
         }
+
+        padding = childConfig.padding;
+
+        PreLayoutChild.call(this, child);
+
+        x = startX + (padding.left * this.scaleX);
+        y = startY + (padding.top * this.scaleY);
+        width = parentWidth - ((padding.left + padding.right) * this.scaleX);
+        height = parentHeight - ((padding.top + padding.bottom) * this.scaleY);
+
         ResizeGameObject(child, width, height);
-        GlobZone.setPosition(x, y).setSize(width, height);
-        AlignIn(child, GlobZone, ALIGN_CENTER);
-        this.resetChildPositionState(child);
+
+        LayoutChild.call(this,
+            child, x, y, width, height, ALIGN_CENTER,
+            0, 0
+        );
     }
 }
 

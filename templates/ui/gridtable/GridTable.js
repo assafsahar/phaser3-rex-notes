@@ -1,13 +1,17 @@
-import Scrollable from '../utils/Scrollable.js';
+import Scrollable from '../utils/scrollable/Scrollable.js';
 import GetScrollMode from '../utils/GetScrollMode.js';
-import GridTableCore from '../../../plugins/gameobjects/gridtable/GridTable.js';
+import GridTableCore from '../../../plugins/gridtable.js';
 import InjectProperties from './InjectProperties.js';
 import TableOnCellVisible from './TableOnCellVisible.js';
-import TableSetInteractive from './TableSetInteractive.js';
+import TableSetInteractive from './input/TableSetInteractive.js';
 import NOOP from '../../../plugins/utils/object/NOOP.js';
 import SetItems from './SetItems.js';
+import Refresh from './Refresh.js';
+import ScrollMethods from './ScrollMethods.js';
+import PointerOverTestMethods from './input/PointerOverTestMethods.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
+import { Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
 
 class GridTable extends Scrollable {
     constructor(scene, config) {
@@ -21,45 +25,73 @@ class GridTable extends Scrollable {
         if (tableConfig === undefined) {
             tableConfig = {};
         }
-        tableConfig.scrollMode = scrollMode;
-        tableConfig.clamplTableOXY = GetValue(config, 'clamplChildOY', false);
+        tableConfig.scrollMode = (scrollMode === 2) ? 0 : scrollMode;
+        tableConfig.clampTableOXY = GetValue(config, 'clampChildOY', false);
         var tableWidth = GetValue(tableConfig, 'width', undefined);
         var tableHeight = GetValue(tableConfig, 'height', undefined);
         var table = new GridTableCore(scene, 0, 0, tableWidth, tableHeight, tableConfig);
-        var proportion, expand;
-        if (scrollMode === 0) {
-            proportion = (tableWidth === undefined) ? 1 : 0;
-            expand = (tableHeight === undefined);
+        scene.add.existing(table); // Important: Add to display list for touch detecting
+        var expandWidth, expandHeight;
+        if (tableConfig.scrollMode === 0) {
+            expandWidth = (tableWidth === undefined);
+            expandHeight = (tableHeight === undefined);
         } else {
-            proportion = (tableHeight === undefined) ? 1 : 0;
-            expand = (tableWidth === undefined);
+            expandWidth = (tableHeight === undefined);
+            expandHeight = (tableWidth === undefined);
         }
         // Inject properties for scrollable interface
         InjectProperties(table);
+        // Set minWidth/minHeight to 0 if tableWidth/tableHeight is undefined
+        table._minWidth = (tableWidth === undefined) ? 0 : undefined;
+        table._minHeight = (tableHeight === undefined) ? 0 : undefined;
 
         // Fill config of scrollable
         config.type = 'rexGridTable';
         config.child = {
             gameObject: table,
-            proportion: proportion,
-            expand: expand,
+            expandWidth: expandWidth,
+            expandHeight: expandHeight,
         };
         var spaceConfig = GetValue(config, 'space', undefined);
         if (spaceConfig) {
-            spaceConfig.child = spaceConfig.table;
+            spaceConfig.child = GetValue(spaceConfig, 'table', 0);
         }
+
         super(scene, config);
 
         this.addChildrenMap('table', table);
+        this.addChildrenMap('mask', table.childrenMaskGameObject);
 
         this.eventEmitter = GetValue(config, 'eventEmitter', this);
         var callback = GetValue(config, 'createCellContainerCallback', NOOP);
         var scope = GetValue(config, 'createCellContainerCallbackScope', undefined);
         this.setCreateCellContainerCallback(callback, scope);
-
         TableOnCellVisible.call(this, table);
-        TableSetInteractive.call(this, table);
-        this.setItems(GetValue(config, 'items', []));
+
+        this.resizeControllerFlag = false;
+        var eventName = (scrollMode === 0) ? 'cellheightchange' : 'cellwidthchange';
+        table.on(eventName, function () {
+            this.resizeControllerFlag = true;
+        }, this);
+
+        if (GetValue(tableConfig, 'interactive', true)) {
+            TableSetInteractive.call(this, table, tableConfig);
+        }
+
+        this.setItems(GetValue(config, 'items'), false);
+
+        scene.game.events.on('poststep', this.onPostStep, this);
+    }
+
+    destroy(fromScene) {
+        //  This Game Object has already been destroyed
+        if (!this.scene || this.ignoreDestroy) {
+            return;
+        }
+
+        this.scene.game.events.off('poststep', this.onPostStep, this);
+
+        super.destroy(fromScene);
     }
 
     setCreateCellContainerCallback(callback, scope) {
@@ -69,18 +101,64 @@ class GridTable extends Scrollable {
     }
 
     refresh() {
-        var table = this.childrenMap.child;
-        table.updateTable(true);
+        this.setItems(this.items);
         return this;
+    }
+
+    getCell(cellIdx) {
+        var table = this.childrenMap.child;
+        return table.getCell(cellIdx);
+    }
+
+    getCellContainer(cellIdx) {
+        var table = this.childrenMap.child;
+        return table.getCellContainer(cellIdx);
+    }
+
+    getAllCellContainers(out) {
+        var table = this.childrenMap.child;
+        return table.getAllCellContainers(out);
+    }
+
+    updateVisibleCell(cellIdx) {
+        var table = this.childrenMap.child;
+        return table.updateVisibleCell(cellIdx);
+    }
+
+    resetAllCellsSize(width, height) {
+        var table = this.childrenMap.child;
+        table.resetAllCellsSize(width, height);
+        return this;
+    }
+
+    resetCellSizeFromCell(cellIndex) {
+        var table = this.childrenMap.child;
+        table.resetCellSizeFromCell(cellIndex);
+        return this;
+    }
+
+    onPostStep() {
+        if (this.resizeControllerFlag) {
+            this.resizeController();
+            this.resizeControllerFlag = false;
+        }
+    }
+
+    get startRowIndex() {
+        var table = this.childrenMap.child;
+        return table.startRowIndex;
     }
 }
 
 var methods = {
-    setItems: SetItems
+    setItems: SetItems,
+    refresh: Refresh,
 }
 Object.assign(
     GridTable.prototype,
-    methods
+    ScrollMethods,
+    PointerOverTestMethods,
+    methods,
 );
 
 export default GridTable;

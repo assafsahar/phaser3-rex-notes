@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import BoardPlugin from '../../plugins/board-plugin.js';
 import UIPlugin from '../../templates/ui/ui-plugin.js';
 
@@ -214,7 +215,7 @@ var CreateLabels = function (scene) {
         row: 3,
         rowProportions: 1,
     })
-        .addBackground(scene.rexUI.add.roundRectangle(0, 0, 0, 0, 10, COLOR_PRIMARY))
+        .addBackground(scene.rexUI.add.roundRectangle(0, 0, 0, 0, 10, COLOR_MAIN))
 
         .add(scene.add.image(0, 0, 'source').setTint(COLOR_SOURCE), 0, 0, 'center', { left: 10, right: 10 }, false)
         .add(scene.add.text(0, 0, 'Source'), 1, 0, 'left', 0, false)
@@ -233,7 +234,7 @@ var CreateLabels = function (scene) {
     return labels;
 }
 
-const COLOR_PRIMARY = 0x4e342e;
+const COLOR_MAIN = 0x4e342e;
 const COLOR_LIGHT = 0x7b5e57;
 const COLOR_DARK = 0x260e04;
 

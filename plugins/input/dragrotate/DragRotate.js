@@ -1,45 +1,80 @@
-const EE = Phaser.Events.EventEmitter;
-const GetValue = Phaser.Utils.Objects.GetValue;
-const DistanceBetween = Phaser.Math.Distance.Between;
-const AngleBetween = Phaser.Math.Angle.Between;
-const WrapRadians = Phaser.Math.Angle.Wrap;
-const RadToDeg = Phaser.Math.RadToDeg;
+import ComponentBase from '../../utils/componentbase/ComponentBase.js';
+import IsGameObject from '../../utils/system/IsGameObject.js';
+import GetPointerWorldXY from '../../utils/input/GetPointerWorldXY.js';
 
-class DragRotate extends EE {
+
+import { Math as PhaserMath, Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
+const IsPlainObject = PhaserUtils.Objects.IsPlainObject;
+const DistanceBetween = PhaserMath.Distance.Between;
+const GetAngle = PhaserMath.Angle.Between;
+const WrapAngle = PhaserMath.Angle.Wrap;
+const RadToDeg = PhaserMath.RadToDeg;
+
+const STATE_TOUCH0 = 0;
+const STATE_TOUCH1 = 1;
+
+class DragRotate extends ComponentBase {
     constructor(scene, config) {
-        super();
-        this._deltaRotation = undefined;
-        this.scene = scene;
+        super(scene);
+        // No event emitter
+        // this.scene = scene
+
+        this.mainCamera = this.scene.sys.cameras.main;
+        this._enable = undefined;
+
         this.resetFromJSON(config);
         this.boot();
     }
 
     resetFromJSON(o) {
         this.pointer = undefined;
+        this.originGameObject = undefined;
+
         this.setEnable(GetValue(o, "enable", true));
-        this.setOrigin(o);
-        this.setRadius(GetValue(o, 'maxRadius', 100), GetValue(o, 'minRadius', 0));
-        this.state = TOUCH0;
+
+        var originConfig = GetValue(o, 'origin', o)
+        this.setOrigin(originConfig);
+        this.setRadius(GetValue(o, 'maxRadius'), GetValue(o, 'minRadius', 0));
+        this.state = STATE_TOUCH0;
     }
 
     boot() {
         this.scene.input.on('pointerdown', this.onPointerDown, this);
         this.scene.input.on('pointerup', this.onPointerUp, this);
         this.scene.input.on('pointermove', this.onPointerMove, this);
-        this.scene.events.on('destroy', this.destroy, this);
     }
 
-    shutdown() {
-        if (this.scene) {
-            this.scene.input.off('pointerdown', this.onPointerDown, this);
-            this.scene.input.off('pointerup', this.onPointerUp, this);
-            this.scene.input.off('pointermove', this.onPointerMove, this);
-            this.scene.events.off('destroy', this.destroy, this);
+    shutdown(fromScene) {
+        // Already shutdown
+        if (this.isShutdown) {
+            return;
         }
+
+        this.scene.input.off('pointerdown', this.onPointerDown, this);
+        this.scene.input.off('pointerup', this.onPointerUp, this);
+        this.scene.input.off('pointermove', this.onPointerMove, this);
+
+        this.mainCamera = undefined;
+        this.pointer = undefined;
+        this.originGameObject = undefined;
+
+        super.shutdown(fromScene);
     }
 
-    destroy() {
-        this.shutdown();
+    get enable() {
+        return this._enable;
+    }
+
+    set enable(e) {
+        if (this._enable === e) {
+            return;
+        }
+
+        if (!e) {
+            this.dragCancel();
+        }
+        this._enable = e;
     }
 
     setEnable(e) {
@@ -47,25 +82,33 @@ class DragRotate extends EE {
             e = true;
         }
 
-        if (this.enable === e) {
-            return this;
-        }
-
-        if (!e) {
-            this.dragCancel();
-        }
         this.enable = e;
         return this;
     }
 
+    toggleEnable() {
+        this.setEnable(!this.enable);
+        return this;
+    }
+
     setOrigin(x, y) {
-        if (y === undefined) {
-            var point = x;
-            x = GetValue(point, 'x', 0);
-            y = GetValue(point, 'y', 0);
+        if (x === undefined) {
+            this.x = undefined;  // World position
+            this.y = undefined;  // World position
+            this.originGameObject = undefined;
+        } else if (IsGameObject(x)) {
+            this.x = undefined;
+            this.y = undefined;
+            this.originGameObject = x;
+        } else if (IsPlainObject(x)) {
+            this.x = GetValue(x, 'x', 0);  // World position
+            this.y = GetValue(x, 'y', 0);  // World position
+            this.originGameObject = undefined;
+        } else {
+            this.x = x;  // World position
+            this.y = y;  // World position
+            this.originGameObject = undefined;
         }
-        this.x = x;
-        this.y = y;
         return this;
     }
 
@@ -78,119 +121,151 @@ class DragRotate extends EE {
         return this;
     }
 
-    contains(x, y) {
-        var r = DistanceBetween(this.x, this.y, x, y);
-        return (r >= this.minRadius) && (r <= this.maxRadius);
+    getOriginX(camera) {
+        // OriginX in world position
+        if (!this.originGameObject) {
+            return this.x;
+        }
+
+        var gameObject = this.originGameObject;
+        var x = gameObject.x;
+        if (gameObject.scrollFactorX === 0) {
+            x += camera.scrollX;
+        }
+        return x;
+    }
+
+    getOriginY(camera) {
+        // OriginY in world position
+        if (!this.originGameObject) {
+            return this.y;
+        }
+
+        var gameObject = this.originGameObject;
+        var y = gameObject.y;
+        if (gameObject.scrollFactorY === 0) {
+            if (camera === undefined) {
+                camera = this.pointer.camera;
+            }
+            y += camera.scrollY;
+        }
+        return y;
+    }
+
+    containsPointer(pointer) {
+        if ((this.minRadius === 0) && (this.maxRadius === undefined)) {
+            return true;
+        }
+
+        var originX = this.getOriginX(pointer.camera);
+        var originY = this.getOriginY(pointer.camera);
+
+        var worldXY = GetPointerWorldXY(pointer, this.mainCamera, true);
+        if (!worldXY) {
+            return false;
+        }
+
+        var r = DistanceBetween(originX, originY, worldXY.x, worldXY.y);
+        return (r >= this.minRadius) &&
+            ((this.maxRadius === undefined) || (r <= this.maxRadius));
     }
 
     onPointerDown(pointer) {
-        if (!this.enable) {
+        if ((!this.enable) || this.pointer) {
             return;
         }
 
-        if (this.pointer) {
+        if (!this.containsPointer(pointer)) {
             return;
         }
 
-        if (!this.contains(pointer.worldX, pointer.worldY)) {
-            return;
-        }
-
-        this.pointer = pointer;
-        this.state = TOUCH1;
         this.onDragStart(pointer);
     }
 
     onPointerUp(pointer) {
-        if (!this.enable) {
-            return;
-        }
-        if (this.pointer !== pointer) {
+        if ((!this.enable) || (this.pointer !== pointer)) {
             return;
         }
 
-        this.pointer = undefined;
-        this.state = TOUCH0;
         this.onDragEnd();
     }
 
     onPointerMove(pointer) {
-        if (!this.enable) {
-            return;
-        }
-
-        if (!pointer.isDown) {
+        if ((!this.enable) || (!pointer.isDown)) {
             return;
         }
 
         switch (this.state) {
-            case TOUCH0:
-                if (this.contains(pointer.worldX, pointer.worldY)) {
+            case STATE_TOUCH0:
+                if (this.containsPointer(pointer)) {
                     this.onDragStart(pointer);
                 }
                 break;
 
-            case TOUCH1:
-                if (this.contains(pointer.worldX, pointer.worldY)) {
-                    this.onDrag();
+            case STATE_TOUCH1:
+                if (this.containsPointer(pointer)) {
+                    this.onDrag(pointer);
                 } else {
-                    this.onDragEnd();
+                    this.onDragEnd(pointer);
                 }
                 break;
         }
     }
 
     dragCancel() {
-        if (this.state === TOUCH1) {
+        if (this.state === STATE_TOUCH1) {
             this.onDragEnd();
         }
         this.pointer = undefined;
-        this.state = TOUCH0;
+        this.state = STATE_TOUCH0;
         return this;
     }
 
     onDragStart(pointer) {
-        this._deltaRotation = undefined;
         this.pointer = pointer;
-        this.state = TOUCH1;
+
+        var worldXY = GetPointerWorldXY(pointer, this.mainCamera, true);
+        if (!worldXY) {
+            return;
+        }
+
+        this.prevPointerX = worldXY.x;
+        this.prevPointerY = worldXY.y;
+        this.state = STATE_TOUCH1;
         this.emit('dragstart', this);
     }
 
     onDragEnd() {
-        this._deltaRotation = undefined;
         this.pointer = undefined;
-        this.state = TOUCH0;
+        this.prevPointerX = undefined;
+        this.prevPointerY = undefined;
+        this.state = STATE_TOUCH0;
+        this._deltaRotation = undefined;
         this.emit('dragend', this);
     }
 
-    onDrag() {
-        this._deltaRotation = undefined;
+    onDrag(pointer) {
+        var x = this.getOriginX(pointer.camera),
+            y = this.getOriginY(pointer.camera);
+
+        var worldXY = GetPointerWorldXY(pointer, this.mainCamera, true);
+        if (!worldXY) {
+            return;
+        }
+
+        var curPointerX = worldXY.x;
+        var curPointerY = worldXY.y;
+        var a0 = GetAngle(x, y, this.prevPointerX, this.prevPointerY),
+            a1 = GetAngle(x, y, curPointerX, curPointerY);
+        this.deltaRotation = WrapAngle(a1 - a0);
+
+        this.prevPointerX = curPointerX;
+        this.prevPointerY = curPointerY;
         this.emit('drag', this);
     }
 
-    get isDrag() {
-        return (this.state === TOUCH1) && (this.pointer.justMoved);
-    }
-
-    get deltaRotation() {
-        if (this.state === TOUCH0) {
-            return 0;
-        }
-
-        if (this._deltaRotation === undefined) {
-            var p0 = this.pointer.prevPosition,
-                p1 = this.pointer.position;
-            var a0 = AngleBetween(this.x, this.y, p0.x, p0.y),
-                a1 = AngleBetween(this.x, this.y, p1.x, p1.y);
-            this._deltaRotation = WrapRadians(a1 - a0);
-        }
-
-        return this._deltaRotation;
-
-    }
-
     get deltaAngle() {
-        if (this.state === TOUCH0) {
+        if (this.state === STATE_TOUCH0) {
             return 0;
         }
 
@@ -206,7 +281,6 @@ class DragRotate extends EE {
     }
 }
 
-const TOUCH0 = 0;
-const TOUCH1 = 1;
+var WorldXY = {}
 
 export default DragRotate;

@@ -5,44 +5,71 @@ Set position of game object on a [path](path.md).
 - Author: Rex
 - Behavior of game object
 
-## Source code
+## Live demos
 
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/pathfollower-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexpathfollowerplugin.min.js)
+- [Path follower](https://codepen.io/rexrainbow/pen/GXKPKB)
+- [Spaced points](https://codepen.io/rexrainbow/pen/Jjraeag)
 
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/pathfollower)
 
-User could import class directly, or install it by global plugin.
+### Install plugin
 
-### Import class
+#### Load minify file
 
-```javascript
-import rexPathFollower from './plugins/pathfollower.js';
-```
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.plugin('rexpathfollowerplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexpathfollowerplugin.min.js', true);
+    ```
+- Add path-follower behavior
+    ```javascript
+    var pathFollower = scene.plugins.get('rexpathfollowerplugin').add(gameObject, config);
+    ```
 
-### Install global plugin
+#### Import plugin
 
-Install plugin in [configuration of game](game.md#configuration)
-
-```javascript
-import PathFollowerPlugin from './plugins/pathfollower-plugin.js';
-
-var config = {
-    // ...
-    plugins: {
-        global: [{
-            key: 'rexPathFollower',
-            plugin: PathFollowerPlugin,
-            start: true
-        },
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import PathFollowerPlugin from 'phaser4-rex-plugins/plugins/pathfollower-plugin.js';
+    var config = {
         // ...
-        ]
-    }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+        plugins: {
+            global: [{
+                key: 'rexPathFollower',
+                plugin: PathFollowerPlugin,
+                start: true
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add path-follower behavior
+    ```javascript
+    var pathFollower = scene.plugins.get('rexPathFollower').add(gameObject, config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import PathFollower from 'phaser4-rex-plugins/plugins/pathfollower.js';
+    ```
+- Add path-follower behavior
+    ```javascript
+    var pathFollower = new PathFollower(gameObject, config);
+    ```
 
 ### Create instance
 
@@ -53,7 +80,14 @@ var pathFollower = scene.plugins.get('rexPathFollower').add(gameObject, {
     // t: 0,                // t: 0~1
     // rotateToPath: false,
     // rotationOffset: 0,
-    // angleOffset: 0
+    // angleOffset: 0,
+
+    // spacedPoints: false,
+    // spacedPoints: {
+    //     divisions: undefined,
+    //     stepRate: 10,
+    // }
+
 });
 ```
 
@@ -61,6 +95,11 @@ var pathFollower = scene.plugins.get('rexPathFollower').add(gameObject, {
 - `t` : Initial value of property `t` (0~1)
 - `rotateToPath`: Set true to change angle towards path
 - `rotationOffset` : Rotation offset in radian, or `angleOffset` in degrees
+- `spacedPoints` :
+    - `false`, or `undefined` : Get point by `path.getPoint(t)`
+    - `spacedPoints.divisions`, `spacedPoints.stepRate` : 
+        1. Get points by `path.getSpacedPoints(divisions, stepRate)`
+        2. Get point from linear interpolation of points in step1.
 
 ### Move along path
 
@@ -96,5 +135,5 @@ pathFollower.setPath(path);
 pathFollower.setRotateToPath(rotateToPath, rotationOffset);
 ```
 
-- `rotateToPath` : Set true to change angle towards path
+- `rotateToPath` : Set `true` to change angle towards path
 - `rotationOffset` : Rotation offset in radian

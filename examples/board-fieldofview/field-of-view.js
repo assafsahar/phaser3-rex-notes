@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import BoardPlugin from '../../plugins/board-plugin.js';
 
 const GetValue = Phaser.Utils.Objects.GetValue;
@@ -152,7 +153,7 @@ var findFOV = function (chessA) {
     }
 }
 
-const COLOR_PRIMARY = 0x03a9f4;
+const COLOR_MAIN = 0x03a9f4;
 const COLOR_LIGHT = 0x67daff;
 const COLOR_DARK = 0x007ac1;
 const COLOR_VISIBLE = 0xc49000;

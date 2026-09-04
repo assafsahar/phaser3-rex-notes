@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import GesturesPlugin from '../../plugins/gestures-plugin.js';
 
 class Demo extends Phaser.Scene {

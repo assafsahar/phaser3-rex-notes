@@ -1,29 +1,25 @@
-import GetSceneObject from '../../utils/system/GetSceneObject.js';
+import ComponentBase from '../../utils/componentbase/ComponentBase.js';
+import ProgressValueMethods from '../../utils/progressvalue/ProgressValueMethods.js';
 
-const EE = Phaser.Events.EventEmitter;
-const GetValue = Phaser.Utils.Objects.GetValue;
-const BetweenPoints = Phaser.Math.Angle.BetweenPoints;
-const DistanceBetween = Phaser.Math.Distance.Between;
-const RotateAroundDistance = Phaser.Math.RotateAroundDistance;
-const Clamp = Phaser.Math.Clamp;
-const Linear = Phaser.Math.Linear;
-const Percent = Phaser.Math.Percent;
+import { Math as PhaserMath, Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
+const BetweenPoints = PhaserMath.Angle.BetweenPoints;
+const DistanceBetween = PhaserMath.Distance.Between;
+const RotateAroundDistance = PhaserMath.RotateAroundDistance;
+const Clamp = PhaserMath.Clamp;
+const Linear = PhaserMath.Linear;
+const Percent = PhaserMath.Percent;
 
-class Slider extends EE {
+class Slider extends ComponentBase {
     constructor(gameObject, config) {
-        super();
-        this.gameObject = gameObject;
-        this.scene = GetSceneObject(gameObject);
+        super(gameObject, config);
+        // this.parent = gameObject;
 
+        this._enable = undefined;
         this._value = undefined;
-        this.endPoints = [{
-            x: 0,
-            y: 0
-        },
-        {
-            x: 0,
-            y: 0
-        }
+        this.endPoints = [
+            { x: 0, y: 0 },
+            { x: 0, y: 0 }
         ];
 
         var callback = GetValue(config, 'valuechangeCallback', null);
@@ -32,7 +28,7 @@ class Slider extends EE {
             this.on('valuechange', callback, scope);
         }
 
-        this.gameObject.setInteractive(GetValue(config, "inputConfig", undefined));
+        this.parent.setInteractive(GetValue(config, "inputConfig", undefined));
         this.resetFromJSON(config);
         this.boot();
     }
@@ -56,19 +52,31 @@ class Slider extends EE {
     }
 
     boot() {
-        this.gameObject.on('drag', this.onDragging, this);
-        this.gameObject.on('destroy', this.destroy, this);
+        this.parent.on('drag', this.onDragging, this);
     }
 
-    shutdown() {
-        super.shutdown();
-        this.gameObject = undefined;
-        this.scene = undefined;
-        // gameObject event 'drag' will be removed when this gameObject destroyed 
+    // shutdown(fromScene) {
+    //     // Already shutdown
+    //     if (this.isShutdown) {
+    //         return;
+    //     }
+    //     // GameObject events will be removed when this gameObject destroyed 
+    //     // this.parent.off('drag', this.onDragging, this);
+    //     super.shutdown(fromScene);
+    // }
+
+    get enable() {
+        return this._enable;
     }
 
-    destroy() {
-        this.shutdown();
+    set enable(e) {
+        if (this._enable === e) {
+            return;
+        }
+
+        this._enable = e;
+        this.scene.input.setDraggable(this.parent, e);
+        return this;
     }
 
     setEnable(e) {
@@ -76,12 +84,12 @@ class Slider extends EE {
             e = true;
         }
 
-        if (this.enable === e) {
-            return this;
-        }
-
         this.enable = e;
-        this.scene.input.setDraggable(this.gameObject, e);
+        return this;
+    }
+
+    toggleEnable() {
+        this.setEnable(!this.enable);
         return this;
     }
 
@@ -120,32 +128,8 @@ class Slider extends EE {
         this.emit('valuechange', this._value, oldValue);
     }
 
-    setValue(value, min, max) {
-        if (min !== undefined) {
-            value = Percent(value, min, max);
-        }
-        this.value = value;
-        return this;
-    }
-
-    addValue(inc, min, max) {
-        if (min !== undefined) {
-            inc = Percent(inc, min, max);
-        }
-        this.value += inc;
-        return this;
-    }
-
-    getValue(min, max) {
-        var value = this.value;
-        if (min !== undefined) {
-            value = Linear(min, max, value);
-        }
-        return value;
-    }
-
     get isDragging() {
-        return (this.gameObject.input.dragState > 0);
+        return (this.parent.input.dragState > 0);
     }
 
     onDragging(pointer, dragX, dragY) {
@@ -160,27 +144,26 @@ class Slider extends EE {
             var max = Math.max(endPoints[0].y, endPoints[1].y);
             newValue = Percent(dragY, min, max);
         } else {
-            var gameObject = this.gameObject;
+            var gameObject = this.parent;
             var dist;
-            P1.x = dragX;
-            P1.y = dragY;
+            var p1 = { x: dragX, y: dragY };
 
-            dist = DistanceBetween(P1.x, P1.y, gameObject.x, gameObject.y);
-            P1 = RotateAroundDistance(P1, gameObject.x, gameObject.y, -this.axisRotation, dist);
-            P1.y = gameObject.y;
-            dist = DistanceBetween(P1.x, P1.y, gameObject.x, gameObject.y);
-            P1 = RotateAroundDistance(P1, gameObject.x, gameObject.y, this.axisRotation, dist);
+            dist = DistanceBetween(p1.x, p1.y, gameObject.x, gameObject.y);
+            p1 = RotateAroundDistance(p1, gameObject.x, gameObject.y, -this.axisRotation, dist);
+            p1.y = gameObject.y;
+            dist = DistanceBetween(p1.x, p1.y, gameObject.x, gameObject.y);
+            p1 = RotateAroundDistance(p1, gameObject.x, gameObject.y, this.axisRotation, dist);
 
             var min = Math.min(endPoints[0].x, endPoints[1].x);
             var max = Math.max(endPoints[0].x, endPoints[1].x);
-            newValue = Percent(P1.x, min, max);
+            newValue = Percent(p1.x, min, max);
         }
 
         this.value = newValue;
     }
 
     updatePos() {
-        var gameObject = this.gameObject;
+        var gameObject = this.parent;
         var points = this.endPoints;
         gameObject.x = Linear(points[0].x, points[1].x, this._value);
         gameObject.y = Linear(points[0].y, points[1].y, this._value);
@@ -188,6 +171,9 @@ class Slider extends EE {
     }
 }
 
-var P1 = {}; // reuse this point object
+Object.assign(
+    Slider.prototype,
+    ProgressValueMethods,
+)
 
 export default Slider;

@@ -1,4 +1,4 @@
-import TileData from './TileData.js';
+import { CreateTileData } from './TileData.js';
 import AreTileXYEqual from '../utils/AreTileXYEqual.js';
 
 import GetRandom from '../../utils/array/GetRandom.js';
@@ -9,7 +9,7 @@ var GetNextTile = function (curTileData, preTileData) {
     var forwardTileData = null,
         backwardTileData = null;
     var neighborTileXArray = []; // forward and other neighbors, exclude backward
-    var neighborTileXY, neighborTileData = null;
+    var neighborTileXY, neighborTileData = null, cost;
     for (var i = 0, cnt = directions.length; i < cnt; i++) {
         neighborTileXY = board.getNeighborTileXY(curTileData, directions[i], true);
         if (neighborTileXY === null) {
@@ -18,7 +18,14 @@ var GetNextTile = function (curTileData, preTileData) {
         if (!board.contains(neighborTileXY.x, neighborTileXY.y, this.pathTileZ)) {
             continue;
         }
-        neighborTileData = new TileData(neighborTileXY.x, neighborTileXY.y, directions[i]);
+
+        neighborTileData = CreateTileData(neighborTileXY.x, neighborTileXY.y, directions[i]);
+        cost = this.getCost(neighborTileData, curTileData);
+        if (typeof (cost) !== 'number') { // Invalid cost, remove this tileData
+            continue;
+        }
+
+        neighborTileData.cost = cost;
 
         if (directions[i] === curTileData.direction) {
             forwardTileData = neighborTileData;

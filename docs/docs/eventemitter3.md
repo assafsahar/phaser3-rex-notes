@@ -8,7 +8,7 @@
 
 - Scene: 
     ```javascript
-    var ee = scene.sys.events;
+    var ee = scene.events;
     ```
 - Game object:
     ```javascript
@@ -37,23 +37,28 @@ ee.emit(eventName, parameter0, ...);
 
 ### Remove listeners
 
-```javascript
-ee.off(eventName, callback, scope);
-ee.off(eventName, callback, scope, true);   // only remove one-time listeners
-```
-
-Alias
-
-```javascript
-ee.removeListener(eventName, callback, scope); 
-ee.removeListener(eventName, callback, scope, true);  // only remove one-time listeners
-```
-
-### Remove all listeners
-
-```javascript
-ee.removeAllListeners();
-```
+- Remove a linstener
+    ```javascript
+    ee.off(eventName, callback, scope);
+    ee.off(eventName, callback, scope, true);   // only remove one-time listeners
+    ```
+    or
+    ```javascript
+    ee.removeListener(eventName, callback, scope); 
+    ee.removeListener(eventName, callback, scope, true);  // only remove one-time listeners
+    ```
+- Remove listeners of an event
+    ```javascript
+    ee.off(eventName);
+    ```
+    or
+    ```javascript
+    ee.removeListener(eventName); 
+    ```
+- Remove listeners of all events
+    ```javascript
+    ee.removeAllListeners();
+    ```
 
 ### Get listeners count
 
@@ -68,6 +73,12 @@ var count = ee.listenerCount(eventName);
 var listeners = ee.listeners(eventName);
 ```
 
+### Get event names
+
+```javascript
+var names = ee.eventNames();
+```
+
 #### Listener
 
 ```javascript
@@ -75,5 +86,19 @@ var listeners = ee.listeners(eventName);
     fn: callback,
     context: scope,
     once: once
+}
+```
+
+### Custom event emitter class
+
+```javascript
+class MyEventEmitter extends Phaser.Events.EventEmitter {
+    // construct() {
+    //     super();
+    // }
+
+    // destroy() {
+    //     super.destroy();
+    // }
 }
 ```

@@ -1,4 +1,5 @@
-const GetRandom = Phaser.Utils.Array.GetRandom;
+import { Utils as PhaserUtils } from 'phaser';
+const GetRandom = PhaserUtils.Array.GetRandom;
 
 var RandomSymbol = function (board, tileX, tileY, callback, scope, excluded) {
     var symbol;
@@ -20,7 +21,7 @@ var RandomSymbol = function (board, tileX, tileY, callback, scope, excluded) {
             symbol = GetRandom(symbols);
         }
 
-    } else if (typeof (obj) === 'function') {
+    } else if (typeof (callback) === 'function') {
         // symbols from return of callback
         if (scope) {
             symbol = callback.call(scope, board, tileX, tileY, excluded);

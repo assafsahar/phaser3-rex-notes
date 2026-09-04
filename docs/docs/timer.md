@@ -2,14 +2,13 @@
 
 Execute callback when time-out, built-in object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
 ### Start timer
 
 - Looped timer
-
     ```javascript
     var timer = scene.time.addEvent({
         delay: 500,                // ms
@@ -19,9 +18,7 @@ Execute callback when time-out, built-in object of phaser.
         loop: true
     });
     ```
-
 - Repeat timer
-
     ```javascript
     var timer = scene.time.addEvent({
         delay: 500,                // ms
@@ -31,96 +28,109 @@ Execute callback when time-out, built-in object of phaser.
         repeat: 4
     });
     ```
-
 - Oneshot timer
-
     ```javascript
     var timer = scene.time.delayedCall(delay, callback, args, scope);  // delay in ms
     ```
-
 - All properties of timer
-
     ```javascript
     var timer = scene.time.addEvent({
         delay: 500,                // ms
         callback: callback,
         args: [],
         callbackScope: thisArg,
-        loop: fasle,
+        loop: false,
         repeat: 0,
         startAt: 0,
         timeScale: 1,
         paused: false
     });
     ```
-
-### Status of timer
-
-- Get elapsed time
-
+- Reuse timer
     ```javascript
-    var elapsed = timer.getElapsed();   // ms
-    var elapsed = timer.getElapsedSeconds(); // sec
+    timer.reset({
+        delay: 500,                // ms
+        callback: callback,
+        args: [],
+        callbackScope: thisArg,
+        loop: false,
+        repeat: 0,
+        startAt: 0,
+        timeScale: 1,
+        paused: false
+    })
+    scene.time.addEvent(timer);
     ```
 
-- Get repeat count
+!!! note
+    Throw error message if `delay : 0` with (`repeat > 0` or `loop: true`)
 
+
+### Pause/resume
+
+- Pause timer
     ```javascript
-    var repeat = timer.getRepeatCount();
+    timer.paused = true;
     ```
-
-- Gets the progress of the current iteration
-
+- Resume timer
     ```javascript
-    var progress = timer.getProgress();  // elapsed / delay
+    timer.paused = false;
     ```
-
-- Gets the progress of the timer overall, factoring in repeats.
-
-    ```javascript
-    var progress = timer.getOverallProgress();  // totalElapsed / totalDuration
-    ```
-
-- Get delay time
-
-    ```javascript
-    var delay = timer.delay;   // ms
-    ```
-
 - Is paused
-
     ```javascript
     var isPaused = timer.paused;
     ```
 
-- Get time-scale
+### Stop
 
+- Stop a running timer
+    ```javascript
+    timer.remove();
+    ```
+- Remove from timeline's all internal lists, for timer re-using
+    ```javascript
+    scene.time.removeEvent(timer);
+    ```
+
+### Time scale
+
+- Set
+    ```javascript
+    timer.timeScale = 2;
+    ```
+- Get
     ```javascript
     var timeScale = timer.timeScale;
     ```
 
-### Commands of timer
+### Other properties
 
-- Pause timer
-
+- Get elapsed time
     ```javascript
-    timer.paused = true;
+    var elapsed = timer.getElapsed();   // ms
+    var elapsed = timer.getElapsedSeconds(); // sec
+    // var elapsed = timer.elapsed;  // ms
     ```
-
-- Resume timer
-
+- Get remaining time
     ```javascript
-    timer.paused = false;
+    var remaining = timer.getRemaining();   // ms
+    var remaining = timer.getRemainingSeconds(); // sec
+    // var remaining = timer.getOverallRemaining();   // ms
+    // var remaining = timer.getOverallRemainingSeconds(); // sec
     ```
-
-- Remove timer from timeline
-
+- Get repeat count
     ```javascript
-    timer.remove();
+    var repeat = timer.getRepeatCount();
     ```
-
-- Set time-scale
-
+- Gets the progress of the current iteration
     ```javascript
-    timer.timeScale = 2;
+    var progress = timer.getProgress();  // elapsed / delay
+    ```
+- Gets the progress of the timer overall, factoring in repeats.
+    ```javascript
+    var progress = timer.getOverallProgress();  // totalElapsed / totalDuration
+    ```
+- Get delay time
+    ```javascript
+    var delay = timer.delay;   // ms
     ```

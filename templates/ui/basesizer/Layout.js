@@ -1,3 +1,5 @@
-// Override
-var Layout = function (parent, newWidth, newHeight) {}
+var Layout = function () {
+    this.runLayout();
+    return this;
+}
 export default Layout;

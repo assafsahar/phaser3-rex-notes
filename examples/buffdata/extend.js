@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import BuffDataPlugin from '../../plugins/buffdata-plugin.js';
 
 class Demo extends Phaser.Scene {

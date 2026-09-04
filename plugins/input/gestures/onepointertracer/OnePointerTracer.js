@@ -1,52 +1,100 @@
-import TickTask from '../../../utils/ticktask/TickTask.js';
+import TickTask from '../../../utils/componentbase/TickTask.js';
+import GetSceneObject from '../../../utils/system/GetSceneObject.js';
+import IsPointerInBounds from '../../../utils/input/IsPointerInBounds.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
+import { Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
 
 class OnePointerTracer extends TickTask {
-    constructor(scene, config) {
+    constructor(gameObject, config) {
+        var scene = GetSceneObject(gameObject);
+        if (scene === gameObject) {
+            gameObject = undefined;
+        }
         super(scene, config);
 
-        this.scene = scene;
+        this.gameObject = gameObject;
+        if (gameObject) {
+            gameObject.setInteractive(GetValue(config, 'inputConfig', undefined));
+        }
+        this._enable = undefined;
         this.resetFromJSON(config);
         this.boot();
     }
 
     resetFromJSON(o) {
-        this.setEnable(GetValue(o, "enable", true));
-        this.bounds = GetValue(o, 'bounds', undefined);
+        this.setEnable(GetValue(o, 'enable', true));
+
+        this.setDetectBounds()
+        if (this.gameObject === undefined) {
+            this.setDetectBounds(GetValue(o, 'bounds', undefined));
+        } else {
+            this.setDetectBounds();
+        }
 
         this.tracerState = TOUCH0;
         // this.recongizedState = new stateClass(this);
         this.pointer = undefined;
         this.lastPointer = undefined; // Last catched pointer
         this.movedState = false;
+        this.isTouchingAnyObject = false;
         return this;
     }
 
     boot() {
         super.boot();
-        this.scene.input.on('pointerdown', this.onPointerDown, this);
+        if (this.gameObject) {
+            this.gameObject.on('pointerdown', this.onPointerDown, this);
+        } else {
+            this.scene.input.on('pointerdown', this.onPointerDown, this);
+        }
         this.scene.input.on('pointerup', this.onPointerUp, this);
+        this.scene.input.on('gameout', this.dragCancel, this);
+
         this.scene.input.on('pointermove', this.onPointerMove, this);
-        this.scene.events.on('destroy', this.destroy, this);
+        this.scene.sys.events.once('shutdown', this.destroy, this);
     }
 
-    shutdown() {
+    shutdown(fromScene) {
+        if (!this.scene) {
+            return
+        }
+
+        if (this.gameObject) {
+            // GameObject events will be removed when this gameObject destroyed 
+            // this.gameObject.off('pointerdown', this.onPointerDown, this);
+        } else {
+            this.scene.input.off('pointerdown', this.onPointerDown, this);
+        }
+        this.scene.input.off('pointerup', this.onPointerUp, this);
+        this.scene.input.off('gameout', this.dragCancel, this);
+
+        this.scene.input.off('pointermove', this.onPointerMove, this);
+        this.scene.sys.events.off('shutdown', this.destroy, this);
+
+        this.gameObject = undefined;
+        this.bounds = undefined;
         this.pointer = undefined;
         this.lastPointer = undefined; // Last catched pointer
         this.movedState = false;
-        if (this.scene) {
-            this.scene.input.off('pointerdown', this.onPointerDown, this);
-            this.scene.input.off('pointerup', this.onPointerUp, this);
-            this.scene.input.off('pointermove', this.onPointerMove, this);
-            this.scene.events.off('destroy', this.destroy, this);
-            this.scene = undefined;
-        }
-        super.shutdown();
+
+        super.shutdown(fromScene);
     }
 
-    destroy() {
-        this.shutdown();
+    get enable() {
+        return this._enable;
+    }
+
+    set enable(e) {
+        if (this._enable === e) {
+            return;
+        }
+
+        if (!e) {
+            this.dragCancel();
+        }
+        this._enable = e;
+        return this;
     }
 
     setEnable(e) {
@@ -54,23 +102,26 @@ class OnePointerTracer extends TickTask {
             e = true;
         }
 
-        if (this.enable === e) {
-            return this;
-        }
-
-        if (!e) {
-            this.dragCancel();
-        }
         this.enable = e;
         return this;
     }
 
-    onPointerDown(pointer) {
+    setDetectBounds(bounds) {
+        this.bounds = bounds;
+        return this;
+    }
+
+    toggleEnable() {
+        this.setEnable(!this.enable);
+        return this;
+    }
+
+    onPointerDown(pointer, gameObjects) {
         if (!this.enable) {
             return;
         }
 
-        if (this.pointer === pointer) {
+        if (this.pointer !== undefined) {
             return;
         }
 
@@ -79,14 +130,19 @@ class OnePointerTracer extends TickTask {
             return;
         }
 
-        if (this.pointer !== undefined) {
+        if (this.pointer === pointer) {
             return;
         }
 
         this.pointer = pointer;
+        this.pointerCamera = pointer.camera;
         this.lastPointer = pointer;
         this.movedState = false;
         this.tracerState = TOUCH1;
+
+        if (this.gameObject === undefined) {
+            this.isTouchingAnyObject = (gameObjects.length > 0);
+        }
         this.onDragStart();
     }
 
@@ -105,6 +161,7 @@ class OnePointerTracer extends TickTask {
         }
 
         this.pointer = undefined;
+        this.pointerCamera = undefined;
         this.movedState = false;
         this.tracerState = TOUCH0;
         this.onDragEnd();
@@ -119,7 +176,7 @@ class OnePointerTracer extends TickTask {
             var isInsideBounds = (this.bounds) ? this.bounds.contains(pointer.x, pointer.y) : true;
             var isCatchedPointer = (this.pointer === pointer);
             if (!isCatchedPointer && isInsideBounds) { // Pointer moves into bounds
-                this.onPointerDown(pointer);
+                // this.onPointerDown(pointer);
             } else if (isCatchedPointer && !isInsideBounds) { // Pointer moves out of bounds
                 this.onPointerUp(pointer);
             } else { // Pointer drags in bounds
@@ -131,11 +188,11 @@ class OnePointerTracer extends TickTask {
                 }
             }
         } else {
-            var isInsideBounds = (this.bounds) ? this.bounds.contains(pointer.x, pointer.y) : true;
-            var isLastCatchedPointer = (this.lastPointer === pointer);
-            if (isLastCatchedPointer && isInsideBounds) {
-                this.onLastPointerMove();
-            }
+            // var isInsideBounds = (this.bounds) ? this.bounds.contains(pointer.x, pointer.y) : true;
+            // var isLastCatchedPointer = (this.lastPointer === pointer);
+            // if (isLastCatchedPointer && isInsideBounds) {
+            //     this.onLastPointerMove();
+            // }
         }
     }
 
@@ -160,27 +217,23 @@ class OnePointerTracer extends TickTask {
         this.emit('drag', this);
     }
 
-    onLastPointerMove() { }
+    // onLastPointerMove() { }
 
     preUpdate(time, delta) { }
 
     postUpdate(time, delta) { }
 
-    get isDrag() {
-        return (this.tracerState === TOUCH1) && (this.pointer.justMoved);
-    }
-
     startTicking() {
         super.startTicking();
-        this.scene.events.on('preupdate', this.preUpdate, this);
-        this.scene.events.on('postupdate', this.postUpdate, this);
+        this.scene.sys.events.on('preupdate', this.preUpdate, this);
+        this.scene.sys.events.on('postupdate', this.postUpdate, this);
     }
 
     stopTicking() {
         super.stopTicking();
         if (this.scene) { // Scene might be destoryed
-            this.scene.events.off('preupdate', this.preUpdate, this);
-            this.scene.events.off('postupdate', this.postUpdate, this);
+            this.scene.sys.events.off('preupdate', this.preUpdate, this);
+            this.scene.sys.events.off('postupdate', this.postUpdate, this);
         }
     }
 
@@ -200,6 +253,15 @@ class OnePointerTracer extends TickTask {
     cancel() {
         this.state = IDLE;
         return this;
+    }
+
+    isPointerInGameObject(gameObject, preTest, postTest) {
+        var pointer = this.lastPointer;
+        if (!pointer) {
+            return false;
+        }
+
+        return IsPointerInBounds(gameObject, pointer, preTest, postTest);
     }
 }
 

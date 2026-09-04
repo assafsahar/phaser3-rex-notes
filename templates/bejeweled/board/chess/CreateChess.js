@@ -14,12 +14,25 @@ var CreateChess = function (tileX, tileY, symbols) {
     } else {
         gameObject = this.chessCreateCallback(board);
     }
-    // Set symbol, it also fires 'changedata_symbol' event
-    gameObject.setData('symbol', symbol);
+
+    // Set swappable to true by default
+    gameObject.setData('swappable', true);
+    // Set clickable to false by default
+    gameObject.setData('clickable', false);
+
+    // Set symbol, it also fires 'changedata-symbol' event
+    gameObject.setData('symbol', undefined).setData('symbol', symbol);
     // Add to board
     board.addChess(gameObject, tileX, tileY, this.chessTileZ, true);
     // behaviors
-    gameObject.rexMoveTo = scene.rexBoard.add.moveTo(gameObject, this.chessMoveTo);
+    gameObject.rexMoveTo = this.rexBoard.add.moveTo(gameObject, this.chessMoveTo);
+
+    if (this.layer) {
+        // Move chess gameObject from scene to layer
+        this.layer.add(gameObject);
+    }
+
+    return gameObject;
 }
 
 export default CreateChess;

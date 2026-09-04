@@ -1,56 +1,86 @@
 ## Introduction
 
-Simulate curosr keys according touch events.
+Simulate cursor keys according to touch events.
 
 - Author: Rex
 - Member of scene
 
-## Source code
+## Live demos
 
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/virtualjoystick-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexvirtualjoystickplugin.min.js)
+- [Virtual joystick](https://codepen.io/rexrainbow/pen/oyqvQY)
+- [Two joySticks](https://codepen.io/rexrainbow/pen/eYdxxOJ)
+- [Joystick and button](https://codepen.io/rexrainbow/pen/GRLwMGa)
+- [Toggle visible](https://codepen.io/rexrainbow/pen/vYPQYZQ)
+- [Drag vector to cursor keys](https://codepen.io/rexrainbow/pen/dyENKqQ)
 
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/virtualjoystick)
 
-User could import class directly, or install it by global plugin.
+### Install plugin
 
-### Import class
+#### Load minify file
 
-```javascript
-import rexVirtualJoyStick from './plugins/virtualjoystick.js';
-```
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.plugin('rexvirtualjoystickplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexvirtualjoystickplugin.min.js', true);
+    ```
+- Create instance
+    ```javascript
+    var joyStick = scene.plugins.get('rexvirtualjoystickplugin').addPlayer(scene, config);
+    ```
 
-### Install global plugin
+#### Import plugin
 
-Install plugin in [configuration of game](game.md#configuration)
-
-```javascript
-import VirtualJoyStickPlugin from './plugins/virtualjoystick-plugin.js';
-
-var config = {
-    // ...
-    plugins: {
-        global: [{
-            key: 'rexVirtualJoyStick',
-            plugin: VirtualJoyStickPlugin,
-            start: true
-        },
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import VirtualJoystickPlugin from 'phaser4-rex-plugins/plugins/virtualjoystick-plugin.js';
+    var config = {
         // ...
-        ]
-    }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+        plugins: {
+            global: [{
+                key: 'rexVirtualJoystick',
+                plugin: VirtualJoystickPlugin,
+                start: true
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Create instance
+    ```javascript
+    var joyStick = scene.plugins.get('rexVirtualJoystick').addPlayer(scene, config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import VirtualJoystick from 'phaser4-rex-plugins/plugins/virtualjoystick.js';
+    ```
+- Create instance
+    ```javascript
+    var joyStick = new VirtualJoystick(scene, config);
+    ```
 
 ### Create instance
 
 ```javascript
-var joystick = scene.plugins.get('rexVirtualJoyStick').add(scene, {
+var joystick = scene.plugins.get('rexVirtualJoystick').add(scene, {
     x: x,
     y: y,
-    radius: radius,
+    radius: 100,
     base: baseGameObject,
     thumb: thumbGameObject,
     // dir: '8dir',
@@ -73,7 +103,7 @@ var joystick = scene.plugins.get('rexVirtualJoyStick').add(scene, {
     - `'8dir'`, or `3` : Simulate up, up-left, up-right, down, down-left, down-right, left, or right cursor keys.
 - `forceMin` : Cursor keys will be pressed when *force* is larger then this value.
     - `force` : Distance between position of base game object to touch pointer
-- `fixed` : Set `true` to fix to camera, i.e set `scrollFactor` to `0` for base and thumb game object.
+- `fixed` : Set `true` to fix to camera, i.e set `scrollFactor` to `0` for base and thumb game object. Default value is `true`.
 - `enable` : Set `false` to disable cursor keys simulation
 
 ### State of cursor keys
@@ -134,8 +164,11 @@ Visible of base game object.
     ```
 - Set
     ```javascript
-    joystick.enable = enable;
-    joystick.setEnable(enable);
+    joystick.setEnable(enable);  // enable: true, or false
+    //joystick.enable = enable;
+    ```
+- Toggle
+    ```javascript
     joystick.toggleEnable();
     ```
 
@@ -150,9 +183,9 @@ Position of base game object.
     ```
 - Set
     ```javascript
-    joystick.x = x;
-    joystick.y = y;
     joystick.setPosition(x ,y);
+    // joystick.x = x;
+    // joystick.y = y;
     ```
 
 ### Scroll factor
@@ -185,6 +218,89 @@ joystick.destroy();
 ### Events
 
 - On joystick updated :
-   ```javascript
-   joystick.on('update', function(){});
-   ```
+    ```javascript
+    joystick.on('update', function(){});
+    ```
+- On pointer-down
+    ```javascript
+    joystick.on('pointerdown', function(pointer){});
+    ```
+- On pointer-up
+    ```javascript
+    joystick.on('pointerup', function(pointer){});
+    ```
+
+### Elements
+
+- Base Game object: 
+    ```javascript
+    var baseGO = joystick.base;
+    ```
+- Thumb Game object: 
+    ```javascript
+    var thumb = joystick.thumb;
+    ```
+
+### Vector to cursor keys
+
+A controller to represent cursor keys by (drag) vector
+
+#### Create controller
+
+```javascript
+var controller = scene.plugins.get('rexVirtualJoyStick').addVectorToCursorKeys({
+    // dir: '8dir',
+    // forceMin: 16,
+    // enable: true
+})
+```
+
+or
+
+
+```javascript
+// import VirtualJoystick from 'phaser4-rex-plugins/plugins/vectortocursorkeys.js';
+var controller = new VirtualJoystick(undefined, config);
+```
+
+- `dir` : 
+    - `'up&down'`, or `0` : Simulate up or down cursor keys only.
+    - `'left&right'`, or `1` : Simulate left or right cursor keys only.
+    - `'4dir'`, or `2` : Simulate up, down, left or right cursor keys.
+    - `'8dir'`, or `3` : Simulate up, up-left, up-right, down, down-left, down-right, left, or right cursor keys.
+- `forceMin` : Cursor keys will be pressed when *force* is larger then this value.
+    - `force` : Distance between position of base game object to touch pointer
+- `enable` : Set `false` to disable cursor keys simulation.
+
+#### Set vector
+
+- Set vector
+    ```javascript
+    controller.setVector(x0, y0, x1, y1);
+    ```
+- Clear vector
+    ```javascript
+    controller.clearVector();
+    ```
+
+#### State of cursor keys
+
+```javascript
+var cursorKeys = controller.createCursorKeys();
+
+var leftKeyDown = cursorKeys.left.isDown;
+var rightKeyDown = cursorKeys.right.isDown;
+var upKeyDown = cursorKeys.up.isDown;
+var downKeyDown = cursorKeys.down.isDown;
+```
+
+#### Force & Angle
+
+```javascript
+var force = controller.force;
+var forceX = controller.forceX;
+var forceY = controller.forceY;
+
+var angle = controller.angle;  // degree between -180 to 180
+var rotation = controller.rotation; // radians
+```

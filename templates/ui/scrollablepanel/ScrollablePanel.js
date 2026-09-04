@@ -1,8 +1,11 @@
-import Scrollable from '../utils/Scrollable.js';
+import Scrollable from '../utils/scrollable/Scrollable.js';
 import GetScrollMode from '../utils/GetScrollMode.js';
-import ScrollableBlock from '../scrollableblock/ScrollableBlock.js';
+import ScrollableBlock from './scrollableblock/ScrollableBlock.js';
+import SetChildrenInteractive from '../utils/setchildreninteractive/SetChildrenInteractive.js';
+import ScrollToChild from './methods/ScrollToChild.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
+import { Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
 
 class ScrollablePanel extends Scrollable {
     constructor(scene, config) {
@@ -17,34 +20,74 @@ class ScrollablePanel extends Scrollable {
             panelConfig = {};
         }
         panelConfig.scrollMode = scrollMode;
-        panelConfig.clamplChildOY = GetValue(config, 'clamplChildOY', false);
+        panelConfig.clampChildOY = GetValue(config, 'clampChildOY', false);
+        panelConfig.clampChildOX = GetValue(config, 'clampChildOX', false);
         var scrollableBlock = new ScrollableBlock(scene, panelConfig);
-        var panelWidth = GetValue(panelConfig, 'width', undefined);
-        var panelHeight = GetValue(panelConfig, 'height', undefined);
-        var proportion, expand;
-        if (scrollMode === 0) {
-            proportion = (panelWidth === undefined) ? 1 : 0;
-            expand = (panelHeight === undefined);
-        } else {
-            proportion = (panelHeight === undefined) ? 1 : 0;
-            expand = (panelWidth === undefined);
+        scene.add.existing(scrollableBlock); // Important: Add to display list for touch detecting
+
+        var expandPanelWidth,
+            expandPanelHeight;
+        switch (scrollMode) {
+            case 0:
+                expandPanelWidth = GetValue(config, 'expand.panel', true);
+                expandPanelHeight = true;
+                break;
+
+            case 1:
+                expandPanelWidth = true;
+                expandPanelHeight = GetValue(config, 'expand.panel', true);
+                break;
+
+            default: // 2
+                expandPanelWidth = true;
+                expandPanelHeight = true;
         }
 
         // Fill config of scrollable
         config.type = 'rexScrollablePanel';
         config.child = {
             gameObject: scrollableBlock,
-            proportion: proportion,
-            expand: expand,
+            expandWidth: expandPanelWidth,
+            expandHeight: expandPanelHeight,
+            align: GetValue(config, 'align.panel', 'center')
         };
         var spaceConfig = GetValue(config, 'space', undefined);
         if (spaceConfig) {
-            spaceConfig.child = spaceConfig.panel;
+            spaceConfig.child = GetValue(spaceConfig, 'panel', 0);
         }
         super(scene, config);
 
-        this.addChildrenMap('panel', this.childrenMap.child);
+        this.addChildrenMap('panel', scrollableBlock.child);
+        this.addChildrenMap('panelLayer', scrollableBlock.maskLayer);
+        this.addChildrenMap('mask', scrollableBlock.childrenMaskGameObject);
+        this.addChildrenMap('scrollableBlock', scrollableBlock);
+    }
+
+    setChildrenInteractive(config) {
+        if (config === undefined) {
+            config = {};
+        }
+
+        if (!config.hasOwnProperty('eventEmitter')) {
+            config.eventEmitter = this;
+        }
+
+        if (!config.hasOwnProperty('targets')) {
+            config.targets = [this.childrenMap.panel];
+        }
+
+        SetChildrenInteractive(this.childrenMap.child, config);
+        return this;
     }
 }
+
+var methods = {
+    scrollToChild: ScrollToChild
+}
+
+Object.assign(
+    ScrollablePanel.prototype,
+    methods,
+)
 
 export default ScrollablePanel;

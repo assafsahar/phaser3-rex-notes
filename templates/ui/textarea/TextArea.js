@@ -1,10 +1,14 @@
-import Scrollable from '../utils/Scrollable.js';
-import TextBlock from '../textblock/TextBlock.js';
+import Scrollable from '../utils/scrollable/Scrollable.js';
+import { TagTextType } from '../../../plugins/utils/text/GetTextObjectType.js';
+import GetTextObjectType from '../../../plugins/utils/text/GetTextObjectType.js';
+import TextBlock from './textblock/TextBlock.js';
+import TagTextBlock from './textblock/TagTextBlock.js';
 import InjectProperties from './InjectProperties.js';
-import SetText from './SetText.js';
-import AppendText from './AppendText.js';
+import SetTextMethods from './SetTextMethods.js';
+import ScrollMethods from './ScrollMethods.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
+import { Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
 
 class TextArea extends Scrollable {
     constructor(scene, config) {
@@ -16,18 +20,26 @@ class TextArea extends Scrollable {
         var textObject = GetValue(config, 'text', undefined);
         var textWidth = GetValue(config, 'textWidth', undefined);
         var textHeight = GetValue(config, 'textHeight', undefined);
-        var textMask = GetValue(config, 'textMask', true);
+        var textCrop = GetValue(config, 'textCrop', !!textObject.setCrop);
+        var textMask = GetValue(config, 'textMask', !textCrop);
         var content = GetValue(config, 'content', '');
-        var textBlock = new TextBlock(scene, {
+        var textBlockConfig = {
             width: textWidth,
             height: textHeight,
             text: textObject,
             textMask: textMask,
+            textCrop: textCrop && !textMask,
             content: content,
-            clamplTextOY: GetValue(config, 'clamplChildOY', false),
-        });
-        var proportion = (textWidth === undefined) ? 1 : 0;
-        var expand = (textHeight === undefined);
+            clampTextOY: GetValue(config, 'clampChildOY', false),
+            alwaysScrollable: GetValue(config, 'alwaysScrollable', false),
+        };
+        var textBlock;
+        if (textObject && (GetTextObjectType(textObject) === TagTextType)) {
+            textBlock = new TagTextBlock(scene, textBlockConfig);
+        } else {
+            textBlock = new TextBlock(scene, textBlockConfig);
+        }
+        scene.add.existing(textBlock); // Important: Add to display list for touch detecting
         // Inject properties for scrollable interface
         InjectProperties(textBlock);
 
@@ -36,34 +48,44 @@ class TextArea extends Scrollable {
         config.type = 'rexTextArea';
         config.child = {
             gameObject: textBlock,
-            proportion: proportion,
-            expand: expand,
+            expandWidth: (textWidth === undefined),
+            expandHeight: (textHeight === undefined),
         };
         var spaceConfig = GetValue(config, 'space', undefined);
         if (spaceConfig) {
-            spaceConfig.child = spaceConfig.text;
+            spaceConfig.child = GetValue(spaceConfig, 'text', 0);
         }
+
         super(scene, config);
 
         this.addChildrenMap('text', textObject);
     }
 
     get text() {
-        return this.childrenMap.child.text;
+        var textBlock = this.childrenMap.child;
+        return textBlock.text;
+    }
+
+    get lineIndex() {
+        var textBlock = this.childrenMap.child;
+        return textBlock.lineIndex;
     }
 
     get linesCount() {
-        return this.childrenMap.child.linesCount;
+        var textBlock = this.childrenMap.child;
+        return textBlock.linesCount;
+    }
+
+    get contentHeight() {
+        var textBlock = this.childrenMap.child;
+        return textBlock.textHeight;
     }
 }
 
-var methods = {
-    setText: SetText,
-    appendText: AppendText,
-}
 Object.assign(
     TextArea.prototype,
-    methods
+    SetTextMethods,
+    ScrollMethods,
 );
 
 export default TextArea;

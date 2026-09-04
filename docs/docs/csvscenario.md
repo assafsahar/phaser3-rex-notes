@@ -5,50 +5,110 @@ Run script in csv format. Csv could be edited by excel or google document.
 - Author: Rex
 - Member of scene
 
-## Source code
+## Live demos
 
-[Link](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/csvscenario-plugin.js)
+- [CSV-scenario](https://codepen.io/rexrainbow/pen/OELGaR)
+- [With TextPlayer](https://codepen.io/rexrainbow/pen/OJveeKJ)
 
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/csv-scenario)
 
-User could import class directly, or install it by global plugin.
+### Install plugin
 
-### Import class
+#### Load minify file
 
-```javascript
-import rexCSVScenario from './plugins/csvscenario.js';
-```
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.plugin('rexcsvscenarioplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexcsvscenarioplugin.min.js', true);
+    ```
+- Add csv-scenario object
+    ```javascript
+    var scenario = scene.plugins.get('rexcsvscenarioplugin').add(scene);
+    ```
 
-### Install global plugin
+#### Import plugin
 
-Install plugin in [configuration of game](game.md#configuration)
-
-```javascript
-import CSVScenarioPlugin from './plugins/csvscenario-plugin.js';
-
-var config = {
-    // ...
-    plugins: {
-        global: [{
-            key: 'rexCSVScenario',
-            plugin: CSVScenarioPlugin,
-            start: true
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import CsvScenarioPlugin from 'phaser4-rex-plugins/plugins/csvscenario-plugin.js';
+    var config = {
+        // ...
+        plugins: {
+            global: [{
+                key: 'rexCsvScenario',
+                plugin: CsvScenarioPlugin,
+                start: true
+            },
+            // ...
+            ]
         }
         // ...
-        ]
-    }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add csv-scenario object
+    ```javascript
+    var scenario = scene.plugins.get('rexCsvScenario').add(scene);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import CsvScenario from 'phaser4-rex-plugins/plugins/csvscenario.js';
+    ```
+- Add csv-scenario object
+    ```javascript
+    var scenario = new CsvScenario(scene);
+    ```
 
 ### Create instance
 
 ```javascript
-var scenario = scene.plugins.get('rexCSVScenario').add(scene);
+var scenario = scene.plugins.get('rexCSVScenario').add(scene, {
+    // timeUnit: 0,        // 'ms'|0|'s'|'sec'|1
+    // prefix: /^#([a-zA-Z]+)/
+    // argsConvert: true,
+    // argsConvertScope: undefined,
+    // delimiter: ','
+    // translateCommandNameCallback: undefined,
+});
 ```
+
+- `csvString` : Commands in csv-string.
+- `scope` : Running commands via methods in this scope object.
+    - Get scope : `var scope = scenario.scope`
+- `timeUnit`: time-unit of dt, for [delay-execution](csvscenario.md#delay-execution)
+    - `'ms'`, or `0` : dt in millisecond
+    - `'s'`, `'sec'`, or 1 : dt in second
+- `prefix`: regex of picking control instructions
+- `argsConvert`: A callback to convert parameters of [run-custom-function](csvscenario.md#run-custom-function)
+    - `true` : Use defaule value converter. Values will be converted to *number* (include hex number string like *'0xFF'*), *boolean*, *null*, or *string*.
+    - Function object:
+        ```javascript
+        function(s) {
+            return s;
+        }
+        ```
+- `argsConvertScope`: scope of argsConvert
+- `delimiter` : Delimiter of CSV string.
+- `translateCommandNameCallback` : Callback to translate custom command name
+    - `undefined` : Use original custom command name. Default behavior.
+    - A function, return new custom command name.
+        ```javascript
+        function(commandName) {
+            return newCommandName;
+        }
+        ```
 
 ### Load csv script
 
@@ -57,16 +117,35 @@ scenario.load(csvString, scope, {
     // timeUnit: 0,        // 'ms'|0|'s'|'sec'|1
     // prefix: /^#([a-zA-Z]+)/
     // argsConvert: true,
-    // argsConvertScope: undefined
+    // argsConvertScope: undefined,
+    // delimiter: ',',
+    // translateCommandNameCallback: undefined,
 })
 ```
 
-- timeUnit: time-unit of dt, for [delay-execution](csvscenario.md#delay-execution)
+- `csvString` : Commands in csv-string.
+- `scope` : Running commands via methods in this scope object.
+    - Get scope : `var scope = scenario.scope`
+- `timeUnit`: time-unit of dt, for [delay-execution](csvscenario.md#delay-execution)
     - `'ms'`, or `0` : dt in millisecond
     - `'s'`, `'sec'`, or 1 : dt in second
-- prefix: regex of picking control instructions
-- argsConvert: a callback to convert parameters of [run-custom-function](csvscenario.md#run-custom-function), or `true` to use default convert function
-- argsConvertScope: scope of argsConvert
+- `prefix`: regex of picking control instructions
+- `argsConvert`: A callback to convert parameters of [run-custom-function](csvscenario.md#run-custom-function)
+    - `true` : Use defaule value converter. Values will be converted to *number* (include hex number string like *'0xFF'*), *boolean*, *null*, or *string*.
+    - Function object:
+        ```javascript
+        function(s) {
+            return s;
+        }
+        ```
+- `argsConvertScope`: scope of argsConvert
+- `delimiter` : Delimiter of CSV string.
+
+#### Append csv script
+
+```javascript
+scenario.append(csvString);
+```
 
 ### Start running instructions
 
@@ -76,27 +155,64 @@ scenario.start({
     // offset: 0
 })
 ```
+```javascript
+scenario.play({
+    // label: '',
+    // offset: 0
+})
+```
+
 
 - `label` : Go to the label and execute. '' label is starting from 1st instruction
 - `offset` : Offset time
+
+or
+
+```javascript
+scenario.playPromise({
+    // label: '',
+    // offset: 0
+})
+    .then(function(){
+        // On complete
+    })
+```
+
 
 ### Events
 
 - Complete
     ```javascript
-    scenario.on('complete', function(scenario){});
+    scenario.on('complete', function(scope, scenario){ 
+
+    });
+    ```
+- Wait event
+    ```javascript
+    scenario.on('wait.' + eventName, function(scenario){ 
+    });
+    ```
+    ```javascript
+    scenario.on('wait', function(eventName, scenario){ 
+    });
     ```
 - Label has changed
     ```javascript
-    scenario.on('labelchange', function(){});
+    scenario.on('labelchange', function(lastLabel, prevLabel, scope, scenario){ 
+
+    });
     ```    
 - Dump execution log
     ```javascript
-    scenario.on('log', function(){});
+    scenario.on('log', function(msg, scope, scenario){ 
+        
+    });
     ```
 - Notify error
     ```javascript
-    scenario.on('error', function(){});
+    scenario.on('error', function(msg, scope, scenario){ 
+        
+    });
     ```
 
 ### Types of instructions
@@ -115,6 +231,11 @@ Format:
 
 - 1st column of instruction: `-`
 - Parameters will be converted to number, boolean, null, or string by default.
+- Method name of last custom command :
+    ```javascript
+    var methodName = scenario.lastCustomCommandName;
+    ```
+- An `error` event will be fired if `fnName` is invalid in `scope`.
 
 ##### Delay execution
 
@@ -144,6 +265,12 @@ eventName,fnName,param0,param1,...
 - Execution will be hang until `scenario.continue(eventName)` is called
 - Parameters will be converted to number, boolean, null, or string by default.
 
+##### Skip waiting
+
+```javascript
+scenario.continue(true);
+```
+
 ##### Task
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/examples/csv-scenario/task.js)
@@ -172,6 +299,15 @@ Example: A label named 'AA'
 ```raw
 #LABEL,AA
 ```
+
+- Last label :
+    ```javascript
+    var label = scenario.lastLabel;
+    ```
+- Previous label :
+    ```javascript
+    var previousLabel = scenario.previousLabel;
+    ```
 
 #### Exit
 
@@ -262,19 +398,48 @@ Example:
     #WAIT,click
     ```
     ```javascript
-    scenario.continue('click')
+    scenario.continue('click');
     ```
 
-### Other methods
-
-#### Pause
+### Pause
 
 ```javascript
-scenario.pause()
+scenario.pause();
 ```
 
-#### Resume
+### Resume
 
 ```javascript
-scenario.resume()
+scenario.resume();
 ```
+
+### Time-scale
+
+- Get
+    ```javascript
+    var timeScale = scenario.timeScale;
+    ```
+- Set
+    ```javascript
+    scenario.setTimeScale(timeScale);
+    // scenario.timeScale = timeScale;
+    ```
+
+### Clear
+
+Stop running and clear instructions.
+
+```javascript
+scenario.clear();
+```
+
+### States
+
+- Is running
+    ```javascript
+    var isRunning = scenario.isRunning;
+    ```
+- Is paused
+    ```javascript
+    var isPaused = scenario.isPaused;
+    ```

@@ -3,100 +3,226 @@
 Swirl post processing filter. [Reference](https://www.geeks3d.com/20110428/shader-library-swirl-post-processing-filter-in-glsl/)
 
 - Author: Rex
-- A camera filter
+- A filter shader effect
 
-## Source code
+!!! warning "WebGL only"
+    Only work in WebGL render mode.
 
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/swirlpipeline-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexswirlpipelineplugin.min.js)
+## Live demos
+
+- [Swirl](https://codepen.io/rexrainbow/pen/RBXQBo)
 
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/shader-swirl)
 
-User could import class directly, or install it by global plugin.
+### Install plugin
 
-### Import class
+#### Load minify file
 
-```javascript
-import rexSwirlpipeline from './plugins/swirlpipeline.js';
-```
-
-### Install global plugin
-
-Install plugin in [configuration of game](game.md#configuration)
-
-```javascript
-import SwirlPipelinePlugin from './plugins/swirlpipeline-plugin.js';
-
-var config = {
-    // ...
-    plugins: {
-        global: [{
-            key: 'rexSwirlPipeline',
-            plugin: SwirlPipelinePlugin,
-            start: true
-        },
-        // ...
-        ]
-    }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
-
-### Apply filter
-
-1. Create pipeline instance
+- Load plugin (minify file) in preload stage
     ```javascript
-    var customPipeline = scene.plugins.get('rexSwirlPipeline').add(scene, key, {
+    scene.load.plugin('rexswirlfilterplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexswirlfilterplugin.min.js', true);
+    ```
+- Apply effect
+    - Apply effect to game object
+        ```javascript
+        gameObject.enableFilters().focusFilters();
+        var filterList = gameObject.filters.internal;
+        var controller = filterList.addRexSwirl(config);
+        ```
+        or
+        ```javascript
+        var controller = scene.plugins.get('rexswirlfilterplugin').add(gameObject, config);
+        ```
+    - Apply effect to camera
+        ```javascript
+        var filterList = camera.filters.internal;
+        var controller = filterList.addRexSwirl(config);
+        ```
+        or
+        ```javascript
+        var controller = scene.plugins.get('rexswirlfilterplugin').add(camera, config);
+        ```
+
+#### Import plugin
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import SwirlFilterPlugin from 'phaser4-rex-plugins/plugins/swirlfilter-plugin.js';
+    var config = {
+        // ...
+        plugins: {
+            global: [{
+                key: 'rexSwirlFilter',
+                plugin: SwirlFilterPlugin,
+                start: true
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Apply effect
+    - Apply effect to game object
+        ```javascript
+        gameObject.enableFilters().focusFilters();
+        var filterList = gameObject.filters.internal;
+        var controller = filterList.addRexSwirl(config);
+        ```
+        or
+        ```javascript
+        var controller = scene.plugins.get('rexSwirlFilter').add(gameObject, config);
+        ```
+    - Apply effect to camera
+        ```javascript
+        var filterList = camera.filters.internal;
+        var controller = filterList.addRexSwirl(config);
+        ```
+        or
+        ```javascript
+        var controller = scene.plugins.get('rexSwirlFilter').add(camera, config);
+        ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import filter and controller class
+    ```javascript
+    import { SwirlFilter, SwirlController } from 'phaser4-rex-plugins/plugins/swirlfilter.js';
+    ```
+- Register effect
+    ```js
+    if (!scene.renderer.renderNodes.hasNode(SwirlFilter.FilterName)) {
+        scene.renderer.renderNodes.addNodeConstructor(SwirlFilter.FilterName, SwirlFilter);
+    }
+    ```
+- Apply effect
+    - Apply effect to game object
+        ```javascript
+        gameObject.enableFilters().focusFilters();
+        var filterList = gameObject.filters.internal;
+        var controller = filterList.add(
+            new SwirlController(filterList.camera, config)
+        );
+        ```
+    - Apply effect to camera
+        ```javascript
+        var filterList = camera.filters.internal;
+        var controller = filterList.add(
+            new SwirlController(filterList.camera, config)
+        );
+        ```
+
+### Apply effect
+
+- Apply effect to game object. A game object only can add 1 swirl effect.
+    ```javascript
+    gameObject.enableFilters().focusFilters();
+    var filterList = gameObject.filters.internal;
+    var controller = filterList.addRexSwirl({
         // center: {
         //    x: windowWidth / 2,
         //    y: windowHeight / 2
         //}
         // radius: 0,
-        // rotation: 0,  // or angle: 0
+        // rotation: 0,  // or angle: 0,
+
+        // name: 'rexSwirlPostFx'
     });
     ```
-2. Add pipeline to camera
+    - `center.x`, `center.y` : Local position of swirl center.
+    - `radius` : Swirl radius.
+    - `rotation` (`angle`) : Swirl angle.
+- Apply effect to camera. A camera only can add 1 swirl effect.
     ```javascript
-    // var camera = scene.cameras.main;
-    camera.setRenderToTexture(customPipeline);
+    var controller = scene.plugins.get('rexSwirlFilter').add(camera, config);
+    ```
+
+### Disable effect
+
+```javascript
+controller.setActive(false);
+// controller.active = false;
+```
+
+### Remove effect
+
+- Remove effect from game object
+    ```javascript
+    var filterList = gameObject.filters.internal;
+    filterList.remove(controller);
+    ```
+    or
+    ```javascript
+    scene.plugins.get('rexSwirlFilter').remove(gameObject);
+    ```
+- Remove effect from camera
+    ```javascript
+    var filterList = camera.filters.internal;
+    filterList.remove(controller);
+    ```
+    or
+    ```javascript
+    scene.plugins.get('rexSwirlFilter').remove(camera);
+    ```
+
+### Get effect
+
+- Get effect from game object
+    ```javascript
+    var controller = scene.plugins.get('rexSwirlFilter').get(gameObject)[0];
+    // var controllers = scene.plugins.get('rexSwirlFilter').get(gameObject);
+    ```
+- Get effect from camera
+    ```javascript
+    var controller = scene.plugins.get('rexSwirlFilter').get(camera)[0];
+    // var controllers = scene.plugins.get('rexSwirlFilter').get(camera);
     ```
 
 ### Radius
 
 - Get
     ```javascript
-    var radius = customPipeline.radius;
+    var radius = controller.radius;
     ```
 - Set
     ```javascript
-    customPipeline.radius = radius;
-    // customPipeline.radius += value;
+    controller.radius = radius;
+    // controller.radius += value;
     ```
     or
     ```javascript
-    customPipeline.setRadius(radius);
+    controller.setRadius(radius);
     ```
 
 ### Rotation
 
 - Get
     ```javascript
-    var rotation = customPipeline.rotation;  // radians
-    // var angle = customPipeline.angle;     // degrees
+    var rotation = controller.rotation;  // radians
+    // var angle = controller.angle;     // degrees
     ```
 - Set
     ```javascript
-    customPipeline.rotation = rotation;
-    customPipeline.rotation += value;
-    // customPipeline.angle = angle;
-    // customPipeline.angle += value;   
+    controller.rotation = rotation;
+    controller.rotation += value;
+    // controller.angle = angle;
+    // controller.angle += value;
     ```
     or
     ```javascript
-    customPipeline.setRotation(rotation);
-    // customPipeline.setAngle(angle);
+    controller.setRotation(rotation);
+    // controller.setAngle(angle);
     ```
 
 ### Center position
@@ -105,16 +231,16 @@ Default value is center of window.
 
 - Get
     ```javascript
-    var x = customPipeline.centerX;
-    var y = customPipeline.centerY;
+    var x = controller.centerX;
+    var y = controller.centerY;
     ```
 - Set
     ```javascript
-    customPipeline.centerX = x;
-    customPipeline.centerY = y;
+    controller.centerX = x;
+    controller.centerY = y;
     ```
     or
     ```javascript
-    customPipeline.setCenter(x, y);
-    // customPipeline.setCenter();   // set to center of window
+    controller.setCenter(x, y);
+    // controller.setCenter();   // set to center of window
     ```

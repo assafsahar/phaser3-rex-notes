@@ -1,11 +1,11 @@
 var GetExpandedChildWidth = function (child, colWidth) {
-    var newWidth;
-    var childConfig = child.rexSizer;    
-    if (childConfig.expand) {
+    var childWidth;
+    var childConfig = child.rexSizer;
+    if (childConfig.expandWidth) {
         var padding = childConfig.padding;
-        newWidth = colWidth - padding.left - padding.right;
+        childWidth = colWidth - ((padding.left + padding.right) * this.scaleX);
     }
-    return newWidth;
+    return childWidth;
 }
 
 export default GetExpandedChildWidth;

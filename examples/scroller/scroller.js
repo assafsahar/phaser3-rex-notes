@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import ScrollerPlugin from '../../plugins/scroller-plugin.js';
 
 const slidingDeceleration = 5000;
@@ -12,47 +13,39 @@ class Demo extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('knighthawks', 'assets/fonts/knighthawks-font-filled.png');
+        this.load.bitmapFont('gothic', 'assets/fonts/gothic.png', 'assets/fonts/gothic.xml');
     }
 
     create() {
+        var snapStep = 75;
         var x = 400,
             y = 300,
             w = 300,
-            h = 400;
+            h = (snapStep) ? (snapStep * 5) : 400;
         var topY = y - (h / 2),
             leftX = x - (w / 2);
         var bg = this.add.graphics()
             .setPosition(leftX, topY)
             .fillStyle(0x000033, 1)
             .fillRect(0, 0, w, h)
-            .setInteractive(new Phaser.Geom.Rectangle(0, 0, w, h),
-                Phaser.Geom.Rectangle.Contains);
+            .setInteractive(
+                new Phaser.Geom.Rectangle(0, 0, w, h),
+                Phaser.Geom.Rectangle.Contains
+            );
 
 
         var s = '';
-        for (var i = 0, cnt = 1000; i < cnt; i++) {
+        for (var i = 0, cnt = 300; i < cnt; i++) {
             s += pad(i.toString(), 4, '0', 1);
             if (i < (cnt - 1)) {
                 s += '\n';
             }
         }
 
-        var config = {
-            image: 'knighthawks',
-            width: 31,
-            height: 25,
-            chars: Phaser.GameObjects.RetroFont.TEXT_SET2,
-            charsPerRow: 10,
-            spacing: {
-                x: 1,
-                y: 1
-            }
-        };
-
-        this.cache.bitmapFont.add('knighthawks', Phaser.GameObjects.RetroFont.Parse(this, config));
-        var txt = this.add.bitmapText(leftX, topY, 'knighthawks', s).setScale(2);
-        txt.setMask(bg.createGeometryMask());
+        var txt = this.add.bitmapText(leftX, topY, 'gothic', s);
+        txt
+            .enableFilters()
+            .filters.external.addMask(bg);
 
         var topBound = topY,
             bottomBound;
@@ -71,8 +64,9 @@ class Demo extends Phaser.Scene {
             value: topBound,
             slidingDeceleration: slidingDeceleration,
             backDeceleration: backDeceleration,
+            snapStep: snapStep,
 
-            valuechangeCallback: function(newValue) {
+            valuechangeCallback: function (newValue) {
                 txt.y = newValue;
             }
         });
@@ -81,7 +75,7 @@ class Demo extends Phaser.Scene {
     }
 
     update() {
-        this.scrollerState.setText(this.scroller.state + "\n" + this.scroller.value);
+        this.scrollerState.text = this.scroller.state + "\n" + this.scroller.value;
     }
 }
 

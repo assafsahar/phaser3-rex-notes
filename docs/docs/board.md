@@ -5,38 +5,79 @@ Core object of Board system.
 - Author: Rex
 - Member of scene
 
-## Source code
+## Live demos
 
-[Plugin](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/board-plugin.js), [minify](https://github.com/rexrainbow/phaser3-rex-notes/blob/master/plugins/dist/rexboardplugin.min.js)
+- [Touch events](https://codepen.io/rexrainbow/pen/QVrGpE)
+- [Get tileXY at direction](https://codepen.io/rexrainbow/pen/QWWVrMx)
+- [Line to tileXY array](https://codepen.io/rexrainbow/pen/aMBXOE)
+- [Triangle to tileXY array](https://codepen.io/rexrainbow/pen/wLYmyw)
+- [Ellipse to tileXY array](https://codepen.io/rexrainbow/pen/LYYJmxE)
+- [Bounds](https://codepen.io/rexrainbow/pen/PoeZOGo)
+- [Boundary points](https://codepen.io/rexrainbow/pen/zxOoXPN)
 
 ## Usage
 
 [Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/board)
 
-User could import class directly, or install it by global plugin.
+### Install plugin
 
-### Install scene plugin
+#### Load minify file
 
-Install plugin in [configuration of game](game.md#configuration)
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.scenePlugin('rexboardplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexboardplugin.min.js', 'rexBoard', 'rexBoard');
+    ```
+- Add board object
+    ```javascript
+    var board = scene.rexBoard.add.board(config);
+    ```
 
-```javascript
-import BoardPlugin from './plugins/board-plugin.js';
+#### Import plugin
 
-var config = {
-    // ...
-    plugins: {
-        scene: [{
-            key: 'rexBoard',
-            plugin: BoardPlugin,
-            mapping: 'rexBoard'
-        },
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import BoardPlugin from 'phaser4-rex-plugins/plugins/board-plugin.js';
+    var config = {
         // ...
-        ]
-    }
-    // ...
-};
-var game = new Phaser.Game(config);
-```
+        plugins: {
+            scene: [{
+                key: 'rexBoard',
+                plugin: BoardPlugin,
+                mapping: 'rexBoard'
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add board object
+    ```javascript
+    var board = scene.rexBoard.add.board(config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import { Board, HexagonGrid, QuadGrid } from 'phaser4-rex-plugins/plugins/board-components.js';
+    ```
+- Add board object
+    ```javascript
+    var board = new Board(scene, {
+        grid: QuadGrid(gridConfig),  // or HexagonGrid(gridConfig)
+        // ...
+    });
+    ```
 
 ### Add board object
 
@@ -49,10 +90,12 @@ var game = new Phaser.Game(config);
             y: 0,
             cellWidth: 0,
             cellHeight: 0,
-            type: 'orthogonal'  // 'orthogonal'|'isometric'|'staggered'
+            type: 'orthogonal'  // 'orthogonal'|'isometric'
         },
-        width: 0,
-        height: 0
+        // width: 0,
+        // height: 0,
+        // wrap: false,
+        // infinity: false,
     });
     ```
 - Hexagon board
@@ -67,8 +110,10 @@ var game = new Phaser.Game(config);
             staggeraxis: 'x',   // 'x'|'y'
             staggerindex: 'odd' // 'odd'|'even'
         },
-        width: 0,
-        height: 0
+        // width: 0,
+        // height: 0,
+        // wrap: false,
+        // infinity: false,
     });
     ```
 
@@ -80,6 +125,8 @@ Configuration
         - `'hexagonGrid'` : [hexagon grid](board-hexagongrid.md)
 - `width` : Board width in tiles
 - `height` : Board height in tiles
+- `wrap` : Set `true` to wrap board bounds. Default value is `false`.
+- `infinity` : Infinity board size if set to `true`. Default value is `false`.
 
 ### Custom class
 
@@ -94,7 +141,7 @@ Configuration
                     y: 0,
                     cellWidth: 0,
                     cellHeight: 0,
-                    type: 'orthogonal'  // 'orthogonal'|'isometric'|'staggered'
+                    type: 'orthogonal'  // 'orthogonal'|'isometric'
                 },
                 width: 0,
                 height: 0
@@ -138,6 +185,8 @@ board.addChess(chess, tileX, tileY, tileZ, align);
 
 - `chess` : A game object.
 - `tileX` , `tileY` , `tileZ` : Tile position.
+    - `tileX` , `tileY` : Number.
+    - `tileZ` : Number or string.
 - `align` : Set `true` to align (i.e. set position) chess to grid (tileX, tileY). Default is `true`.
 
 !!! note "Chess and tile position"
@@ -185,7 +234,19 @@ board.moveChess(chess, toTileX, toTileY, toTileZ, align);
 
 - `chess` : A game object
 - `toTileX`, `toTileY`, `toTileZ` : Target tile position
-- `align` : Set `true` to align (i.e. set position) chess to grid (tileX, tileY).
+- `align` : Set `true` to align (i.e. set position) chess to grid (tileX, tileY). Default is `true`.
+
+Do nothing if chess is not at this board.
+
+### Set tileZ of chess
+
+```javascript
+board.setChessTileZ(chess, toTileZ, align);
+```
+
+- `chess` : A game object
+- `toTileZ` : Target tileZ
+- `align` : Set `true` to align (i.e. set position) chess to grid (tileX, tileY). Default is `false`.
 
 ### Swap chess
 
@@ -237,6 +298,25 @@ var tileXYZ = board.chessToTileXYZ(chess);
     - `tileXYArray` : An array of tileXY `{x, y}`
     - `out` : An array of chess
 
+### World position -> chess
+
+- Get chess at (worldX, worldY)
+    ```javascript
+    var out = board.worldXYToChessArray(worldX, worldY);
+    // var out = board.worldXYToChessArray(worldX, worldY, out);
+    ```
+    - `out` : An array of chess
+- Get chess at (worldX, worldY), tileZ
+    ```javascript
+    var chess = board.worldXYToChess(worldX, worldY, tileZ);
+    ```
+    - `chess` : A game object
+- Get chess at (worldX, worldY)
+    ```javascript
+    var chess = board.worldXYToChess(worldX, worldY);
+    ```
+    - `chess` : A game object at a tileZ.
+
 ### Contains
 
 - Is (tileX, tileY) inside board?
@@ -259,7 +339,7 @@ var tileXYZ = board.chessToTileXYZ(chess);
 board.forEachTileXY(function(tileXY, board) {
     // var tileX = tileXY.x;
     // var tileY = tileXY.y;
-}, scope, order);
+}, scope);
 ```
 
 Iteration order :
@@ -268,14 +348,16 @@ Iteration order :
 board.forEachTileXY(function(tileXY, board) {
     // var tileX = tileXY.x;
     // var tileY = tileXY.y;
+    
+    // return isBreak;
 }, scope, order);
 ```
 
 - `order` :
-    - `0`, or `x+` : Increasing x, increasing y.
-    - `1`, or `x-` : Decreasing x, increasing y.
-    - `2`, or `y+` : Increasing y, increasing x.
-    - `3`, or `y-` : Decreasing y, increasing x.
+    - `0`, or `'x+'` : Increasing x, increasing y.
+    - `1`, or `'x-'` : Decreasing x, increasing y.
+    - `2`, or `'y+'` : Increasing y, increasing x.
+    - `3`, or `'y-'` : Decreasing y, increasing x.
 
 Or using for-loop
 
@@ -288,6 +370,35 @@ for (var tileY = 0; tileY < board.height; tileY++) {
 ```
 
 - `board.width` , `board.height` : Board width/height in tiles.
+
+### For each tile in viewport of a camera
+
+```javascript
+board.forEachCullTileXY(function(tileXY, board) {
+    // var tileX = tileXY.x;
+    // var tileY = tileXY.y;
+}, scope);
+```
+
+```javascript
+board.forEachCullTileXY(function(tileXY, board) {
+    // var tileX = tileXY.x;
+    // var tileY = tileXY.y;
+}, scope, {
+    camera: board.scene.cameras.main,
+    paddingX: 1,
+    paddingY: 1,
+    order: 0,
+});
+```
+
+- `camera` : Camera of scene. Default value is the main camera.
+- `paddingX` , `paddingY` : Padding space of camera's viewport
+- `order` :
+    - `0`, or `'x+'` : Increasing x, increasing y.
+    - `1`, or `'x-'` : Decreasing x, increasing y.
+    - `2`, or `'y+'` : Increasing y, increasing x.
+    - `3`, or `'y-'` : Decreasing y, increasing x.
 
 ### Tile position -> world position
 
@@ -310,7 +421,54 @@ var gridWorldXY = board.worldXYSnapToGrid(worldX, worldY);
 // var out = board.worldXYSnapToGrid(worldX, worldY, out);
 ```
 
-### Line -> tile position
+### Grid distance
+
+```javascript
+var distance = board.getDistance(tileA, tileB);
+```
+
+- `tileA`, `tileB` : Chess object, or tileXY `{x, y}`. 
+
+### Ring -> tile position
+
+- Get array of tile position around a ring.
+    ```javascript
+    var out = board.ringToTileXYArray(centerTileXY, radius);
+    // var out = board.ringToTileXYArray(centerTileXY, radius, out);
+    ```
+    - `centerTileXY` : Chess object, or tileXY `{x, y}` of ring center.
+    - `radius` : Radius of the ring.
+- Get array of tile position within a filled ring. `centerTileXY` will be included.
+    ```javascript
+    var out = board.filledRingToTileXYArray(centerTileXY, radius);
+    var out = board.filledRingToTileXYArray(centerTileXY, radius, nearToFar);
+    // var out = board.filledRingToTileXYArray(centerTileXY, radius, out);
+    // var out = board.filledRingToTileXYArray(centerTileXY, radius, nearToFar, out);
+    ```
+    - `centerTileXY` : Chess object, or tileXY `{x, y}` of ring center.
+    - `radius` : Radius of the ring.
+    - `nearToFar` : From near ring to far ring. Default value is `true`.
+
+### Ring -> chess
+
+- Get array of chess around a ring.
+    ```javascript
+    var out = board.ringToChessArray(centerTileXY, radius, tileZ);
+    // var out = board.ringToChessArray(centerTileXY, radius, tileZ, out);
+    ```
+    - `centerTileXY` : Chess object, or tileXY `{x, y}` of ring center.
+- Get array of chess within a filled ring. Chess at `centerTileXY` will be included.
+    ```javascript
+    var out = board.filledRingToTileXYArray(centerTileXY, radius, tileZ);
+    var out = board.filledRingToTileXYArray(centerTileXY, radius, tileZ, nearToFar);
+    // var out = board.filledRingToTileXYArray(centerTileXY, radius, tileZ, out);
+    // var out = board.filledRingToTileXYArray(centerTileXY, radius, tileZ, nearToFar, out);
+    ```
+    - `centerTileXY` : Chess object, or tileXY `{x, y}` of ring center.
+
+### Shape -> tile position
+
+#### Line -> tile position
 
 Get array of tile position along a line defined via (`startWorldX`, `startWorldY`) to (`endWorldX`, `endWorldY`)
 
@@ -319,44 +477,176 @@ var out = board.lineToTileXYArray(startWorldX, startWorldY, endWorldX, endWorldY
 // var out = board.lineToTileXYArray(startWorldX, startWorldY, endWorldX, endWorldY, out);
 ```
 
-- `startWorldX`, `startWorldY`, `endWorldX`, `endWorldY` : Line
+- `startWorldX`, `startWorldY`, `endWorldX`, `endWorldY` : Start and end pointer of a line
 - `out` : An array of tile position
+
+or
+
+```javascript
+var out = board.lineToTileXYArray(line);
+// var out = board.lineToTileXYArray(line, out);
+```
+
+- `line` : [Line object](geom-line.md)
+
+#### Circle -> tile position
+
+Get array of tile position inside a [circle shape](geom-circle.md)
+
+```javascript
+var out = board.circleToTileXYArray(circle);
+// var out = board.circleToTileXYArray(circle, out);
+// var out = board.circleToTileXYArray(circle, testMode, out);
+```
+
+- `circle` : [Circle shape](geom-circle.md)
+- `testMode` : 
+    - `0` : Test if shape is overlapping center position of a grid. Default behavior.
+    - `1` : Test if shape is overlapping grid bounds of a grid.
+    - `2` : Test if shape is overlapping grid points of a grid.
+- `out` : An array of tile position.
+
+#### Rectangle -> tile position
+
+Get array of tile position inside a [rectangle shape](geom-rectangle.md)
+
+```javascript
+var out = board.rectangleToTileXYArray(rectangle);
+// var out = board.rectangleToTileXYArray(rectangle, out);
+// var out = board.rectangleToTileXYArray(rectangle, testMode, out);
+```
+
+- `rectangle` : [Rectangle shape](geom-rectangle.md)
+- `testMode` : 
+    - `0` : Test if shape is overlapping center position of a grid. Default behavior.
+    - `1` : Test if shape is overlapping grid bounds of a grid.
+    - `2` : Test if shape is overlapping grid points of a grid.
+- `out` : An array of tile position.
+
+#### Ellipse -> tile position
+
+Get array of tile position inside a [ellipse shape](geom-ellipse.md)
+
+```javascript
+var out = board.ellipseToTileXYArray(ellipse);
+// var out = board.ellipseToTileXYArray(ellipse, out);
+// var out = board.ellipseToTileXYArray(ellipse, testMode, out);
+```
+
+- `ellipse` : [Ellipse shape](geom-ellipse.md)
+- `testMode` : 
+    - `0` : Test if shape is overlapping center position of a grid. Default behavior.
+    - `1` : Test if shape is overlapping grid bounds of a grid.
+    - `2` : Test if shape is overlapping grid points of a grid.
+- `out` : An array of tile position.
+
+#### Triangle -> tile position
+
+Get array of tile position inside a [triangle shape](geom-triangle.md)
+
+```javascript
+var out = board.triangleToTileXYArray(triangle);
+// var out = board.triangleToTileXYArray(triangle, out);
+// var out = board.triangleToTileXYArray(triangle, testMode, out);
+```
+
+- `triangle` : [Triangle shape](geom-triangle.md)
+- `testMode` : 
+    - `0` : Test if shape is overlapping center position of a grid. Default behavior.
+    - `1` : Test if shape is overlapping grid bounds of a grid.
+    - `2` : Test if shape is overlapping grid points of a grid.
+- `out` : An array of tile position.
+
+#### Polygon -> tile position
+
+Get array of tile position inside a [polygon shape](geom-polygon.md)
+
+```javascript
+var out = board.polygonToTileXYArray(polygon);
+// var out = board.polygonToTileXYArray(polygon, out);
+// var out = board.polygonToTileXYArray(polygon, testMode, out);
+```
+
+- `polygon` : [Polygon shape](geom-polygon.md)
+- `testMode` : 
+    - `0` : Test if shape is overlapping center position of a grid. Default behavior.
+    - `1` : Test if shape is overlapping grid bounds of a grid.
+    - `2` : Test if shape is overlapping grid points of a grid.
+- `out` : An array of tile position.
 
 ### Angle between world position of 2 tiles
 
 ```javascript
-var radian = board.angleBetween(tileXY0, tileXY1);
+var radian = board.angleBetween(tileA, tileB);
 ```
 
-- `radian` : Angle between world position of 2 tiles, in radian
-- `tileXY0`, `tileXY1` : tile position `{x, y}`
+- `tileA`, `tileB` : Chess object, or tileXY `{x, y}` of ring center.
+- `radian` : Angle between world position of 2 tiles, in radian.
+
+### Is angle in cone
+
+```javascript
+var isInCone = board.isAngleInCone(chessA, chessB, face, cone);
+```
+
+- `chessA`, `chessB` : Chess object, or tileXY `{x, y}`. 
+- `face`, `cone` : Range of compared angle is between `face - (cone/2)` to `face + (cone/2)`. Angle in radian.
 
 ### Direction between 2 tiles
 
 ```javascript
-var direction = board.directionBetween(srcTileXY, targetTileXY);
+var direction = board.directionBetween(chessA, chessB);
 ```
 
-- `srcTileXY` : Tile position `{x, y}` of source.
-- `targetTileXY` : Tile position `{x, y}` of target.
+- `chessA`, `chessB` : A chess object, or tile position `{x,y}`.
 - `direction` : Integer number.
-    - [Quad grid](board-quadgrid.md#directions) : `0`, `1`, `2`, `3`.
+    - [Quad grid](board-quadgrid.md#directions) : `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`.
     - [Hexagon grid](board-hexagongrid.md#directions) : `0`, `1`, `2`, `3`, `4`, `5`.
 
 ```javascript
-var direction = board.directionBetween(srcTileXY, targetTileXY, false);
+var direction = board.directionBetween(chessA, chessB, false);
 ```
 
-- `direction` : Integer number, or float number
-    - [Quad grid](board-quadgrid.md#directions) : `0`, `1`, `2`, `3`, or float number between 0~1, 1~2, 2~3, 3~4.
+- `direction` : Integer number, or float number.
+    - [Quad grid](board-quadgrid.md#directions) : `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, or float number between 0~1, 1~2, 2~3, 3~4, 4~5, 5~6, 6~7.
     - [Hexagon grid](board-hexagongrid.md#directions) : `0`, `1`, `2`, `3`, `4`, `5`, or float number between 0~1, 1~2, 2~3, 3~4, 4~5, 5~6.
 
+### Is direction in cone
+
+```javascript
+var isInCone = board.isDirectionInCone(chessA, chessB, face, cone);
+```
+
+- `chessA`, `chessB` : Chess object, or tileXY `{x, y}`.
+- `face`, `cone` : Range of compared direction is between `face - (cone/2)` to `face + (cone/2)`. Integer number, or float number.
+    - [Quad grid](board-quadgrid.md#directions) : `0`, `1`, `2`, `3`, or float number between 0~1, 1~2, 2~3, 3~4.
+    - [Hexagon grid](board-hexagongrid.md#directions) : `0`, `1`, `2`, `3`, `4`, `5`, or float number between 0~1, 1~2, 2~3, 3~4, 4~5, 5~6.
 
 ### Opposite direction
 
 ```javascript
 var direction = board.getOppositeDirection(tileX, tileY, direction);
 ```
+
+or
+
+```javascript
+var direction = board.getOppositeDirection(tileXY, direction);
+```
+
+- `tileXY` : Chess object, or tileXY `{x, y}`.
+
+### Angle snap to direction
+
+```javascript
+var direction = board.angleSnapToDirection(tileXY, angle);
+```
+
+- `tileXY` : Chess object, or tileXY `{x, y}`, or `undefined`.
+- `angle` : Angle in radius.
+- `direction` : Integer number.
+    - [Quad grid](board-quadgrid.md#directions) : `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`.
+    - [Hexagon grid](board-hexagongrid.md#directions) : `0`, `1`, `2`, `3`, `4`, `5`.
 
 ### Align world position to grid
 
@@ -390,7 +680,7 @@ var isOverlapping = board.isOverlappingPoint(worldX, worldY, tileZ);
     var neighborTileXY = board.getNeighborTileXY(srcTileXY, direction);
     // var out = board.getNeighborTileXY(srcTileXY, direction, out);
     ```
-    - `srcTileXY` : Tile position `{x, y}` of source.
+    - `srcTileXY` : Chess object, or tileXY `{x, y}` of source.
     - `direction` : Number, or string number.
         - `0` ~ `3` : [Quad grid](board-quadgrid.md#directions) in 4 directions mode.
         - `0` ~ `7` : [Quad grid](board-quadgrid.md#directions) in 8 directions mode.
@@ -415,7 +705,16 @@ var isOverlapping = board.isOverlappingPoint(worldX, worldY, tileZ);
     ```javascript
     var direction = board.getNeighborTileDirection(srcTile, neighborTileXY);
     ```
-    - `direction` : Return `null` if these 2 tile positions are not neighbors.
+    - `srcTile`, `neighborTileXY` : Chess object, or tileXY `{x, y}`.
+    - `direction` : Retu1rn `null` if these 2 tile positions are not neighbors.
+- Get neighbor tile position at angle
+    ```javascript
+    var neighborTileXY = board.getNeighborTileXYAtAngle(srcTileXY, angle);
+    // var out = board.getNeighborTileXYAtAngle(srcTileXY, angle, out);
+    ```
+    - `srcTileXY` : Tile position `{x, y}` of source.
+    - `angle` : Angle in radius.
+    - `neighborTileXY` : Tile position `{x, y}` of neighbor. Retrun `null` if no neighbor there (i.e. source chess is at the edge of board.)
 
 #### Neighbor chess
 
@@ -424,7 +723,7 @@ var isOverlapping = board.isOverlappingPoint(worldX, worldY, tileZ);
     var neighborChess = board.getNeighborChess(chess, direction); // neighborTileZ = tileZ of chess
     // var neighborChess = board.getNeighborChess(chess, direction, neighborTileZ);
     ```
-    - `chess` : A chess object, or tile position `{x,y,z}`.
+    - `chess` : A chess object, or tile position `{x, y, z}`.
     - `direction` : Number, or string number.
         - `0` ~ `3` : [Quad grid](board-quadgrid.md#directions) in 4 directions mode.
         - `0` ~ `7` : [Quad grid](board-quadgrid.md#directions) in 8 directions mode.
@@ -445,7 +744,7 @@ var isOverlapping = board.isOverlappingPoint(worldX, worldY, tileZ);
     var out = board.getNeighborChess(chess, null); // neighborTileZ = tileZ of chess
     // var out = board.getNeighborChess(chess, null, neighborTileZ);
     ```
-    - `chess` : A chess object, or tile position `{x,y,z}`.
+    - `chess` : A chess object, or tile position `{x, y, z}`.
     - `out` : Chess array of all neighbors.
 - Get direction between 2 chess
     ```javascript
@@ -454,23 +753,111 @@ var isOverlapping = board.isOverlappingPoint(worldX, worldY, tileZ);
     - `direction` : Return `null` if these 2 chess are not neighbors.
 - Are 2 chess neighbors?
    ```javascript
-   var areNeighbor = board.areNeighbors(chessA, chessB);
+   var areNeighbor = board.areNeighbors(tileA, tileB);
    ```
+   - `tileA`, `tileB` : A chess object, or tile position `{x, y}`.
    - `areNeighbor` : Return `true` if `chessA` and `chessB` are neighbors.
+
+#### Map neighbor tile position
+
+```javascript
+var newArray = board.mapNeighbors(chess, function(neighborTileXY, index, neighborTileXYArray){
+    return {};
+}, scope);
+```
+
+or
+
+```javascript
+var newArray = board.mapNeighbors(chess, distance, function(neighborTileXY, index, neighborTileXYArray){
+    return {};
+}, scope);
+```
+
+
+- `chess` : A chess object, or tile position `{x,y,z}`.
+- `neighborTileXY` : Neighbor tile position `{x,y,direction}`
+
+### Tile at direction
+
+- Get tile position at 1 direction
+    ```javascript
+    var out = board.getTileXYAtDirection(srcTileXY, direction, distance);
+    // var out = board.getTileXYAtDirection(srcTileXY, direction, distance, out);
+    ```
+    - `srcTileXY` : A chess object, or tile position `{x, y}` of source.
+    - `direction` : Number, or string number.
+        - `0` ~ `3` : [Quad grid](board-quadgrid.md#directions) in 4 directions mode.
+        - `0` ~ `7` : [Quad grid](board-quadgrid.md#directions) in 8 directions mode.
+        - `0` ~ `5` : [Hexagon grid](board-hexagongrid.md#directions).
+    - `distance` : A JSON, number, or number array.
+        - JSON : Range of distances. `{end: 3}` is equal to `[1,2,3]`.
+            ```javascript
+            {
+                start: 1,
+                end: 1,
+                step: 1
+            }
+            ```
+            - `start` : Start distance. Default value is `1`.
+            - `end` : End distance. Default value is `1`.
+            - `step` : Step. Default value is `1`.
+        - Number, `3`.
+        - Array of numbers, `[2, 3, 5]` : Array of distances.
+    - `out` :
+        - A single tile position, if `distance` is a number.
+        - Tile position `{x, y}` array, if `distance` is a JSON or a number array.
+- Get tile positions at directions
+    ```javascript
+    var neighborTileXY = board.getTileXYAtDirection(srcTileXY, directions, distance);
+    // var out = board.getTileXYAtDirection(srcTileXY, directions, distance, out);
+    ```
+    - `directions`
+        - Array of numbers, `[0, 2, 4]`.
+        - String number concatenated via `,`, `'0,2,4'`.
+    - `out` : Tile position `{x, y}` array.
+- Get tile positions at all directions
+    ```javascript
+    var out = board.getTileXYAtDirection(srcTileXY, null, distance);
+    // var out = board.getTileXYAtDirection(srcTileXY, null, distance, out);
+    ```
+    - `out` : Tile position `{x, y}` array.
 
 ### Empty tile position
 
+- Is tile empty? (TileXY is inside board, and TileXYZ has no chess)
+    ```javascript
+    var isEmpty = board.isEmptyTileXYZ(tileX, tileY, tileZ);
+    ```
 - Get a random tile position which does not have any chess
     ```javascript
     var tileXY = board.getRandomEmptyTileXY(tileZ);
     // var out = board.getRandomEmptyTileXY(tileZ, out);
     ```
-    - `tileXY` : Tile position `{x, y}`, return `null` if all positions are occupied.
+    - `tileXY` : Tile position `{x, y}`, 
+        - `null` : All positions are occupied.
 - Get an array of tile position which does not have any chess
     ```javascript
     var tileXYArray = board.getEmptyTileXYArray(tileZ);
     // var out = board.getEmptyTileXYArray(tileZ, out);
     ```
+    - `tileXYArray` : An array of tile position
+- Get a random tile position of neighbor which does not have any chess
+    ```javascript
+    var tileXY = board.getRandomEmptyTileXYInRange(centerTileXY, radius, tileZ);
+    // var out = board.getRandomEmptyTileXYInRange(centerTileXY, radius, tileZ, out);
+    ```
+    - `centerTileXY` : Chess object, or tileXY `{x, y}` of ring center.
+    - `radius` : Radius of the ring.
+    - `tileXY` : Tile position `{x, y}`, 
+        - `null` : All positions are occupied.
+- Get an array of tile position of neighbors which does not have any chess
+    ```javascript
+    var tileXYArray = board.getEmptyTileXYArrayInRange(centerTileXY, radius, tileZ);
+    // var out = board.getEmptyTileXYArrayInRange(centerTileXY, radius, tileZ, out);
+    ```
+    - `centerTileXY` : Chess object, or tileXY `{x, y}` of ring center.
+    - `radius` : Radius of the ring.
     - `tileXYArray` : An array of tile position
 
 ### Get all chess
@@ -495,10 +882,12 @@ Offset all of tile positions to `(0, 0)`, and set board size to fit these tile p
 - Has blocker at tile position (tileX, tileY, tileZ)
     ```javascript
     var hasBlocker = board.hasBlocker(tileX, tileY, tileZ);
+    // var hasBlocker = board.hasBlocker(chess);  // chess or tileXYZ
     ```
 - Any chess at (tileX, tileY) has `blocker` property
     ```javascript
     var hasBlocker = board.hasBlocker(tileX, tileY);
+    // var hasBlocker = board.hasBlocker(chess);  // chess or tileXY
     ```
 
 ### Touch events
@@ -508,13 +897,42 @@ Offset all of tile positions to `(0, 0)`, and set board size to fit these tile p
 - Enable
     ```javascript
     board.setInteractive();
+    // board.setInteractive({ useTouchZone: false });
     ```
+    - `useTouchZone` : 
+        - `true` : Detect touch input by input event of a full-screen [zone game object](board.md#touch-zone). Default behavior.
+        - `false` : Detect touch input by input event of scene.
 - Disable
     ```javascript
     board.setInteractive(false);
     ```
 
-#### Touch input
+#### Touch Zone
+
+- Get
+    ```javascript
+    var touchZone = board.getTouchZone();
+    // var touchZone = board.touchZone;
+    ```
+    - Return `null` if `useTouchZone` is `false`.
+- Set depth
+    ```javascript
+    touchZone.setDepth(depth);
+    ```
+    or
+    ```javascript
+    scene.children.bringToTop(touchZone);
+    scene.children.sendToBack(touchZone);
+    scene.children.moveUp(touchZone);
+    scene.children.moveDown(touchZone);
+    scene.children.moveUp(touchZone);
+    scene.children.moveTo(touchZone, index);
+    scene.children.moveAbove(touchZone, child); // Move touchZone above child
+    scene.children.moveBelow(touchZone, child); // Move touchZone below child
+    scene.children.swap(touchZone, child);
+    ```
+
+#### Pointer down
 
 - Pointer down at any tile
     ```javascript
@@ -523,26 +941,9 @@ Offset all of tile positions to `(0, 0)`, and set board size to fit these tile p
         // var tileY = tileXY.y;
     });
     ```
-    - `pointer` : [Touch pointer](touchevents.md#properties-of-point)
-    - `tileXY`
-        - `tileXY.x`
-        - `tileXY.y`
-- Pointer up at any tile
-    ```javascript
-    board.on('tileup', function(pointer, tileXY) {
-        // var tileX = tileXY.x;
-        // var tileY = tileXY.y;
-    });
-    ```
-- Pointer move to another tile
-    ```javascript
-    board.on('tilemove', function(pointer, tileXY) {
-        // var tileX = tileXY.x;
-        // var tileY = tileXY.y;
-    });
-    ```
-    - Only triggered when `tileXY` is changed.
-- Pointer down at a chess
+    - `pointer` : [Touch pointer](touchevents.md#pointer)
+    - `tileXY` : `{x, y}`
+- Pointer down at chess
     ```javascript
     board.on('gameobjectdown', function(pointer, gameObject) {
     })
@@ -552,9 +953,20 @@ Offset all of tile positions to `(0, 0)`, and set board size to fit these tile p
     gameObject.on('board.pointerdown', function(pointer) {
     })
     ```
-    - `pointer` : [Touch pointer](touchevents.md#properties-of-point)
+    - `pointer` : [Touch pointer](touchevents.md#pointer)
     - `gameObject` : Game object at touched (tileX, tileY)
-- Pointer up at a chess
+
+#### Pointer up
+
+- Pointer up at any tile
+    ```javascript
+    board.on('tileup', function(pointer, tileXY) {
+        // var tileX = tileXY.x;
+        // var tileY = tileXY.y;
+    });
+    ```
+    - `tileXY` : `{x, y}`
+- Pointer up at chess
     ```javascript
     board.on('gameobjectup', function(pointer, gameObject) {
     })
@@ -564,8 +976,20 @@ Offset all of tile positions to `(0, 0)`, and set board size to fit these tile p
     gameObject.on('board.pointerup', function(pointer) {
     })
     ```
-    - `pointer` : [Touch pointer](touchevents.md#properties-of-point)
-    - `gameObject` : Game object at touched (tileX, tileY)    
+    - `pointer` : [Touch pointer](touchevents.md#pointer)
+    - `gameObject` : Game object at touched (tileX, tileY)
+
+#### Pointer move
+
+- Pointer move to another tile
+    ```javascript
+    board.on('tilemove', function(pointer, tileXY) {
+        // var tileX = tileXY.x;
+        // var tileY = tileXY.y;
+    });
+    ```
+    - `tileXY` : `{x, y}`
+    - Only triggered when `tileXY` is changed.
 - Pointer move to another chess
     ```javascript
     board.on('gameobjectmove', function(pointer, gameObject) {
@@ -576,7 +1000,186 @@ Offset all of tile positions to `(0, 0)`, and set board size to fit these tile p
     gameObject.on('board.pointermove', function(pointer) {
     })
     ```
-    - `pointer` : [Touch pointer](touchevents.md#properties-of-point)
+    - `pointer` : [Touch pointer](touchevents.md#pointer)
+    - `gameObject` : Game object at touched (tileX, tileY)
+
+#### Pointer over
+
+- Pointer over to another tile
+    ```javascript
+    board.on('tileover', function(pointer, tileXY) {
+        // var tileX = tileXY.x;
+        // var tileY = tileXY.y;
+    });
+    ```
+    - `tileXY` : `{x, y}`
+    - Only triggered when `tileXY` is changed.
+- Pointer over to another chess
+    ```javascript
+    board.on('gameobjectover', function(pointer, gameObject) {
+    })
+    ```
+    or
+    ```javascript
+    gameObject.on('board.pointerover', function(pointer) {
+    })
+    ```
+    - `pointer` : [Touch pointer](touchevents.md#pointer)
+    - `gameObject` : Game object at touched (tileX, tileY)
+
+#### Pointer out
+
+- Pointer out tile
+    ```javascript
+    board.on('tileout', function(pointer, tileXY) {
+        // var tileX = tileXY.x;
+        // var tileY = tileXY.y;
+    });
+    ```
+    - `tileXY` : `{x, y}`
+    - Only triggered when `tileXY` is changed.
+- Pointer out chess
+    ```javascript
+    board.on('gameobjectout', function(pointer, gameObject) {
+    })
+    ```
+    or
+    ```javascript
+    gameObject.on('board.pointerout', function(pointer) {
+    })
+    ```
+    - `pointer` : [Touch pointer](touchevents.md#pointer)
+    - `gameObject` : Game object at pointer-out (tileX, tileY)
+
+#### [Tap](gesture-tap.md)
+
+- Tap at any tile
+    ```javascript
+    board.on('tiletap', function(tap, tileXY) {
+        // var tileX = tileXY.x;
+        // var tileY = tileXY.y;
+        // var tapsCount = tap.tapsCount;
+    });
+    ```
+    - `tap` : [Tap behavior](gesture-tap.md).
+        - `tap.tapsCount` : Taps count.
+    - `tileXY` : `{x, y}`
+- N-taps at any tile
+    ```javascript
+    board.on('tile' + tapsCount + 'tap' , function(tap, tileXY) {
+        // var tileX = tileXY.x;
+        // var tileY = tileXY.y;
+    });
+    ```
+    - `'tile' + tapsCount + 'tap'` : `'tile1tap'`, `'tile2tap'`, `'tile3tap'`, etc ...
+    - `tap` : [Tap behavior](gesture-tap.md).
+    - `tileXY` : `{x, y}`
+- Tap at chess
+    ```javascript
+    board.on('gameobjecttap', function(tap, gameObject) {
+        // var tapsCount = tap.tapsCount;
+    })
+    ```
+    or
+    ```javascript
+    gameObject.on('board.tap', function(tap) {
+        // var tapsCount = tap.tapsCount;
+    })
+    ```
+    - `tap` : [Tap behavior](gesture-tap.md).
+        - `tap.tapsCount` : Taps count.
+    - `gameObject` : Game object at touched (tileX, tileY)
+- N-taps at chess
+    ```javascript
+    board.on('gameobject' + tapsCount + 'tap' , function(tap, gameObject) {
+    })
+    ```
+    or
+    ```javascript
+    gameObject.on('board.' + tapsCount + 'tap', function(tap) {
+    })
+    ```
+    - `'gameobject' + tapsCount + 'tap'` : `'gameobject1tap'`, `'gameobject2tap'`, `'gameobject3tap'`, etc ...
+    - `'board.' + tapsCount + 'tap'` : `'board.1tap'`, `'board.2tap'`, `'board.3tap'`, etc ...
+    - `tap` : [Tap behavior](gesture-tap.md).
+    - `gameObject` : Game object at touched (tileX, tileY)
+
+#### [Press](gesture-press.md)
+
+- Press-start at any tile
+    ```javascript
+    board.on('tilepressstart', function(press, tileXY) {
+        // var tileX = tileXY.x;
+        // var tileY = tileXY.y;
+    });
+    ```
+    - `press` : [Press behavior](gesture-press.md).
+    - `tileXY` : `{x, y}`
+- Press-end at any tile
+    ```javascript
+    board.on('tilepressend', function(press, tileXY) {
+        // var tileX = tileXY.x;
+        // var tileY = tileXY.y;
+    });
+    ```
+    - `press` : [Press behavior](gesture-press.md).
+    - `tileXY` : `{x, y}`
+- Press-star at chess
+    ```javascript
+    board.on('gameobjectpressstart', function(press, gameObject) {
+    })
+    ```
+    or
+    ```javascript
+    gameObject.on('board.pressstart', function(press) {
+    })
+    ```
+    - `press` : [Press behavior](gesture-tap.md).
+    - `gameObject` : Game object at touched (tileX, tileY)
+- Press-end at chess
+    ```javascript
+    board.on('gameobjectpressend', function(press, gameObject) {
+    })
+    ```
+    or
+    ```javascript
+    gameObject.on('board.pressend', function(press) {
+    })
+    ```
+    - `press` : [Press behavior](gesture-tap.md).
+    - `gameObject` : Game object at touched (tileX, tileY)
+
+#### [Swipe](gesture-swipe.md)
+
+- Swipe at any tile
+    ```javascript
+    board.on('tileswipe', function(swipe, tileXY) {
+        // var tileX = tileXY.x;
+        // var tileY = tileXY.y;
+        // var direction = swipe.direction;
+    });
+    ```
+    - `swipe` : [Swipe behavior](gesture-swipe.md).
+        - `swipe.direction` : Integer number.
+            - [Quad grid](board-quadgrid.md#directions) : 0, 1, 2, 3, 4, 5, 6, 7.
+            - [Hexagon grid](board-hexagongrid.md#directions) : 0, 1, 2, 3, 4, 5.
+    - `tileXY` : `{x, y}`
+- Swipe at chess
+    ```javascript
+    board.on('gameobjectswipe', function(swipe, gameObject) {
+        // var direction = swipe.direction;
+    })
+    ```
+    or
+    ```javascript
+    gameObject.on('board.swipe', function(swipe) {
+        // var direction = swipe.direction;
+    })
+    ```
+    - `swipe` : [Swipe behavior](gesture-swipe.md).
+        - `swipe.direction` : Integer number.
+            - [Quad grid](board-quadgrid.md#directions) : 0, 1, 2, 3, 4, 5, 6, 7.
+            - [Hexagon grid](board-hexagongrid.md#directions) : 0, 1, 2, 3, 4, 5.
     - `gameObject` : Game object at touched (tileX, tileY)
 
 ### Grid points
@@ -585,11 +1188,91 @@ Offset all of tile positions to `(0, 0)`, and set board size to fit these tile p
     ```javascript
     var points = board.getGridPoints(tileX, tileY);
     // var out = board.getGridPoints(tileX, tileY, out);
+    // var points = board.getGridPoints(chess, out);  // chess or tileXY
     ```
+    - `points` :　Array of world position `{x, y}`.
 - Draw grid polygon on [graphics object](graphics.md#lines)
     ```javascript
     graphics.strokePoints(points, true);
     ```
+
+
+### Boundary points
+
+- Get boundary points around tiles
+    ```javascript
+    var pointsAarray = board.getBoundaryPoints(tileXYArray);
+    ```
+    ```javascript
+    var pointsAarray = board.getBoundaryPoints(chessArray);
+    ```
+    ```javascript
+    var pointsAarray = board.getBoundaryPoints(tileZ); // All tiles on tileZ
+    ```
+    ```javascript
+    var pointsAarray = board.getBoundaryPoints(); // All tileXY position
+    ```
+    - `pointsAarray` : `[ [{x,y}, {x,y}, ...], [{x,y}, {x,y}, ...], ...]`. Array of polygon path in points.
+- Draw grid polygon on [graphics object](graphics.md#lines)
+    ```javascript
+    pointsAarray.forEach(function (points) {
+        graphics
+            .lineStyle(lineWidth, color, alpha)
+            .strokePoints(points, true);
+    })
+    ```
+
+
+### Bounds
+
+#### Board bounds
+
+- Get a rectangle of all tiles
+    ```javascript
+    var rectangle = board.getBoardBounds();
+    // var out = board.getGridBounds(out);
+    ```
+    - `rectangle` : [Rectangle object](geom-rectangle.md).
+- Draw rectangle on [graphics object](graphics.md#lines)
+    ```javascript
+    graphics.strokeRectShape(rectangle);
+    ```
+
+#### Grid bounds
+
+- Get a rectangle of a tile
+    ```javascript
+    var rectangle = board.getGridBounds(tileX, tileY);
+    // var out = board.getGridBounds(tileX, tileY, out);
+    // var rectangle = board.getGridBounds(chess, out);  // chess or tileXY
+    ```
+    - `rectangle` : [Rectangle object](geom-rectangle.md).
+- Draw rectangle on [graphics object](graphics.md#lines)
+    ```javascript
+    graphics.strokeRectShape(rectangle);
+    ```
+
+### Get Board
+
+- Static method 
+    ```javascript
+    var board = Board.GetBoard(chess);
+    ```
+    - `GetBoard` is a static method of `Board` class.
+
+- Member method
+    ```javascript
+    var board = board.chessToBoard(chess);
+    ```
+- Board property
+    - Chess
+        ```javascript
+        var board = chess.rexChess.board;
+        ```
+    - [Miniboard](board-miniboard.md)
+        ```javascript
+        var board = miniboard.mainBoard;
+        ```
 
 ### Other properties
 
@@ -597,3 +1280,14 @@ Offset all of tile positions to `(0, 0)`, and set board size to fit these tile p
     ```javascript
     var scene = board.scene;
     ```
+- Grid object
+    - Get
+        ```javascript
+        var grid = board.grid;
+        ```
+        - `grid` : [Quad grid](board-quadgrid.md), or [hexagon grid](board-hexagongrid.md).
+    - Set
+        ```javascript
+        board.setGrid(grid);
+        ```
+        - `grid` : [Quad grid](board-quadgrid.md), or [hexagon grid](board-hexagongrid.md).

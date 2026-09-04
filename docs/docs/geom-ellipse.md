@@ -2,7 +2,7 @@
 
 Ellipse shape and methods, built-in methods of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
@@ -103,6 +103,10 @@ var ellipse1 = Phaser.Geom.Ellipse.Clone(ellipse0);
 - Circumference
     ```javascript
     var circumference = Phaser.Geom.Ellipse.Circumference(ellipse);
+    ```
+- Type:
+    ```javascript
+    var type = ellipse.type; // 1
     ```
 
 ### Point(s) & shape

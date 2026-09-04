@@ -3,7 +3,7 @@ import GridTablePlugin from '../../plugins/gridtable-plugin.js';
 import TouchStatePlugin from '../../plugins/touchstate-plugin.js';
 import ContainerLitePlugin from '../../plugins/containerlite-plugin.js';
 
-const COLOR_PRIMARY = 0x4e342e;
+const COLOR_MAIN = 0x4e342e;
 const COLOR_LIGHT = 0x7b5e57;
 const COLOR_DARK = 0x260e04;
 
@@ -86,22 +86,19 @@ var getDataBase = function (count) {
 var newTable = function (scene, config) {
     var table;
 
-    var newCellObject = function (cell) {
+    config.cellVisibleCallback = function (cell) {
         var scene = cell.scene;
         var database = table.database;
         var data = database[cell.index];
-        var bg = scene.add.rectangle(0, 0, cell.width, cell.height, COLOR_PRIMARY)
+        var bg = scene.add.rectangle(0, 0, cell.width, cell.height, COLOR_MAIN)
             .setStrokeStyle(2, COLOR_LIGHT)
             .setOrigin(0);
         var txt = scene.add.text(5, 5, data.id);
         var container = scene.add.rexContainerLite(0, 0)
             .add(bg)
             .add(txt);
-        return container;
-    };
 
-    config.cellVisibleCallback = function (cell) {
-        cell.setContainer(newCellObject(cell));
+        cell.setContainer(container);
         //console.log('Cell ' + cell.index + ' visible');
     };
     table = scene.make.rexGridTable(config);
@@ -118,10 +115,11 @@ var newTable = function (scene, config) {
 }
 
 var addDragContentBehavior = function (table) {
-    table.touchState = table.scene.plugins.get('rexTouchState').add(table)
+    var touchState = table.scene.plugins.get('rexTouchState').add(table)
+    touchState
         .on('touchmove', function (pointer) {
             table.addTableOXY(this.dx, this.dy).updateTable();
-        });
+        }, touchState);
     return table;
 }
 

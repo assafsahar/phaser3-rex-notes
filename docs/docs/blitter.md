@@ -2,7 +2,7 @@
 
 Display of static images, built-in game object of phaser.
 
-- Author: Richard Davey
+- Author: Phaser Team
 
 ## Usage
 
@@ -34,6 +34,7 @@ var blitter = scene.make.blitter({
     // alpha: 1
     // flipX: true,
     // flipY: true,
+    // origin: {x: 0.5, y: 0.5},
     
     add: true
 });
@@ -91,12 +92,7 @@ var bobs = blitter.createFromCallback(callback, quantity, frame, visible)
 ### Get bob objects
 
 ```javascript
-var bobs = blitter.children;
-// bobs = blitter.getRenderList();
-```
-
-```javascript
-bobs = blitter.getRenderList();
+var bobs = blitter.children.list;
 ```
 
 ### Clear all bob objects
@@ -109,54 +105,93 @@ blitter.clear();
 
 A Bob has a position, alpha value and a frame from a texture that it uses to render with. You can also toggle the flipped and visible state of the Bob.
 
-#### Position, frame
+#### Position
 
-```javascript
-bob.x = 0;
-bob.y = 0;
-// var x = bob.x;
-// var y = bob.y;
-```
+- Get
+    ```javascript
+    var x = bob.x;
+    var y = bob.y;
+    ```
+- Set
+    ```javascript
+    bob.setPosition(x, y);
+    // bob.x = 0;
+    // bob.y = 0;
+    ```
+    or
+    ```javascript
+    bob.reset(x, y);
+    // bob.reset(x, y, frame);
+    ```
 
-```javascript
-bob.reset(x, y, frame);
-```
+#### Frame
 
-```javascript
-bob.setFrame(frame);
-```
+- Get
+    ```javascript
+    var frame = bob.frame;
+    ```
+    - `frame` : [Frame object](textures.md#frame-object).
+- Set
+    ```javascript
+    bob.setFrame(frame);
+    ```
 
 #### Flip
 
-```javascript
-bob.resetFlip();
-```
+- Get
+    ```javascript
+    var flipX = bob.flipX;
+    var flipY = bob.flipY;
+    ```
+- Set
+    ```javascript
+    bob.setFlip(boolX, boolY);
+    // bob.setFlipX(boolean);
+    // bob.setFlipY(boolean);
+    // bob.flipX = flipX;
+    // bob.flipY = flipY;
+    ```
+    or
+    ```javascript
+    bob.resetFlip(); // bob.setFlip(false, false)
+    ```
 
-```javascript
-bob.setFlip(boolX, boolY);
-```
+#### Visible
 
-```javascript
-bob.setFlipX(boolean);
-```
+- Get
+    ```javascript
+    var visible = bob.visible;
+    ```
+- Set
+    ```javascript
+    bob.setVisible(boolean);
+    // bob.visible = v;
+    ```
 
-```javascript
-bob.setFlipY(boolean);
-```
+#### Alpha
 
-#### Visible, alpha
+- Get
+    ```javascript
+    var alpha = bob.alpha;
+    ```
+- Set
+    ```javascript
+    bob.setAlpha(v);
+    // bob.aplha = v;
+    ```
 
-```javascript
-bob.setVisible(boolean);
-// bob.visible = v;
-// var visible = bob.visible;
-```
+#### Tint
 
-```javascript
-bob.setAlpha(v);
-// bob.aplha = v;
-// var alpha = bob.alpha;
-```
+- Get
+    ```javascript
+    var tint = bob.tint;
+    ```
+- Set
+    ```javascript
+    bob.setTint(tint);
+    // bob.tint = tint;
+    ```
+    - `tint` : Tint value, between `0` and `0xffffff`.
 
 #### Destroy
 
@@ -169,3 +204,15 @@ bob.destroy();
 ```javascript
 var data = bob.data;  // {}
 ```
+
+### Other properties
+
+See [game object](gameobject.md)
+
+### Create mask
+
+See [mask](mask.md)
+
+### Shader effects
+
+Support [internal and external filters](shader-builtin.md)

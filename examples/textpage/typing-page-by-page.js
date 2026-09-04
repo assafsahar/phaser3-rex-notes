@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import TextPagePlugin from '../../plugins/textpage-plugin.js'
 import TextTypingPlugin from '../../plugins/texttyping-plugin.js';
 
@@ -16,7 +17,7 @@ class PageTypingText extends Phaser.GameObjects.Text {
     start(text, speed) {
         this.page.setText(text);
         if (speed !== undefined) {
-            this.typing.setTypeSpeed(speed);
+            this.typing.setTypingSpeed(speed);
         }
         this.typeNextPage();
     }

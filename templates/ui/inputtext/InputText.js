@@ -1,2 +1,2 @@
-import RoundRectangle from '../../../plugins/gameobjects/shape/roundrectangle/RoundRectangle.js';
-export default RoundRectangle;
+import InputText from '../../../plugins/inputtext.js';
+export default InputText;

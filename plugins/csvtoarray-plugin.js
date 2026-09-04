@@ -1,17 +1,18 @@
 import CSVToArray from './csvtoarray.js'
 
-class CSVToArrayPlugin extends Phaser.Plugins.BasePlugin {
+import { Plugins as PhaserPlugins } from 'phaser';
+class CSVToArrayPlugin extends PhaserPlugins.BasePlugin {
     constructor(pluginManager) {
         super(pluginManager);
     }
 
     start() {
         var eventEmitter = this.game.events;
-        eventEmitter.once('destroy', this.destroy, this);
+        eventEmitter.on('destroy', this.destroy, this);
     }
 
-    convert(strData, config) {
-        return CSVToArray(strData, config);
+    convert(csvString, config) {
+        return CSVToArray(csvString, config);
     }
 }
 

@@ -1,40 +1,21 @@
-import Canvas from './gameobjects/canvas/Canvas.js';
+import Factory from './gameobjects/canvas/canvas/Factory.js';
+import Creator from './gameobjects/canvas/canvas/Creator.js';
+import Canvas from './gameobjects/canvas/canvas/Canvas.js';
 import SetValue from './utils/object/SetValue.js';
 
-const GetAdvancedValue = Phaser.Utils.Objects.GetAdvancedValue;
-const BuildGameObject = Phaser.GameObjects.BuildGameObject;
-
-class CanvasPlugin extends Phaser.Plugins.BasePlugin {
+import { Plugins as PhaserPlugins } from 'phaser';
+class CanvasPlugin extends PhaserPlugins.BasePlugin {
 
     constructor(pluginManager) {
         super(pluginManager);
 
         //  Register our new Game Object type
-        pluginManager.registerGameObject('rexCanvas', this.addCanvas, this.makeCanvas);
+        pluginManager.registerGameObject('rexCanvas', Factory, Creator);
     }
 
     start() {
         var eventEmitter = this.game.events;
-        eventEmitter.once('destroy', this.destroy, this);
-    }
-
-    addCanvas(x, y, width, height) {
-        var canvas = new Canvas(this.scene, x, y, width, height);
-        this.displayList.add(canvas);
-        return canvas;
-    }
-
-    makeCanvas(config, addToScene) {
-        var width = GetAdvancedValue(config, 'width', 256);
-        var height = GetAdvancedValue(config, 'height', width);
-        if (addToScene !== undefined) {
-            config.add = addToScene;
-        }
-        var canvas = new Canvas(this.scene, 0, 0, width, height);
-        BuildGameObject(this.scene, canvas, config);
-        var fillColor = GetAdvancedValue(config, 'fill', null);
-        canvas.fill(fillColor);
-        return canvas;
+        eventEmitter.on('destroy', this.destroy, this);
     }
 }
 

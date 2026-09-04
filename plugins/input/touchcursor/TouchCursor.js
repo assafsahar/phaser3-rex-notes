@@ -1,20 +1,31 @@
 import VectorToCursorKeys from '../../utils/input/VectorToCursorKeys.js';
+import EventEmitterMethods from '../../utils/eventemitter/EventEmitterMethods.js';
+import GetPointerWorldXY from '../../utils/input/GetPointerWorldXY.js';
 
-const EE = Phaser.Events.EventEmitter;
-const GetValue = Phaser.Utils.Objects.GetValue;
-const CircleClass = Phaser.Geom.Circle;
-const CircleContains = Phaser.Geom.Circle.Contains;
+import { Geom as PhaserGeom, Utils as PhaserUtils } from 'phaser';
+const GetValue = PhaserUtils.Objects.GetValue;
+const CircleClass = PhaserGeom.Circle;
+const CircleContains = PhaserGeom.Circle.Contains;
 
 class TouchCursor extends VectorToCursorKeys {
     constructor(gameObject, config) {
-        super(config);
+        var scene = gameObject.scene;
+        super(scene, config);
         //this.resetFromJSON(config); // this function had been called in super(config)
 
-        this.events = new EE();
-        this.scene = gameObject.scene;
+        // Event emitter
+        var eventEmitter = GetValue(config, 'eventEmitter', undefined);
+        var EventEmitterClass = GetValue(config, 'EventEmitterClass', undefined);
+        this.setEventEmitter(eventEmitter, EventEmitterClass);
+
+        this.scene = scene;
+        this.mainCamera = scene.sys.cameras.main;
+        this.pointer = undefined;
         this.gameObject = gameObject;
         this.radius = GetValue(config, 'radius', 100);
+
         gameObject.setInteractive(new CircleClass(gameObject.displayOriginX, gameObject.displayOriginY, this.radius), CircleContains);
+
         this.boot();
     }
 
@@ -39,26 +50,53 @@ class TouchCursor extends VectorToCursorKeys {
         this.scene.input.on('pointermove', this.onKeyDown, this);
         this.scene.input.on('pointerup', this.onKeyUp, this);
 
-        this.gameObject.on('destroy', this.destroy, this);
+        this.gameObject.once('destroy', this.onParentDestroy, this);
     }
 
-    shutdown() {
-        if (this.scene) {
-            this.scene.input.off('pointermove', this.onKeyDown, this);
-            this.scene.input.off('pointerup', this.onKeyUp, this);
+    shutdown(fromScene) {
+        if (!this.scene) {
+            return;
         }
+
         // gameObject events will be removed when this gameObject destroyed 
+        // this.gameObject.off('pointerdown', this.onKeyDownStart, this);
+        // this.gameObject.off('pointerover', this.onKeyDownStart, this);
 
-        this.events.destroy();
+        this.scene.input.off('pointermove', this.onKeyDown, this);
+        this.scene.input.off('pointerup', this.onKeyUp, this);
 
-        this.pointer = undefined;
+        this.destroyEventEmitter();
+
         this.scene = undefined;
+        this.mainCamera = undefined;
+        this.pointer = undefined;
         this.gameObject = undefined;
-        this.events = undefined;
+
+        super.shutdown();
     }
 
-    destroy() {
-        this.shutdown();
+    get enable() {
+        return this._enable;
+    }
+
+    // Override setter of enable
+    set enable(e) {
+        if (this._enable === e) {
+            return;
+        }
+        if (!e) {
+            this.pointer = undefined; // Release pointer
+        }
+        super.enable = e;
+        return this;
+    }
+
+    destroy(fromScene) {
+        this.shutdown(fromScene);
+    }
+
+    onParentDestroy(parent, fromScene) {
+        this.destroy(fromScene);
     }
 
     onKeyDownStart(pointer) {
@@ -68,6 +106,7 @@ class TouchCursor extends VectorToCursorKeys {
         }
         this.pointer = pointer;
         this.onKeyDown(pointer);
+        this.emit('pointerdown', pointer);
     }
 
     onKeyDown(pointer) {
@@ -75,10 +114,21 @@ class TouchCursor extends VectorToCursorKeys {
             return;
         }
 
-        var p0 = this.gameObject,
-            p1 = pointer;
-        this.setVector(p0.x, p0.y, p1.x, p1.y);
-        this.events.emit('update');
+        var worldXY = GetPointerWorldXY(pointer, this.mainCamera, true);
+        if (!worldXY) {
+            // Pointer is outside of any camera, no worldX/worldY available
+            return;
+        }
+
+        // Vector of world position
+        var camera = pointer.camera;
+        var gameObject = this.gameObject;
+        var startX = gameObject.x - (camera.scrollX * (gameObject.scrollFactorX - 1));
+        var startY = gameObject.y - (camera.scrollY * (gameObject.scrollFactorY - 1));
+
+        this.setVector(startX, startY, worldXY.x, worldXY.y);
+
+        this.emit('update');
     }
 
     onKeyUp(pointer) {
@@ -87,21 +137,25 @@ class TouchCursor extends VectorToCursorKeys {
         }
         this.pointer = undefined;
         this.clearVector();
-        this.events.emit('update');
+        this.emit('update');
+        this.emit('pointerup', pointer);
     }
 
-    on() {
-        var ee = this.events;
-        ee.on.apply(ee, arguments);
-        return this;
-    }
+    forceUpdate() {
+        var pointer = this.pointer;
+        if (!pointer || !pointer.isDown) {
+            return this;
+        }
 
-    once() {
-        var ee = this.events;
-        ee.once.apply(ee, arguments);
+        this.onKeyDown(pointer);
         return this;
     }
 
 }
+
+Object.assign(
+    TouchCursor.prototype,
+    EventEmitterMethods
+);
 
 export default TouchCursor;

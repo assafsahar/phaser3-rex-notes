@@ -1,20 +1,18 @@
-import TickTask from '../../utils/ticktask/TickTask.js';
-import GetSceneObject from '../../utils/system/GetSceneObject.js';
+import { Utils as PhaserUtils, Math as PhaserMath } from 'phaser';
+import TickTask from '../../utils/componentbase/SceneUpdateTickTask.js';
 import DegToRad from '../../utils/math/DegToRad.js';
 import RadToDeg from '../../utils/math/RadToDeg.js';
 
-const GetValue = Phaser.Utils.Objects.GetValue;
-const MathWrap = Phaser.Math.Wrap;
-const WrapAngle = Phaser.Math.Angle.Wrap;
-const AngleBetween = Phaser.Math.Angle.Between;
+const GetValue = PhaserUtils.Objects.GetValue;
+const MathWrap = PhaserMath.Wrap;
+const WrapAngle = PhaserMath.Angle.Wrap;
+const AngleBetween = PhaserMath.Angle.Between;
 
 
 class RotateTo extends TickTask {
     constructor(gameObject, config) {
         super(gameObject, config);
-
-        this.gameObject = gameObject;
-        this.scene = GetSceneObject(gameObject);
+        // this.parent = gameObject;
 
         this.resetFromJSON(config);
         this.boot();
@@ -41,35 +39,6 @@ class RotateTo extends TickTask {
         };
     }
 
-    boot() {
-        super.boot();
-        if (this.gameObject.on) { // oops, bob object does not have event emitter
-            this.gameObject.on('destroy', this.destroy, this);
-        }
-    }
-
-    shutdown() {
-        super.shutdown();
-        this.gameObject = undefined;
-        this.scene = undefined;
-    }
-
-    destroy() {
-        this.shutdown();
-    }
-
-    startTicking() {
-        super.startTicking();
-        this.scene.events.on('update', this.update, this);
-    }
-
-    stopTicking() {
-        super.stopTicking();
-        if (this.scene) { // Scene might be destoryed
-            this.scene.events.off('update', this.update, this);
-        }
-    }
-
     setEnable(e) {
         if (e == undefined) {
             e = true;
@@ -83,27 +52,27 @@ class RotateTo extends TickTask {
         return this;
     }
 
-    rotateTo(angle, dir) {
+    rotateTo(angle, dir, speed) {
         if (typeof (angle) !== 'number') {
             var config = angle;
             angle = GetValue(config, 'angle', undefined);
             dir = GetValue(config, 'dir', undefined);
-        }
-        // invalid target angle
-        if (angle == null) {
-            return this;
         }
         this.target = MathWrap(angle, 0, 360); // 0~360
         if (dir === undefined) {
             dir = 0;
         }
         this.dir = (typeof (dir) === 'string') ? DIRMODE[dir] : dir;
+        if (speed !== undefined) {
+            this.setSpeed(speed);
+        }
         super.start();
+        this.emit('start', this.parent, this);
         return this;
     }
 
     rotateTowardsPosition(x, y, dir, speed) {
-        var gameObject = this.gameObject;
+        var gameObject = this.parent;
         var rad = AngleBetween(gameObject.x, gameObject.y, x, y);
         var angle = RadToDeg(rad);
         this.rotateTo(angle, dir, speed);
@@ -115,9 +84,13 @@ class RotateTo extends TickTask {
             return this;
         }
 
+        var gameObject = this.parent;
+        if (!gameObject.active) {
+            return this;
+        }
+
         var target = this.target; // 0~360
         var targetRad = WrapAngle(DegToRad(target)); // -PI~PI
-        var gameObject = this.gameObject;
         if (targetRad === gameObject.rotation) {
             this.complete();
             return this;

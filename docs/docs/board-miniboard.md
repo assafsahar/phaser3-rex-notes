@@ -5,17 +5,72 @@ Chess [Container](containerlite.md), to rotate/mirror/drag chess together.
 - Author: Rex
 - Container Game object of chess group
 
-## Source code
+## Live demos
 
-Included in [board plugin](board.md#source-code).
+- [Group 4](https://codepen.io/rexrainbow/pen/bGdMVzo)
+- [Drag & drop, mirror, rotate](https://codepen.io/rexrainbow/pen/ZEVqGRJ)
+- [Drag overlapped miniboard](https://codepen.io/rexrainbow/pen/KwPwOjO)
 
 ## Usage
 
-[Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/board-miniBoard)
+[Sample code](https://github.com/rexrainbow/phaser3-rex-notes/tree/master/examples/board-miniboard)
 
-### Install scene plugin
+### Install plugin
 
-Included in board plugin.
+#### Load minify file
+
+- Load plugin (minify file) in preload stage
+    ```javascript
+    scene.load.scenePlugin('rexboardplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexboardplugin.min.js', 'rexBoard', 'rexBoard');
+    ```
+- Add container
+    ```javascript
+    var miniBoard = scene.rexBoard.add.miniBoard(x, y, config);
+    ```
+
+#### Import plugin
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Install plugin in [configuration of game](game.md#configuration)
+    ```javascript
+    import BoardPlugin from 'phaser4-rex-plugins/plugins/board-plugin.js';
+    var config = {
+        // ...
+        plugins: {
+            scene: [{
+                key: 'rexBoard',
+                plugin: BoardPlugin,
+                mapping: 'rexBoard'
+            },
+            // ...
+            ]
+        }
+        // ...
+    };
+    var game = new Phaser.Game(config);
+    ```
+- Add container
+    ```javascript
+    var miniBoard = scene.rexBoard.add.miniBoard(x, y, config);
+    ```
+
+#### Import class
+
+- Install rex plugins from npm
+    ```
+    npm i phaser4-rex-plugins
+    ```
+- Import class
+    ```javascript
+    import { MiniBoard } from 'phaser4-rex-plugins/plugins/board-components.js';
+    ```
+- Add match object
+    ```javascript
+    var miniBoard = new MiniBoard(scene, x, y, config);
+    ```
 
 ### Add Container
 
@@ -40,6 +95,8 @@ miniBoard.addChess(gameObject, tileX, tileY, tileZ);
 
 - `chess` : A game object.
 - `tileX` , `tileY` , `tileZ` : Tile position.
+    - `tileX` , `tileY` : Number.
+    - `tileZ` : Number or string.
 
 !!! note "Chess and tile position"
     - Any chess has a **(tileX, tileY, tileZ)** index
@@ -54,6 +111,8 @@ These world properties of chess will be changed with container.
 - Alpha
 - Scroll factor
 - Mask
+
+Bounds and origin will change after adding chess.
 
 #### Remove chess
 
@@ -74,6 +133,47 @@ These world properties of chess will be changed with container.
     miniBoard.removeAllChess(destroy);
     ```
     - `destroy` : Set `true` to desrtoy chess object.
+
+Bounds and origin will change after removing chess.
+
+### Set origin
+
+- Set origin tileXY by offset tileXY of all chess.
+    ```javascript
+    miniBoard.setOrigin(origin);
+    // miniBoard.setOrigin(originX, originY);
+    ```
+    - `originX`, `originY`: 0~1. 
+        - `0` : Left/top.
+        - `0.5` : Center. 
+        - `1` : Right/bottom.
+- Set origin tileXY to center by offset tileXY of all chess.
+    ```javascript
+    miniBoard.setOrigin();
+    // miniBoard.setOrigin('center');
+    ```
+- Set origin tileXY to top-left. 
+    ```javascript
+    miniBoard.setOrigin('top-left');
+    ```
+
+Position of this miniboard will change
+
+### Get all chess
+
+```javascript
+var gameObjects = miniBoard.getAllChess();
+// var out = miniBoard.getAllChess(out);
+```
+
+### Get bounds
+
+A rectangle bounds contains all chess.
+
+```javascript
+var rect = miniBoard.getBounds();
+// var out = miniBoard.getBounds(out);
+```
 
 ### Main board
 
@@ -219,7 +319,7 @@ Always return `true` if this mini-board is not on a main-board.
 #### Mirror
 
 ```javascript
-miniBoard.rotate(mode);
+miniBoard.mirror(mode);
 ```
 
 - `mode` :
@@ -257,6 +357,68 @@ var isSuccess = miniBoard.lastTransferResult;
     miniBoard.setDragEnable(false);
     ```
 
+#### Touch event
+
+##### Pointer down
+
+- Pointer down at any chess
+    ```javascript
+    miniBoard.on('pointerdown', function(pointer, miniBoard) {
+    })
+    ```
+- Pointer down at a chess
+    ```javascript
+    miniBoard.on('gameobjectdown', function(pointer, gameObject) {
+    })
+    ```
+    or
+    ```javascript
+    gameObject.on('miniboard.pointerdown', function(pointer) {
+    })
+    ```
+    - `pointer` : [Touch pointer](touchevents.md#pointer)
+    - `gameObject` : Game object at touched (tileX, tileY)
+
+##### Pointer up
+
+- Pointer up
+    ```javascript
+    miniBoard.on('pointerup', function(pointer, miniBoard) {
+    })
+    ```
+- Pointer up at a chess
+    ```javascript
+    miniBoard.on('gameobjectup', function(pointer, gameObject) {
+    })
+    ```
+    or
+    ```javascript
+    gameObject.on('miniboard.pointerup', function(pointer) {
+    })
+    ```
+    - `pointer` : [Touch pointer](touchevents.md#pointer)
+    - `gameObject` : Game object at touched (tileX, tileY)    
+
+##### Pointer move
+
+- Pointer move
+    ```javascript
+    miniBoard.on('pointermove', function(pointer, miniBoard) {
+    })
+    ```
+- Pointer move to another chess
+    ```javascript
+    miniBoard.on('gameobjectmove', function(pointer, gameObject) {
+    })
+    ```
+    or
+    ```javascript
+    gameObject.on('miniboard.pointermove', function(pointer) {
+    })
+    ```
+    - `pointer` : [Touch pointer](touchevents.md#pointer)
+    - `gameObject` : Game object at touched (tileX, tileY)
+
 #### Drag events
 
 - Drag-start
@@ -291,42 +453,3 @@ var isSuccess = miniBoard.lastTransferResult;
     }, scope);
     ```
     Put chess on main-board at nearest grid.
-
-#### Touch event
-
-- Pointer down at a chess
-    ```javascript
-    miniBoard.on('gameobjectdown', function(pointer, gameObject) {
-    })
-    ```
-    or
-    ```javascript
-    gameObject.on('miniboard.pointerdown', function(pointer) {
-    })
-    ```
-    - `pointer` : [Touch pointer](touchevents.md#properties-of-point)
-    - `gameObject` : Game object at touched (tileX, tileY)
-- Pointer up at a chess
-    ```javascript
-    miniBoard.on('gameobjectup', function(pointer, gameObject) {
-    })
-    ```
-    or
-    ```javascript
-    gameObject.on('miniboard.pointerup', function(pointer) {
-    })
-    ```
-    - `pointer` : [Touch pointer](touchevents.md#properties-of-point)
-    - `gameObject` : Game object at touched (tileX, tileY)    
-- Pointer move to another chess
-    ```javascript
-    miniBoard.on('gameobjectmove', function(pointer, gameObject) {
-    })
-    ```
-    or
-    ```javascript
-    gameObject.on('miniboard.pointermove', function(pointer) {
-    })
-    ```
-    - `pointer` : [Touch pointer](touchevents.md#properties-of-point)
-    - `gameObject` : Game object at touched (tileX, tileY)

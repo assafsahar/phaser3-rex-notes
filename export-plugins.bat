@@ -1,2 +1,5 @@
 @echo off
-webpack --config webpack.plugins.config.js
+cd dist
+del /S /Q *.js
+cd ..
+npm run build
